@@ -15,4 +15,5 @@ Imports: readr,
     lazyeval,
     lubridate,
     dplyr,
-    readxl
+    readxl,
+    pkgdown
