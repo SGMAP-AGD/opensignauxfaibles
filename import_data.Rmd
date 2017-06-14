@@ -1,0 +1,29 @@
+---
+title: "Import data"
+output: html_notebook
+---
+
+```{r setup}
+library("opensignauxfaibles")
+```
+
+## Import table altares
+
+```{bash}
+in2csv data-raw/direccte/altares/RECAP_ALTARES.xls > data-raw/direccte/altares/RECAP_ALTARES.csv
+```
+
+```{r}
+import_table_altares(
+  path = "data-raw/direccte/altares/RECAP_ALTARES.csv"
+  )
+```
+
+## Activité partielle
+
+```{r}
+import_table_apart(
+  path = "data-raw/direccte/activite_partielle/201705_POP_Bourg Fr Comté_Janv2008àavril2017.xls"
+  )
+```
+
