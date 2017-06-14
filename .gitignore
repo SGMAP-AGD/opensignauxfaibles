@@ -5,3 +5,4 @@
 .DS_Store
 .profile
 data-raw/
+*.nb.html
