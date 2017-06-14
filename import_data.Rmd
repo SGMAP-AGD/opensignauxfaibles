@@ -48,3 +48,12 @@ import_table_debit(
   glimpse()
 ```
 
+## Effectifs
+
+```{r}
+import_table_effectif2(
+  path = "data-raw/urssaf/emploi/Urssaf_emploi_BFC_201001_201701.csv"
+  ) %>% 
+  glimpse()
+```
+

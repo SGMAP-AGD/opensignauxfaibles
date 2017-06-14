@@ -192,3 +192,101 @@ import_table_debit <- function(path) {
   return(table_debit)
 }
 
+#' Import table effectif
+#'
+#' @param path path of the source files. Source files are stored in raw-data/urssaf directory
+#'
+#' @return a tibble with columns siret, raison_sociale, period, effectif, code_departement
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' import_table_effectif(
+#' path = "raw-data/urssaf/Urssaf_emploi_BFC_200401_201606.csv"
+#' )
+#' }
+#'
+import_table_effectif <- function(path) {
+  table_effectif <- readr::read_csv2(
+    file = path
+  ) %>%
+    tidyr::gather(
+      key = yyyyqm,
+      value = effectif,
+      - c(rais_soc,UR_EMET, SIRET, dep)
+    ) %>%
+    dplyr::rename(
+      raison_sociale = rais_soc,
+      siret = SIRET,
+      code_departement = dep
+    ) %>%
+    dplyr::mutate(
+      code_departement = as.character(code_departement),
+      yyyyqm = stringr::str_replace(
+        string = yyyyqm,
+        pattern = "eff([[:digit:]]{6})",
+        replacement = "\\1"
+      )
+    ) %>%
+    convert_urssaf_periods_(
+      .variable = ~ yyyyqm,
+      format = "yyyyqm"
+    ) %>%
+    dplyr::select(siret, raison_sociale, code_departement, period, effectif) %>%
+    dplyr::filter(is.na(effectif) == FALSE) %>%
+    dplyr::group_by(siret, period, raison_sociale, code_departement) %>%
+    dplyr::summarise(effectif = sum(effectif))
+  return(table_effectif)
+}
+
+
+#' Import the new version of table effectif
+#'
+#' @param path the path to the CSV file
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' table_effectif2 <- import_table_effectif2(path = "raw-data/urssaf/Urssaf_emploi_BFC_200401_201609.csv")
+#' }
+import_table_effectif2 <- function(path) {
+  table_effectif <- readr::read_csv2(
+    file = path,
+    col_types = readr::cols(
+      compte = readr::col_character(),
+      SIRET = readr::col_character(),
+      dep = readr::col_character()
+    )
+  ) %>%
+    tidyr::gather(
+      key = yyyyqm,
+      value = effectif,
+      - c(rais_soc,UR_EMET, SIRET, dep, compte)
+    ) %>%
+    dplyr::rename(
+      raison_sociale = rais_soc,
+      siret = SIRET,
+      code_departement = dep
+    ) %>%
+    dplyr::mutate(
+      yyyyqm = stringr::str_replace(
+        string = yyyyqm,
+        pattern = "eff([[:digit:]]{6})",
+        replacement = "\\1"
+      )
+    ) %>%
+    convert_urssaf_periods_(
+      .variable = ~ yyyyqm,
+      format = "yyyyqm"
+    ) %>%
+    dplyr::select(siret, compte, raison_sociale, code_departement, period, effectif) %>%
+    dplyr::filter(is.na(effectif) == FALSE) %>%
+    dplyr::group_by(siret, compte, period, raison_sociale, code_departement) %>%
+    dplyr::mutate(effectif = as.numeric(effectif)) %>%
+    dplyr::summarise(effectif = sum(effectif))
+  return(table_effectif)
+}
+
+
