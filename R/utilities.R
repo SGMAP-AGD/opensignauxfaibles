@@ -80,3 +80,35 @@ convert_urssaf_periods_ <- function(.data, .variable, format = "yyqm") {
   return(dplyr::bind_cols(.data, tibble::tibble(periodicity = periodicity_, period = period_)))
 }
 
+
+#' convert_urssaf_date
+#'
+#' @param weird_date
+#'
+#' @return a date
+#' @export
+#'
+#' @examples
+#' convert_urssaf_date(weird_date = "1010115")
+#'
+convert_urssaf_date <- function(weird_date) {
+  year <- weird_date %>%
+    stringr::str_pad(string = .,
+                     width = "7",
+                     pad = "9",
+                     side = "left") %>%
+    substr(., 1, 3) %>%
+    as.numeric() %>%
+    `+`(1900) %>%
+    as.character()
+  month_day <- weird_date %>%
+    stringr::str_pad(string = .,
+                     width = "7",
+                     pad = "9",
+                     side = "left") %>%
+    substr(., 4, 7)
+  date <- lubridate::ymd(paste0(year, month_day))
+  return(date)
+}
+
+

@@ -39,3 +39,12 @@ import_table_cotisation_csv(
   glimpse()
 ```
 
+## Débits URSSAF
+
+```{r}
+import_table_debit(
+  path = "data-raw/urssaf/debits/Debits_frc_02_2017_03_2017.csv"
+  ) %>%
+  glimpse()
+```
+

@@ -134,3 +134,61 @@ import_table_cotisation_csv <- function(path) {
       ~ cotisation_encaissee_directement, ~cotisation_due
     )
 }
+
+#' Import table debits
+#'
+#' @param path the path to the debit files
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' import_table_debit(path = "raw-data/urssaf/Debit_bourgogne_31_07_2016.csv")
+#' }
+#'
+import_table_debit <- function(path) {
+  table_debit <- readr::read_csv2(
+    file = path,
+    col_names = c("numero_compte", "numero_ecart_negatif",
+                  "date_traitement_ecart_negatif",
+                  "montant_part_ouvriere", "montant_part_patronale",
+                  "numero_historique_ecart_negatif",
+                  "date_immatriculation_1", "etat_compte",
+                  "code_procedure_collective", "siren",
+                  "periode", "date_immatriculation",
+                  "code_operation_ecart_negatif", "code_motif_ecart_negatif"),
+    col_types = readr::cols(
+      numero_compte = readr::col_character(),
+      numero_ecart_negatif = readr::col_character(),
+      date_traitement_ecart_negatif = readr::col_character(),
+      montant_part_ouvriere = readr::col_number(),
+      montant_part_patronale = readr::col_number(),
+      numero_historique_ecart_negatif = readr::col_integer(),
+      date_immatriculation_1 = readr::col_character(),
+      etat_compte = readr::col_integer(),
+      code_procedure_collective = readr::col_character(),
+      siren = readr::col_character(),
+      periode = readr::col_character(),
+      date_immatriculation = readr::col_date(),
+      code_operation_ecart_negatif = readr::col_character(),
+      code_motif_ecart_negatif = readr::col_character()
+    ),
+    skip = 1,
+    progress = FALSE
+  ) %>%
+    dplyr::mutate(
+      date_traitement_ecart_negatif = convert_urssaf_date(date_traitement_ecart_negatif),
+      montant_part_ouvriere = montant_part_ouvriere / 100,
+      montant_part_patronale = montant_part_patronale / 100
+    ) %>%
+    dplyr::filter(is.na(date_traitement_ecart_negatif) == FALSE)
+
+  table_debit <- convert_urssaf_periods_(
+    .data = table_debit,
+    .variable = ~ periode,
+    format = "yyyyqm")
+
+  return(table_debit)
+}
+
