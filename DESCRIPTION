@@ -14,4 +14,5 @@ Imports: readr,
     magrittr,
     lazyeval,
     lubridate,
-    dplyr
+    dplyr,
+    readxl

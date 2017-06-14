@@ -48,3 +48,45 @@ import_table_altares <- function(path) {
     )
   return(table)
 }
+
+
+#' Import table apart  (ie Activite partielle)
+#'
+#' @param path path to the excel file
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' import_table_apart(path = "raw-data/direccte/201609_POP_Bourg Fr Comté de janv2008àaoût2016.xls")
+#' }
+#'
+import_table_apart <- function(path) {
+  table <- readxl::read_excel(
+    path = path,
+    sheet = "Liste des établissements ",
+    skip = 4,
+    col_names = c(
+      "code_departement", "libelle_departement",
+      "code_commune", "libelle_commune",
+      "siret", "raison_sociale",
+      "code_naf_700", "libelle_naf_700",
+      "date_decision", "numero_decision",
+      "numero_avenant",
+      "date_debut_periode_autorisee", "date_fin_periode_autorisee",
+      "heures_autorisees", "montants_autorises",
+      "heures_consommees", "montants_consommes",
+      "effectif_concerne", "effectif_etablissement"
+    )
+  ) %>%
+    dplyr::filter(
+      libelle_departement != "Total"
+    ) %>%
+    dplyr::mutate(
+      date_decision = lubridate::ymd(date_decision),
+      date_debut_periode_autorisee = lubridate::ymd(date_debut_periode_autorisee),
+      date_fin_periode_autorisee = lubridate::ymd(date_fin_periode_autorisee)
+    )
+  return(table)
+}
