@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{is_siren}
 \alias{is_siren}
-\title{is_siren}
+\title{Is siren}
 \usage{
 is_siren(siren)
 }
@@ -13,7 +13,7 @@ is_siren(siren)
 a boolean vector with value TRUE if the string includes exactly 9 digits.
 }
 \description{
-is_siren
+Is siren
 }
 \examples{
 is_siren("2015")

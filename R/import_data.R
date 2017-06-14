@@ -90,3 +90,47 @@ import_table_apart <- function(path) {
     )
   return(table)
 }
+
+
+#' Import table cotisation in a CSV format
+#'
+#'
+#' @param path path to the CSV file
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' import_table_cotisation_csv(
+#' path = "raw-data/urssaf/Urssaf_bourgogne_Cotis_dues_09_2016_01_2017.csv"
+#' )
+#' }
+#'
+import_table_cotisation_csv <- function(path) {
+  readr::read_csv2(
+    file = path,
+    col_names = c(
+      "numero_compte", "periode_debit", "cotisation_mise_en_recouvrement",
+      "cotisation_encaissee_directement", "periode",
+      "cotisation_due", "numero_ecart_negatif"
+    ),
+    col_types = readr::cols(
+      numero_compte = readr::col_character(),
+      periode_debit = readr::col_character(),
+      cotisation_mise_en_recouvrement = readr::col_number(),
+      cotisation_encaissee_directement = readr::col_number(),
+      periode = readr::col_character(),
+      cotisation_due = readr::col_number(),
+      numero_ecart_negatif = readr::col_character()
+    ),
+    skip = 1
+  ) %>%
+    convert_urssaf_periods_(.data = ., .variable = ~ periode) %>%
+    dplyr::select_(
+      ~ numero_compte, ~ periodicity, ~ period,
+      ~ numero_ecart_negatif, ~ cotisation_mise_en_recouvrement,
+      ~ cotisation_encaissee_directement, ~cotisation_due
+    )
+}

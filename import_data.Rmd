@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r setup}
 library("opensignauxfaibles")
+library("dplyr")
 ```
 
 ## Import table altares
@@ -16,7 +17,8 @@ in2csv data-raw/direccte/altares/RECAP_ALTARES.xls > data-raw/direccte/altares/R
 ```{r}
 import_table_altares(
   path = "data-raw/direccte/altares/RECAP_ALTARES.csv"
-  )
+  ) %>% 
+  glimpse()
 ```
 
 ## Activité partielle
@@ -24,6 +26,16 @@ import_table_altares(
 ```{r}
 import_table_apart(
   path = "data-raw/direccte/activite_partielle/201705_POP_Bourg Fr Comté_Janv2008àavril2017.xls"
-  )
+  ) %>% 
+  glimpse()
+```
+
+## Cotisations URSSAF
+
+```{r}
+import_table_cotisation_csv(
+  path = "data-raw/urssaf/cotisations dues/Urssaf_frc_cotis_dues_02_2017_03_2017.csv"
+  ) %>% 
+  glimpse()
 ```
 
