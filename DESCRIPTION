@@ -16,4 +16,5 @@ Imports: readr,
     lubridate,
     dplyr,
     readxl,
-    pkgdown
+    pkgdown,
+    tricky

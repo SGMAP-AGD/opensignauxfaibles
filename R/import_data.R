@@ -327,3 +327,46 @@ import_table_naf <- function(path) {
   return(output_table)
 }
 
+#' Import table CCSV
+#'
+#' Cette fonction permet d'importer les données CCSV dans la base de données.
+#'
+#' @param path chemin vers le fichier CSV
+#'
+#' @return a tibble : table de données
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' "raw-data/urssaf/Bourgogne_ccsf.csv" %>%
+#' import_table_ccsv(path = .)
+#' }
+#'
+#' \dontrun{
+#' "raw-data/urssaf/FRC_ccsf.csv" %>%
+#' import_table_ccsv(path = .)
+#' }
+#'
+import_table_ccsv <- function(path) {
+  readr::read_csv2(
+    file = path,
+    col_types = readr::cols(
+      Compte = readr::col_character(),
+      `Date de traitement` = readr::col_character(),
+      `Code externe du stade` = readr::col_character(),
+      `Code externe de l'action` = readr::col_character()
+    ),
+    locale = readr::locale(decimal_mark = ",")
+  ) %>%
+    tricky::set_standard_names(.data = .) %>%
+    dplyr::mutate_(
+      .dots = list(
+        "date_de_traitement" = lazyeval::interp(
+          ~ convert_urssaf_date(weird_date = x),
+          x = quote(date_de_traitement)
+        )
+      )
+    )
+}
+

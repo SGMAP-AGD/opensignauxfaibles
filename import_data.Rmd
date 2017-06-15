@@ -64,3 +64,10 @@ import_table_naf(path = "data-raw/insee/naf/naf2008_5_niveaux.xls") %>%
   glimpse()
 ```
 
+## Données CCSV
+
+```{r}
+import_table_ccsv(path = "data-raw/urssaf/Ccsf/FRC_ccsf.csv") %>% 
+  glimpse()
+```
+
