@@ -468,6 +468,57 @@ import_apart_heuresconsommees <- function(path) {
     )
 }
 
+#' Import table SIREN
+#'
+#' @param path the path of the siren database in a SAS format
+#' @param db a database connexion
+#'
+#' @return a tibble with siren variables
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' import_table_sirene(path = "raw-data/direccte/bfc.sas7bdat")
+#' }
+#'
+import_table_sirene <- function(path, db) {
 
+  table_sirene <- haven::read_sas(path) %>%
+    dplyr::select(
+      siren = SIREN,
+      nic = NIC,
+      code_departement = DEPET,
+      code_ancienne_region = RPET,
+      siege = SIEGE,
+      tranche_effectif_salarie = TEFET,
+      date_effectif_salarie = DEFET,
+      date_creation_etablissement = DCRET,
+      code_apet_700 = APET700
+    ) %>%
+    dplyr::mutate(
+      siret = paste0(siren, nic),
+      date_creation_etablissement = format(
+        zoo::as.yearmon(
+          date_creation_etablissement,
+          format = "%Y%m"
+        ),
+        format = "%Y-%m"
+      )
+    )
+
+  table_naf <- import_table_naf(
+    path = "data-raw/insee/naf/naf2008_5_niveaux.xls"
+    )
+
+  table_sirene <- dplyr::left_join(
+    x = table_sirene,
+    y = table_naf,
+    by = c("code_apet_700" = "code_naf_niveau5")
+  ) %>%
+    dplyr::select(-nic)
+
+  return(table_sirene)
+
+}
 
 

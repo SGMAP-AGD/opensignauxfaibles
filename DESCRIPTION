@@ -17,4 +17,5 @@ Imports: readr,
     dplyr,
     readxl,
     pkgdown,
-    tricky
+    tricky,
+    haven

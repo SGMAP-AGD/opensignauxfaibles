@@ -95,3 +95,9 @@ import_table_delais(
   glimpse()
 ```
 
+## SIRENE
+
+```{r}
+import_table_sirene(path = "data-raw/direccte/sirene/bfc.sas7bdat")
+```
+
