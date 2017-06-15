@@ -370,3 +370,34 @@ import_table_ccsv <- function(path) {
     )
 }
 
+#' Import table délais
+#'
+#' @param path path to the sources files
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' import_table_delais(path = "raw-data/urssaf/delais_bourgogne_01_2013_01_2017_utf8.csv")
+#' import_table_delais(path = "raw-data/urssaf/delais_franchecomte_01_2013__01_2017.csv")
+#' }
+#'
+import_table_delais <- function(path) {
+  readr::read_csv2(
+    file = path,
+    col_names = c("numero_compte", "numero_contentieux", "date_creation", "date_echeance",
+                  "duree_delai", "denomination_premiere_ligne", "indic_6m", "annee_date_creation",
+                  "montant_global_de_l_echeancier", "numero_de_structure", "code_externe_du_stade",
+                  "code_externe_de_l_action"),
+    col_types = readr::cols(
+      numero_compte = readr::col_character(),
+      numero_contentieux = readr::col_character(),
+      numero_de_structure = readr::col_character()
+    ),
+    skip = 1,
+    locale = readr::locale(decimal_mark = ",")
+  )
+}
+

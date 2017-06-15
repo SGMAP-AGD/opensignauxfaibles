@@ -71,3 +71,12 @@ import_table_ccsv(path = "data-raw/urssaf/Ccsf/FRC_ccsf.csv") %>%
   glimpse()
 ```
 
+## Délais URSSAF
+
+```{r import-delais}
+import_table_delais(
+  path = "data-raw/urssaf/Délais/Délais_bourgogne_01_2013_01_2017.csv"
+  ) %>%
+  glimpse()
+```
+
