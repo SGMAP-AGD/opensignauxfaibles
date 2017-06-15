@@ -37,6 +37,12 @@ import_table_activite_partielle(
   glimpse()
 ```
 
+```{r}
+import_apart_heuresconsommees(
+  path = "data-raw/direccte/activite_partielle/act_partielle_consommée.xlsx"
+  ) %>% 
+  glimpse()
+```
 
 
 ## Cotisations URSSAF

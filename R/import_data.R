@@ -437,3 +437,37 @@ import_table_activite_partielle <- function(path) {
     )
 }
 
+
+
+#' Import Apart heures consommées
+#'
+#' @param path path to the file
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' import_apart_heuresconsommees(path = "raw-data/direccte/act_partielle_consommée.xlsx")
+#' }
+#'
+import_apart_heuresconsommees <- function(path) {
+  readxl::read_excel(path = path) %>%
+    tricky::set_standard_names() %>%
+    dplyr::select(
+      id_da,
+      siret = etab_siret,
+      date = mois_concerne_par_le_paiement,
+      effectif_etablissement = eff_etab,
+      effectif_concerne = effectifs_concernes_par_le_paiement,
+      heures_consommees,
+      montants_des_heures_consommees,
+      source,
+      date_payement_annee_mois
+    )
+}
+
+
+
+
