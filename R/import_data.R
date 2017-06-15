@@ -401,3 +401,39 @@ import_table_delais <- function(path) {
   )
 }
 
+
+
+#' Import table activite partielle
+#'
+#' Import de la table d'activité partielle augmentée
+#'
+#' @param path path
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' import_table_activite_partielle(path = "raw-data/direccte/act_partielle_ddes_2012_mai2017.xlsx")
+#' }
+#'
+import_table_activite_partielle <- function(path) {
+  readxl::read_excel(path = path) %>%
+    tricky::set_standard_names() %>%
+    dplyr::select(id_da,
+                  siret = etab_siret,
+                  effectif = eff_etab,
+                  hta_heures_totales_autorisees,
+                  mta_montant_total_autorise,
+                  motif_recours_se,
+                  effectif_autorise = `eff_auto_:_effectif_autorise_a_chomer`
+    ) %>%
+    dplyr::mutate(
+      motif_label = factor(
+        motif_recours_se,
+        levels = c(1,2,3,4,5),
+        labels = c("conjoncture", "approvisionnement", "intemperies", "restructuration", "autres"))
+    )
+}
+
