@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{convert_urssaf_date}
 \alias{convert_urssaf_date}
-\title{convert_urssaf_date}
+\title{Convert URSSAF weird dates to normal dates}
 \usage{
 convert_urssaf_date(weird_date)
 }
@@ -13,7 +13,7 @@ convert_urssaf_date(weird_date)
 a date
 }
 \description{
-convert_urssaf_date
+Convert URSSAF weird dates to normal dates
 }
 \examples{
 convert_urssaf_date(weird_date = "1010115")

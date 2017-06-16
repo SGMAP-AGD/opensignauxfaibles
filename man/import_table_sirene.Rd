@@ -4,7 +4,7 @@
 \alias{import_table_sirene}
 \title{Import table SIREN}
 \usage{
-import_table_sirene(path, db)
+import_table_sirene(path)
 }
 \arguments{
 \item{path}{the path of the siren database in a SAS format}

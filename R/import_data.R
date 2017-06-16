@@ -481,9 +481,9 @@ import_apart_heuresconsommees <- function(path) {
 #' import_table_sirene(path = "raw-data/direccte/bfc.sas7bdat")
 #' }
 #'
-import_table_sirene <- function(path, db) {
+import_table_sirene <- function(path) {
 
-  table_sirene <- haven::read_sas(path) %>%
+  table_sirene <- haven::read_sas(data_file = path) %>%
     dplyr::select(
       siren = SIREN,
       nic = NIC,
@@ -505,17 +505,6 @@ import_table_sirene <- function(path, db) {
         format = "%Y-%m"
       )
     )
-
-  table_naf <- import_table_naf(
-    path = "data-raw/insee/naf/naf2008_5_niveaux.xls"
-    )
-
-  table_sirene <- dplyr::left_join(
-    x = table_sirene,
-    y = table_naf,
-    by = c("code_apet_700" = "code_naf_niveau5")
-  ) %>%
-    dplyr::select(-nic)
 
   return(table_sirene)
 

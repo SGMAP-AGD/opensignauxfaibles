@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Convert URSSAF weird dates to normal dates — convert_urssaf_date • opensignauxfaibles</title>
+<title>Import table SIREN — import_table_sirene • opensignauxfaibles</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -66,29 +66,32 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Convert URSSAF weird dates to normal dates</h1>
+    <h1>Import table SIREN</h1>
     </div>
 
     
-    <p>Convert URSSAF weird dates to normal dates</p>
+    <p>Import table SIREN</p>
     
 
-    <pre><span class='fu'>convert_urssaf_date</span>(<span class='no'>weird_date</span>)</pre>
+    <pre><span class='fu'>import_table_sirene</span>(<span class='no'>path</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <dl class="dl-horizontal">
-      <dt>weird_date</dt>
-      <dd></dd>
+      <dt>path</dt>
+      <dd>the path of the siren database in a SAS format</dd>
+      <dt>db</dt>
+      <dd>a database connexion</dd>
     </dl>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a date</p>
+    <p>a tibble with siren variables</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>convert_urssaf_date</span>(<span class='kw'>weird_date</span> <span class='kw'>=</span> <span class='st'>"1010115"</span>)</div><div class='output co'>#&gt; [1] &quot;2001-01-15&quot;</div><div class='input'>
-</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>## Not run: ------------------------------------</span>
+<span class='co'># import_table_sirene(path = "raw-data/direccte/bfc.sas7bdat")</span>
+<span class='co'>## ---------------------------------------------</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

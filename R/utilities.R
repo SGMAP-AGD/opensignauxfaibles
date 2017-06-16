@@ -81,7 +81,7 @@ convert_urssaf_periods_ <- function(.data, .variable, format = "yyqm") {
 }
 
 
-#' convert_urssaf_date
+#' Convert URSSAF weird dates to normal dates
 #'
 #' @param weird_date
 #'
