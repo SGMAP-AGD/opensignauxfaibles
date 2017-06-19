@@ -1,0 +1,10 @@
+---
+title: "Compute samples"
+output: html_notebook
+---
+
+
+```{r}
+library("opensignauxfaibles")
+```
+
