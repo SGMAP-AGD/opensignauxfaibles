@@ -112,3 +112,41 @@ convert_urssaf_date <- function(weird_date) {
 }
 
 
+#' Database connect
+#'
+#' This function reads the file keys.json at the root of the directory and create a connection to the postgre database.
+#'
+#' The file keys.json should have the following format :
+#'
+#' {
+#' "host": ["127.0.0.1"],
+#' "dbname": ["databasename"],
+#' "port": ["5433"],
+#' "id":["login"],
+#' "pw":["password"]
+#' }
+#'
+#' @param file name of the file where keys are stored
+#'
+#' @return a connection to the signauxfaible database
+#' @export
+#'
+#' @examples
+#' database_signauxfaibles <- database_connect()
+#'
+database_connect <- function(file = "keys.json") {
+
+  keys <- jsonlite::fromJSON(
+    rprojroot::find_rstudio_root_file(file)
+  )
+
+  dplyr::src_postgres(
+    host = keys$host,
+    dbname = keys$dbname,
+    port = keys$port,
+    user = keys$id,
+    password = keys$pw
+  )
+
+}
+
