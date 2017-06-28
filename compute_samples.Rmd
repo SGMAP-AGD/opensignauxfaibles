@@ -20,3 +20,25 @@ compute_sample_effectif(
   .date = "2013-01-01")
 ```
 
+```{r}
+periods <- as.character(seq(from = lubridate::ymd("2013-01-01"), to = lubridate::ymd("2017-03-01"), by = "month"))
+
+list_samples <- list()
+
+for (k in 1:length(periods)) {
+  list_samples[[k]] <- compute_sample_effectif(
+    db = database_signauxfaibles, 
+    .date = "2017-01-01") %>% 
+    collect()
+}
+
+bind_rows(list_samples)
+```
+
+
+```{r}
+compute_sample_effectif(
+  db = database_signauxfaibles,
+  .date = "2013-01-01")
+```
+

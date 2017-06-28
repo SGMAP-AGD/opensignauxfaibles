@@ -5,5 +5,9 @@
 
 - Le répertoire data-raw/ contient les données brutes
 - Le répertoire output/ contient les résultats
-- keys.json contient les paramètres de la base PostGre
+- Le répertoire R/ contient l'ensemble des fonctions
+- keys.json contient les paramètres de connexion la base PostGre
+
+- compute_samples.Rmd calcule les échantillons
+
 
