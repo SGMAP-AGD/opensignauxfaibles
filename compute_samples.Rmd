@@ -17,7 +17,8 @@ src_tbls(x = database_signauxfaibles)
 ```{r}
 compute_sample_effectif(
   db = database_signauxfaibles,
-  .date = "2013-01-01")
+  .date = "2013-01-01"
+  )
 ```
 
 ```{r}
@@ -35,10 +36,4 @@ for (k in 1:length(periods)) {
 bind_rows(list_samples)
 ```
 
-
-```{r}
-compute_sample_effectif(
-  db = database_signauxfaibles,
-  .date = "2013-01-01")
-```
 
