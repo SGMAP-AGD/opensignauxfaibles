@@ -7,7 +7,9 @@
 compute_prefilter_altares(db, .date)
 }
 \arguments{
-\item{.date}{}
+\item{db}{name of the database}
+
+\item{.date}{a date}
 }
 \value{
 a table in the database

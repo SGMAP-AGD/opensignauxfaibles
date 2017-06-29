@@ -112,8 +112,8 @@ compute_sample_altares <- function(db, .date) {
 #'
 #' Cette fonction a pour but de pouvoir retirer toutes les entreprises qui sont déjà en RJ/LJ à la date considérée.
 #'
-#' @param db
-#' @param .date
+#' @param db name of the database
+#' @param .date a date
 #'
 #' @return a table in the database
 #' @export

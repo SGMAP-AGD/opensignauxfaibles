@@ -32,5 +32,8 @@ compute_prefilter_altares(
   )
 ```
 
+```{r}
+compute_sample_sirene(db = database_signauxfaibles)
+```
 
 
