@@ -187,3 +187,151 @@ compute_sample_sirene <- function(db) {
                   libelle_naf_niveau1, code_naf_niveau1)
 
 }
+
+
+#' Compute sample apart
+#'
+#' @param db name of the database
+#' @param .date initial date
+#' @param n_months number of months to consider
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_sample_apart(
+#' db = database_signauxfaibles,
+#' initial_date = "2013-01-01",
+#' n_months = 12
+#' )
+#' }
+#'
+
+compute_sample_apart <- function(db, .date, n_months = 12) {
+
+  start_date <- lubridate::ymd(.date) %m-% months(n_months)
+  end_date <- lubridate::ymd(.date)
+
+  dplyr::tbl(db, "table_apart") %>%
+    dplyr::filter(
+      date_debut_periode_autorisee >= start_date,
+      date_debut_periode_autorisee < end_date
+    ) %>%
+    dplyr::group_by(siret) %>%
+    dplyr::summarise(apart_last12_months = ifelse(n() >= 1, 1, 0))
+
+}
+
+
+#' Compute sample cotisations
+#'
+#' @param db name of the database
+#' @param .date a date to be considered
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#'
+compute_sample_meancotisation <- function(db, .date) {
+
+  dplyr::tbl(db, "table_cotisation") %>%
+    dplyr::filter(periodicity == "monthly") %>%
+    dplyr::select(numero_compte, period, numero_ecart_negatif, cotisation_due) %>%
+    dplyr::semi_join(
+      y = get_table_last_n_months(.date = .date, .n_months = 12),
+      by = "period",
+      copy = TRUE)  %>%
+    dplyr::group_by(numero_compte, period) %>%
+    dplyr::summarise(cotisation_due = sum(cotisation_due)) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(numero_compte) %>%
+    dplyr::summarise(
+      mean_cotisation_due = mean(cotisation_due)
+    )
+
+}
+
+#' Compute sample dette cumulee
+#'
+#' @param db name of the database
+#' @param .date a date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
+#' }
+#'
+compute_sample_dettecumulee <- function(db, .date) {
+
+  .date <- lubridate::ymd(.date)
+
+  dplyr::tbl(db, from = "table_debit") %>%
+    dplyr::filter_(.dots = list(~ periodicity == "monthly"))  %>%
+    dplyr::select_(
+      ~ numero_compte, ~ period, ~ numero_ecart_negatif,
+      ~ numero_historique_ecart_negatif, ~ date_traitement_ecart_negatif,
+      ~ montant_part_ouvriere, ~montant_part_patronale
+    ) %>%
+    dplyr::filter_(.dots = list(~ date_traitement_ecart_negatif <= .date)) %>%
+    dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
+    dplyr::filter_(.dots = list(
+      ~numero_historique_ecart_negatif == max(numero_historique_ecart_negatif)
+    )
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::select_(~ numero_compte, ~ montant_part_ouvriere, ~ montant_part_patronale) %>%
+    dplyr::group_by_(~ numero_compte) %>%
+    dplyr::summarise_(
+      .dots = list(
+        "montant_part_ouvriere" = lazyeval::interp(~ sum(x), x = quote(montant_part_ouvriere)),
+        "montant_part_patronale" = lazyeval::interp(~ sum(x), x = quote(montant_part_patronale))
+      )
+    )
+
+}
+
+#' Compute sample growth dette cumulee
+#'
+#' @param db name of the database
+#' @param .date date
+#' @param lag number of lag months
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_sample_growth_dettecumulee(
+#' db = database_signauxfaibles,
+#' date = "2013-01-01",
+#' lag = 12,
+#' )
+#' }
+
+compute_sample_growth_dettecumulee <- function(db, .date, lag, name) {
+
+  lag_date <- lubridate::ymd(.date) %m-% months(lag)
+
+  dplyr::left_join(
+    x = compute_sample_dettecumulee(db = db, .date = .date),
+    y = compute_sample_dettecumulee(db = db, .date = lag_date) %>%
+      dplyr::select(
+        numero_compte,
+        montant_part_ouvriere_old = montant_part_ouvriere,
+        montant_part_patronale_old = montant_part_patronale
+      ),
+    by = "numero_compte") %>%
+    dplyr::mutate(
+      croissance_dettecumulee_bool = ((montant_part_ouvriere + montant_part_patronale) > (montant_part_patronale_old + montant_part_ouvriere_old)),
+      croissance_dettecumulee_new = ((montant_part_ouvriere + montant_part_patronale > 0) & (montant_part_ouvriere_old + montant_part_patronale_old == 0))
+    ) %>%
+    dplyr::select(numero_compte, croissance_dettecumulee_bool, croissance_dettecumulee_new)
+
+}
+

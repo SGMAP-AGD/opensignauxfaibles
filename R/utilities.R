@@ -150,3 +150,28 @@ database_connect <- function(file = "keys.json") {
 
 }
 
+#' Get table last n months
+#'
+#' @param .date a date as a string
+#' @param .n_months an integer
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' get_table_last_n_months(.date = "2017-01-01", .n_months = 12)
+#'
+get_table_last_n_months <- function(.date, .n_months) {
+  tibble::tibble(
+    period = format(
+      x = seq(
+        from = lubridate::ymd(.date) %m-% months(.n_months - 1),
+        to = lubridate::ymd(.date),
+        by = "month"
+      ),
+      format = "%Y-%m"
+    )
+  )
+}
+
+
