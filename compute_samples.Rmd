@@ -99,6 +99,8 @@ compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-01-01")
 compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01")
 ```
 
+## Compute sample
+
 ```{r}
 compute_sample(db = database_signauxfaibles, .date = "2017-01-01")
 ```

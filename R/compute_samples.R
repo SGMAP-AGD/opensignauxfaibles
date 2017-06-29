@@ -607,6 +607,12 @@ compute_sample <- function(db, .date, .fallback_date) {
       by = "siret"
     ) %>%
     dplyr::filter_(.dots = ~ effectif >= 10) %>%
+    dplyr::inner_join(
+      y = dplyr::tbl(src = db, from = "table_sirene") %>%
+        dplyr::select_(
+          .dots = list(~ siren, ~ siret, ~ siege, ~ date_creation_etablissement, ~ libelle_naf_niveau1, ~ code_naf_niveau1)
+        ),
+      by = "siret") %>%
     dplyr::mutate(periode = as.character(.date)) %>%
     dplyr::select(siret, numero_compte, raison_sociale, periode, everything())
 
