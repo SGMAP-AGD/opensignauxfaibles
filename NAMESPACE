@@ -3,6 +3,7 @@
 export("%>%")
 export("%m+%")
 export("%m-%")
+export(compute_filter_ccsv)
 export(compute_prefilter_altares)
 export(compute_sample_altares)
 export(compute_sample_apart)

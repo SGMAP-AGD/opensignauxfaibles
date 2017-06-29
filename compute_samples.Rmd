@@ -59,4 +59,10 @@ compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
 compute_sample_growth_dettecumulee(db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
 ```
 
+## Filtre CCSV
+
+```{r}
+compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
 

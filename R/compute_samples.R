@@ -335,3 +335,29 @@ compute_sample_growth_dettecumulee <- function(db, .date, lag, name) {
 
 }
 
+
+#' Compute filter CCSV
+#'
+#' @param db a database connexion
+#' @param .date a date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_filter_ccsv(db = database_signauxfaibles, .date = "2013-01-01")
+#' compute_filter_ccsv(db = database_signauxfaibles, .date = "2014-01-01")
+#' compute_filter_ccsv(db = database_signauxfaibles, .date = "2015-01-01")
+#' }
+#'
+compute_filter_ccsv <- function(db, .date) {
+
+  .date <- lubridate::ymd(.date)
+
+  dplyr::tbl(src = db, from = "table_ccsv") %>%
+    dplyr::filter_(.dots = ~ date_de_traitement < .date) %>%
+    dplyr::distinct_(.dots = ~ compte)
+
+}
