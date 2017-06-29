@@ -106,3 +106,84 @@ compute_sample_altares <- function(db, .date) {
     )
 
 }
+
+
+#' Compute prefilter altares
+#'
+#' Cette fonction a pour but de pouvoir retirer toutes les entreprises qui sont déjà en RJ/LJ à la date considérée.
+#'
+#' @param db
+#' @param .date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_prefilter_altares(
+#' db = database_signauxfaibles,
+#' .date = "2013-01-01")
+#' }
+#'
+compute_prefilter_altares <- function(db, .date) {
+
+  .date <- lubridate::ymd(.date)
+
+  dplyr::semi_join(
+    x = dplyr::tbl(src = db, from = "table_altares"),
+    y = dplyr::tbl(src = db, from = "table_code_rj_lj"),
+    by = c("code_de_la_nature_de_l_evenement" = "code")
+  ) %>%
+    dplyr::select_(
+      .dots = list(
+        ~ siret,
+        ~ code_du_journal,
+        ~ code_de_la_nature_de_l_evenement,
+        ~ date_effet
+      )
+    ) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~ code_du_journal == "001",
+        ~ date_effet < .date
+      )
+    ) %>%
+    dplyr::group_by_(.dots = ~ siret) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~ date_effet == min(date_effet)
+      )
+    ) %>%
+    dplyr::mutate_(
+      .dots = list("row_number" = ~ sql("row_number() over(PARTITION BY siret ORDER BY date_effet)"))
+    ) %>%
+    dplyr::filter_(
+      ~ row_number == 1
+    ) %>%
+    dplyr::select_(
+      .dots = list(~ siret, ~ date_effet)
+    )
+
+}
+
+#' Compute sample sirene
+#'
+#' @param db name of the database
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_sample_sirene(
+#' db = database_signauxfaibles,
+#' )
+#' }
+#'
+compute_sample_sirene <- function(db) {
+
+  dplyr::tbl(db, "table_sirene") %>%
+    dplyr::select(siren, siret, siege, date_creation_etablissement,
+                  libelle_naf_niveau1, code_naf_niveau1)
+
+}

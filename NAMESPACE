@@ -3,6 +3,7 @@
 export("%>%")
 export("%m+%")
 export("%m-%")
+export(compute_prefilter_altares)
 export(compute_sample_altares)
 export(compute_sample_effectif)
 export(convert_urssaf_date)
