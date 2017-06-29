@@ -18,6 +18,8 @@ a table in the database
 Compute sample cotisations
 }
 \examples{
-
+\dontrun{
+compute_sample_meancotisation(db = database_signauxfaibles, .date = "2017-01-01")
+}
 
 }

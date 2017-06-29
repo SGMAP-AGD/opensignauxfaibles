@@ -108,12 +108,10 @@ compute_sample_altares <- function(db, .date) {
 }
 
 
-#' Compute prefilter altares
+#' Compute prefilter Altares
 #'
-#' Cette fonction a pour but de pouvoir retirer toutes les entreprises qui sont déjà en RJ/LJ à la date considérée.
-#'
-#' @param db name of the database
-#' @param .date a date
+#' @param db database
+#' @param .date date
 #'
 #' @return a table in the database
 #' @export
@@ -122,7 +120,7 @@ compute_sample_altares <- function(db, .date) {
 #' \dontrun{
 #' compute_prefilter_altares(
 #' db = database_signauxfaibles,
-#' .date = "2013-01-01")
+#' .date = "2017-01-01")
 #' }
 #'
 compute_prefilter_altares <- function(db, .date) {
@@ -148,23 +146,10 @@ compute_prefilter_altares <- function(db, .date) {
         ~ date_effet < .date
       )
     ) %>%
-    dplyr::group_by_(.dots = ~ siret) %>%
-    dplyr::filter_(
-      .dots = list(
-        ~ date_effet == min(date_effet)
-      )
-    ) %>%
-    dplyr::mutate_(
-      .dots = list("row_number" = ~ sql("row_number() over(PARTITION BY siret ORDER BY date_effet)"))
-    ) %>%
-    dplyr::filter_(
-      ~ row_number == 1
-    ) %>%
-    dplyr::select_(
-      .dots = list(~ siret, ~ date_effet)
-    )
+    dplyr::distinct(siret)
 
 }
+
 
 #' Compute sample sirene
 #'
@@ -233,7 +218,9 @@ compute_sample_apart <- function(db, .date, n_months = 12) {
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
+#' compute_sample_meancotisation(db = database_signauxfaibles, .date = "2017-01-01")
+#' }
 #'
 compute_sample_meancotisation <- function(db, .date) {
 
@@ -428,3 +415,200 @@ compute_sample_nbdebits <- function(db, .date, n_months) {
     dplyr::rename_(.dots = list("nb_debits" = ~ n))
 
 }
+
+#' Compute filter proccollectives
+#'
+#' @param db database
+#' @param .date a date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01")
+#' }
+#'
+compute_filter_proccollectives <- function(db, .date) {
+
+  .date <- lubridate::ymd(.date)
+
+  dplyr::tbl(src = db, from = "table_debit") %>%
+    dplyr::filter_(.dots = ~ periodicity == "monthly") %>%
+    dplyr::select_(.dots = ~ numero_compte, ~ code_procedure_collective, ~ period) %>%
+    dplyr::mutate_(.dots = list("period_date" = ~ sql("to_date(period || -01, 'YYYY-MM-DD')"))) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~ period_date <= .date,
+        ~ code_procedure_collective != "0"
+      )
+    ) %>%
+    dplyr::distinct_(.dots = ~ numero_compte)
+
+}
+
+#' Compute sample delais
+#'
+#' @param db database
+#' @param .date date
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_sample_delais(db = database_signauxfaibles, .date = "2017-01-01")
+#' }
+#'
+compute_sample_delais <- function(db, .date) {
+
+  .date = lubridate::ymd(.date)
+
+  dplyr::tbl(src = db, from = "table_delais") %>%
+    dplyr::filter(
+      date_creation <= .date,
+      date_echeance >= .date
+    ) %>%
+    dplyr::select(numero_compte, "delai_sup_6mois" = indic_6m) %>%
+    dplyr::mutate(delai = 1, delai_sup_6mois = ifelse(delai_sup_6mois == "SUP", 1, 0))
+
+}
+
+
+#' Compute sample activite partielle consommee
+#'
+#' @param db database
+#' @param .date date
+#'
+#' @return a table in the databaase
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_sample_apart_consommee(db = database_signauxfaibles, .date = "2017-03-01")
+#' }
+#'
+compute_sample_apart_consommee <- function(db, .date) {
+
+  .date <- lubridate::ymd(.date)
+  .lag_date <- .date %m-% months(12)
+
+  tbl_effectif <- dplyr::tbl(
+    src = db,
+    from = "table_effectif") %>%
+    dplyr::semi_join(
+      y = get_table_last_n_months(.date = .date, .n_months = 12),
+      by = "period",
+      copy = TRUE
+    ) %>%
+    dplyr::filter(effectif > 0) %>%
+    dplyr::select(siret, period, effectif)
+
+  tbl_consommee <- dplyr::tbl(
+    src = db, from = "table_apart_consommee") %>%
+    dplyr::semi_join(
+      y = dplyr::tbl(
+        src = db, from = "table_activitepartielle") %>%
+        dplyr::filter(motif_label != " intemperies") %>%
+        dplyr::select(id_da, motif_label),
+      by = "id_da"
+    ) %>%
+    dplyr::mutate(
+      period = sql("to_char(date, 'YYYY-MM')")
+    ) %>%
+    dplyr::select(siret, period, heures_consommees) %>%
+    dplyr::filter(heures_consommees > 0) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(siret, period) %>%
+    dplyr::summarise(heures_consommees = sum(heures_consommees))
+
+  tbl_effectif %>%
+    dplyr::left_join(
+      y = tbl_consommee,
+      by = c("siret", "period")
+    ) %>%
+    dplyr::mutate(
+      heures_consommees = ifelse(is.na(heures_consommees), 0, heures_consommees)
+    ) %>%
+    dplyr::group_by(siret) %>%
+    dplyr::summarise(
+      apart_consommee = ifelse(sum(heures_consommees) > 0, 1, 0),
+      apart_share_heuresconsommees = 100 * sum(heures_consommees) / sum(effectif * 1607/12)
+    )
+
+}
+
+
+
+
+#' Compute sample
+#'
+#' @param db a database
+#' @param .date a date
+#' @param .fallback_date the fallback date for the table effectif
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_sample(db = database_signauxfaibles, .date = "2017-01-01")
+#' }
+#'
+compute_sample <- function(db, .date, .fallback_date) {
+
+  .date2 <- ifelse(missing(.fallback_date), .date, .fallback_date)
+
+  compute_sample_effectif(
+    db = db,
+    .date = .date2) %>%
+    dplyr::left_join(
+      y = compute_sample_altares(
+        db = db,
+        .date = .date
+      ),
+      by = "siret"
+    ) %>%
+    anti_join(
+      y = compute_prefilter_altares(db = db, .date = .date),
+      by = "siret"
+    ) %>%
+    inner_join(
+      y = compute_sample_meancotisation(db = db, .date = .date),
+      by = "numero_compte"
+    ) %>%
+    left_join(
+      y = compute_sample_apart(db = db, .date = .date),
+      by = "siret"
+    ) %>%
+    dplyr::inner_join(
+      y = compute_sample_dettecumulee(db = db, .date = .date),
+      by = "numero_compte"
+    ) %>%
+    dplyr::left_join(
+      y = compute_sample_lag_dettecumulee(
+        db = db,
+        .date = .date,
+        lag = 12),
+      by = "numero_compte"
+    ) %>%
+    left_join(
+      y = compute_sample_nbdebits(db = db, .date = .date, n_months = 12),
+      by = "numero_compte"
+    ) %>%
+    dplyr::left_join(
+      y = compute_sample_delais(db = db, .date = .date),
+      by = "numero_compte"
+    ) %>%
+    dplyr::left_join(
+      y = compute_sample_apart_consommee(db = db, .date = .date2),
+      by = "siret"
+    ) %>%
+    dplyr::filter_(.dots = ~ effectif >= 10) %>%
+    dplyr::mutate(periode = as.character(.date)) %>%
+    dplyr::select(siret, numero_compte, raison_sociale, periode, everything())
+
+}
+

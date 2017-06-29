@@ -28,7 +28,7 @@ compute_sample_altares(db = database_signauxfaibles, .date = "2017-01-01")
 ```{r}
 compute_prefilter_altares(
   db = database_signauxfaibles,
-  .date = "2013-01-01"
+  .date = "2017-01-01"
   )
 ```
 
@@ -36,12 +36,20 @@ compute_prefilter_altares(
 compute_sample_sirene(db = database_signauxfaibles)
 ```
 
+## Activité partielle
 
 ```{r}
-compute_sample_apart(db = database_signauxfaibles, .date = "2017-01-01", n_months = 12)
+compute_sample_apart(
+  db = database_signauxfaibles, 
+  .date = "2017-01-01", 
+  n_months = 12)
 ```
 
-## Calcul des cotisations moyennes
+```{r}
+compute_sample_apart_consommee(db = database_signauxfaibles, .date = "2017-03-01")
+```
+
+## Cotisations moyennes
 
 ```{r}
 get_table_last_n_months(.date = "2017-01-01", .n_months = 12) 
@@ -61,7 +69,8 @@ compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = 
 
 
 ```{r}
-compute_sample_growth_dettecumulee(db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
+compute_sample_growth_dettecumulee(
+  db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
 ```
 
 ```{r}
@@ -71,6 +80,12 @@ compute_sample_nbdebits(
   n_months = 12)
 ```
 
+### Délais URSSAF
+
+```{r}
+compute_sample_delais(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
 
 ## Filtre CCSV
 
@@ -78,4 +93,13 @@ compute_sample_nbdebits(
 compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-01-01")
 ```
 
+### Filter procédures collectives
+
+```{r}
+compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+```{r}
+compute_sample(db = database_signauxfaibles, .date = "2017-01-01")
+```
 

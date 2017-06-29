@@ -2,26 +2,26 @@
 % Please edit documentation in R/compute_samples.R
 \name{compute_prefilter_altares}
 \alias{compute_prefilter_altares}
-\title{Compute prefilter altares}
+\title{Compute prefilter Altares}
 \usage{
 compute_prefilter_altares(db, .date)
 }
 \arguments{
-\item{db}{name of the database}
+\item{db}{database}
 
-\item{.date}{a date}
+\item{.date}{date}
 }
 \value{
 a table in the database
 }
 \description{
-Cette fonction a pour but de pouvoir retirer toutes les entreprises qui sont déjà en RJ/LJ à la date considérée.
+Compute prefilter Altares
 }
 \examples{
 \dontrun{
 compute_prefilter_altares(
 db = database_signauxfaibles,
-.date = "2013-01-01")
+.date = "2017-01-01")
 }
 
 }
