@@ -2,9 +2,9 @@
 % Please edit documentation in R/compute_samples.R
 \name{compute_sample_growth_dettecumulee}
 \alias{compute_sample_growth_dettecumulee}
-\title{Compute sample growth dette cumulee}
+\title{DEPRECATED Compute sample growth dette cumulee}
 \usage{
-compute_sample_growth_dettecumulee(db, .date, lag, name)
+compute_sample_growth_dettecumulee(db, .date, lag)
 }
 \arguments{
 \item{db}{name of the database}
@@ -17,7 +17,7 @@ compute_sample_growth_dettecumulee(db, .date, lag, name)
 a table in the database
 }
 \description{
-Compute sample growth dette cumulee
+DEPRECATED Compute sample growth dette cumulee
 }
 \examples{
 \dontrun{

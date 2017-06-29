@@ -296,7 +296,7 @@ compute_sample_dettecumulee <- function(db, .date) {
 
 }
 
-#' Compute sample growth dette cumulee
+#' DEPRECATED Compute sample growth dette cumulee
 #'
 #' @param db name of the database
 #' @param .date date
@@ -314,7 +314,7 @@ compute_sample_dettecumulee <- function(db, .date) {
 #' )
 #' }
 
-compute_sample_growth_dettecumulee <- function(db, .date, lag, name) {
+compute_sample_growth_dettecumulee <- function(db, .date, lag) {
 
   lag_date <- lubridate::ymd(.date) %m-% months(lag)
 
@@ -332,6 +332,34 @@ compute_sample_growth_dettecumulee <- function(db, .date, lag, name) {
       croissance_dettecumulee_new = ((montant_part_ouvriere + montant_part_patronale > 0) & (montant_part_ouvriere_old + montant_part_patronale_old == 0))
     ) %>%
     dplyr::select(numero_compte, croissance_dettecumulee_bool, croissance_dettecumulee_new)
+
+}
+
+
+#' Compute sample lag dette cumulee
+#'
+#' @param db database
+#' @param .date a date
+#' @param lag number of months
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = "2017-01-01")
+#' }
+#'
+compute_sample_lag_dettecumulee <- function(db, .date, lag) {
+
+  lag_date <- lubridate::ymd(.date) %m-% months(lag)
+  compute_sample_dettecumulee(db = db, .date = lag_date) %>%
+      dplyr::select(
+        numero_compte,
+        lag_montant_part_ouvriere = montant_part_ouvriere,
+        lag_montant_part_patronale = montant_part_patronale
+      )
 
 }
 
@@ -359,5 +387,44 @@ compute_filter_ccsv <- function(db, .date) {
   dplyr::tbl(src = db, from = "table_ccsv") %>%
     dplyr::filter_(.dots = ~ date_de_traitement < .date) %>%
     dplyr::distinct_(.dots = ~ compte)
+
+}
+
+#' Compute sample nbdebits
+#'
+#' @param db database
+#' @param .date date
+#' @param n_months n_months
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_sample_nbdebits(
+#' db = database_signauxfaibles,
+#' .date = "2017-01-01",
+#' n_months = 12)
+#' }
+#'
+compute_sample_nbdebits <- function(db, .date, n_months) {
+
+  dplyr::tbl(db, from = "table_debit") %>%
+    dplyr::filter_(.dots = list(~ periodicity == "monthly")) %>%
+    dplyr::select_(
+      ~ numero_compte, ~ period, ~ numero_ecart_negatif,
+      ~ numero_historique_ecart_negatif, ~ date_traitement_ecart_negatif,
+      ~ montant_part_ouvriere, ~montant_part_patronale
+    ) %>%
+    dplyr::semi_join(
+      y =  get_table_last_n_months(.date = .date, .n_months = n_months),
+      by = "period",
+      copy = TRUE
+    ) %>%
+    dplyr::distinct_(.dots = list(~ numero_compte, ~ period)) %>%
+    dplyr::group_by_(.dots = ~ numero_compte) %>%
+    dplyr::count_() %>%
+    dplyr::rename_(.dots = list("nb_debits" = ~ n))
 
 }

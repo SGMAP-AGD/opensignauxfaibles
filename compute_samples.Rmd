@@ -56,8 +56,21 @@ compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
 ```
 
 ```{r}
+compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = "2017-01-01")
+```
+
+
+```{r}
 compute_sample_growth_dettecumulee(db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
 ```
+
+```{r}
+compute_sample_nbdebits(
+  db = database_signauxfaibles, 
+  .date = "2017-01-01", 
+  n_months = 12)
+```
+
 
 ## Filtre CCSV
 
