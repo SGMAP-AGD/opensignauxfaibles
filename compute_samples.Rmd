@@ -22,6 +22,11 @@ compute_sample_effectif(
 ```
 
 ```{r}
+compute_sample_altares(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+
+```{r}
 periods <- as.character(seq(from = lubridate::ymd("2013-01-01"), to = lubridate::ymd("2017-03-01"), by = "month"))
 
 list_samples <- list()
