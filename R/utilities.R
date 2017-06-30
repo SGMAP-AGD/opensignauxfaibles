@@ -175,3 +175,58 @@ get_table_last_n_months <- function(.date, .n_months) {
 }
 
 
+#' Count NA
+#'
+#' count_na count the number of NA in a vector
+#'
+#' @param x a vector
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' table_training$code_departement %>% count_na()
+#'
+#' plyr::ldply(.data = table_training, .fun = count_na)
+#'
+count_na <- function(x) {
+  x %>%
+    is.na() %>%
+    factor() %>%
+    forcats::fct_count()
+}
+
+
+#' Detect NA
+#'
+#' Detect NA takes a tibble and return the number and share of missing values for each variable
+#'
+#' @param table name of the input variable
+#'
+#' @return a tibble with 3 columns (variable, n_missing, share_missing)
+#' @export
+#'
+#' @examples
+#' dplyr::tbl(src = database_signauxfaibles, from = "table_training") %>%
+#' dplyr::collect() %>%
+#' detect_na()
+#'
+detect_na <- function(table) {
+  table %>%
+    plyr::ldply(.data = ., .fun = count_na, .id = "variable") %>%
+    dplyr::group_by_(~ variable) %>%
+    dplyr::mutate_(
+      .dots = list(
+        "share_missing" = lazyeval::interp(~ 100 * x / sum(x), x = quote(n))
+      )
+    ) %>%
+    dplyr::filter_(
+      .dots = list(~ f == TRUE)
+    ) %>%
+    dplyr::select_(
+      .dots = list(~variable, "n_missing" = ~n, ~share_missing)
+    )
+
+}
+
