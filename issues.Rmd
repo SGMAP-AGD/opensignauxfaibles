@@ -1,0 +1,22 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("opensignauxfaibles")
+library("dplyr")
+database_signauxfaibles <- database_connect()
+```
+
+## Numero de compte en doublon
+
+* Dans 19 cas, certains SIRET ont deux numéros de comptes
+
+```{r}
+tbl(src = database_signauxfaibles, from = "wholesample_effectif") %>%
+  collect(n = Inf) %>%
+  group_by(siret, periode) %>%
+  filter(n() > 1) 
+```
+
