@@ -24,17 +24,29 @@ compute_sample_effectif(
 ```
 
 ```{r}
-collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+collect_sample_effectif(db = database_signauxfaibles, .date = "2013-01-01")
 ```
 
 ```{r}
-compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
+compute_wholesample_effectif(
+  db = database_signauxfaibles, 
+  name = "wholesample_effectif", 
+  start = "2013-01-01", 
+  end = "2017-03-01")
 ```
 
 ## Altares
 
 ```{r}
 compute_sample_altares(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+```{r}
+compute_wholesample_altares(
+  db = database_signauxfaibles,
+  name = "wholesample_altares",
+  start = "2013-01-01",
+  end = "2017-03-01")
 ```
 
 ```{r}

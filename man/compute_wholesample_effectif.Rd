@@ -4,7 +4,7 @@
 \alias{compute_wholesample_effectif}
 \title{Compute whole sample effectif}
 \usage{
-compute_wholesample_effectif(db, name = "wholesample_effectif")
+compute_wholesample_effectif(db, name, start, end)
 }
 \arguments{
 \item{db}{database}
@@ -18,7 +18,9 @@ a table in the database
 Compute whole sample effectif
 }
 \examples{
+
 \dontrun{
 compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
 }
+
 }
