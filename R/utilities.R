@@ -230,3 +230,84 @@ detect_na <- function(table) {
 
 }
 
+
+#' Count infinite
+#'
+#' @param x a vector
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+#' count_infinite(x = c(Inf, -))
+#'
+count_infinite <- function(x) {
+  x %>%
+    is.infinite() %>%
+    factor() %>%
+    forcats::fct_count()
+}
+
+
+#' Detect infinite values
+#'
+#' @param table a table
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#'
+detect_infinite <- function(table) {
+
+  table %>%
+    plyr::ldply(.data = ., .fun = count_infinite, .id = "variable") %>%
+    dplyr::group_by_(~ variable) %>%
+    dplyr::mutate_(
+      .dots = list(
+        "share_infinite" = lazyeval::interp(~ 100 * x / sum(x), x = quote(n))
+      )
+    ) %>%
+    dplyr::filter_(
+      .dots = list(~ f == TRUE)
+    ) %>%
+    dplyr::select_(
+      .dots = list(~variable, "n_infinite" = ~n, ~share_infinite)
+    )
+
+}
+
+
+#' Drop table if exist
+#'
+#' The default function db_drop_table in the dplyr package returns an error if the table already exist. This creates a lot of errors in the data manipulation pipe. db_drop_table_ifexist check if the table exist and drop the table if and only if it exist.
+#'
+#' @param db name of the database
+#' @param table name of the table
+#'
+#' @export
+#'
+#' @examples
+#' db_drop_table_ifexist(
+#' db = database_signauxfaibles,
+#' table = "table_periods"
+#' )
+#'
+db_drop_table_ifexist <- function(db, table) {
+
+  if (dplyr::db_has_table(
+    con = db$con,
+    table = table) == TRUE) {
+
+    base::message(base::paste0("Dropping ", table))
+
+    dplyr::db_drop_table(db$con, table)
+
+  } else {
+
+    base::message(base::paste0("Table ", table, " doesn't exist"))
+
+  }
+
+}

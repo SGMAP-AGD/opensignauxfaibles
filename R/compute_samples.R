@@ -49,13 +49,85 @@ compute_sample_effectif <- function(db, .date) {
         lag_effectif_missing == TRUE,
         0,
         effectif / lag_effectif
-      )
+      ),
+      periode = as.character(.date)
     ) %>%
-    dplyr::rename(numero_compte = compte)
+    dplyr::rename(numero_compte = compte) %>%
+    dplyr::select(siret, numero_compte, raison_sociale, periode,
+                  code_departement, effectif, lag_effectif, lag_effectif_missing, growthrate_effectif
+                  )
 
 }
 
+#' Collect sample effectif
+#'
+#' @param db database
+#' @param .date a date
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+#' }
+#'
+collect_sample_effectif <- function(db, .date) {
+  compute_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01") %>%
+    collect(n = Inf) %>%
+    mutate(
+      log_effectif = log(x = effectif),
+      log_growthrate_effectif = dplyr::if_else(
+        condition = (lag_effectif_missing == FALSE),
+        true = log(growthrate_effectif),
+        false = 0),
+      region = forcats::fct_collapse(
+        code_departement,
+        bourgogne = c("21", "58", "71", "89"),
+        franche_comte = c("25", "39", "70", "90")
+      )
+    ) %>%
+    select(siret, numero_compte, raison_sociale, periode,
+           code_departement, region, effectif, log_effectif,
+           growthrate_effectif, log_growthrate_effectif,
+           lag_effectif_missing) %>%
+    filter(effectif >= 10)
+}
 
+
+#' Compute whole sample effectif
+#'
+#' @param db database
+#' @param name name of the table
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
+#' }
+compute_wholesample_effectif <- function(db, name = "wholesample_effectif") {
+
+  periods <- as.character(seq(
+    from = lubridate::ymd("2013-01-01"),
+    to = lubridate::ymd("2017-03-01"),
+    by = "month"))
+
+  db_drop_table_ifexist(db = db, table = "wholesample_effectif")
+
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {collect_sample_effectif(db = db, .date = x)}
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("siret", "numero_compte", "periode")
+    )
+
+}
 
 #' Compute sample ALTARES
 #'
@@ -74,6 +146,7 @@ compute_sample_effectif <- function(db, .date) {
 #' }
 #'
 compute_sample_altares <- function(db, .date) {
+
   .date <- lubridate::ymd(.date)
 
   dplyr::semi_join(

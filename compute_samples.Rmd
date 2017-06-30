@@ -14,12 +14,20 @@ database_signauxfaibles <- database_connect()
 src_tbls(x = database_signauxfaibles)
 ```
 
+## Effectif
+
 ```{r}
 compute_sample_effectif(
   db = database_signauxfaibles,
   .date = "2013-01-01"
   )
 ```
+
+```{r}
+compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
+```
+
+## Altares
 
 ```{r}
 compute_sample_altares(db = database_signauxfaibles, .date = "2017-01-01")
