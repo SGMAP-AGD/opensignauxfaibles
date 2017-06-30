@@ -476,7 +476,54 @@ compute_sample_meancotisation <- function(db, .date) {
     dplyr::group_by(numero_compte) %>%
     dplyr::summarise(
       mean_cotisation_due = mean(cotisation_due)
-    )
+    ) %>%
+    dplyr::mutate(periode = as.character(.date)) %>%
+    dplyr::select(numero_compte, periode, mean_cotisation_due)
+
+}
+
+
+#' compute_wholesample_meancotisation
+#'
+#' @param db database
+#' @param name name of the output table
+#' @param start start date
+#' @param end end date
+#'
+#' @return table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_wholesample_meancotisation(
+#' db = database_signauxfaibles,
+#' name = "wholesample_meancotisation",
+#' start = "2013-01-01",
+#' end = "2017-03-01"
+#' )
+#' }
+#'
+compute_wholesample_meancotisation <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_meancotisation(
+        db = db,
+        .date = x) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    copy_to(
+      dest = db, name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE)
 
 }
 
@@ -495,30 +542,27 @@ compute_sample_meancotisation <- function(db, .date) {
 #'
 compute_sample_dettecumulee <- function(db, .date) {
 
+  periode <- .date
   .date <- lubridate::ymd(.date)
 
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter_(.dots = list(~ periodicity == "monthly"))  %>%
-    dplyr::select_(
-      ~ numero_compte, ~ period, ~ numero_ecart_negatif,
-      ~ numero_historique_ecart_negatif, ~ date_traitement_ecart_negatif,
-      ~ montant_part_ouvriere, ~montant_part_patronale
-    ) %>%
-    dplyr::filter_(.dots = list(~ date_traitement_ecart_negatif <= .date)) %>%
-    dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
     dplyr::filter_(.dots = list(
-      ~numero_historique_ecart_negatif == max(numero_historique_ecart_negatif)
-    )
+      ~ periodicity == "monthly",
+      ~ date_traitement_ecart_negatif <= .date)
+    ) %>%
+    dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~numero_historique_ecart_negatif == max(numero_historique_ecart_negatif)
+      )
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::select_(~ numero_compte, ~ montant_part_ouvriere, ~ montant_part_patronale) %>%
     dplyr::group_by_(~ numero_compte) %>%
-    dplyr::summarise_(
-      .dots = list(
-        "montant_part_ouvriere" = lazyeval::interp(~ sum(x), x = quote(montant_part_ouvriere)),
-        "montant_part_patronale" = lazyeval::interp(~ sum(x), x = quote(montant_part_patronale))
-      )
-    )
+    dplyr::summarise(
+      montant_part_ouvriere = sum(montant_part_ouvriere),
+      montant_part_patronale = sum(montant_part_patronale)
+    ) %>%
+    mutate(periode = as.character(periode))
 
 }
 
