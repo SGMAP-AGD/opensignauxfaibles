@@ -149,6 +149,7 @@ compute_wholesample_effectif <- function(db, name, start, end) {
     dplyr::copy_to(
       dest = db,
       name = name,
+      temporary = FALSE,
       indexes = list("siret", "numero_compte", "periode")
     )
 
@@ -290,6 +291,7 @@ compute_wholesample_altares <- function(db, name, start, end) {
     dplyr::copy_to(
       dest = db,
       name = name,
+      temporary = FALSE,
       indexes = list("siret", "periode")
     )
 }
@@ -337,6 +339,56 @@ compute_prefilter_altares <- function(db, .date) {
 }
 
 
+#' Compute wholesample prefilter Altares
+#'
+#' @param db database
+#' @param name name of the table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_wholesample_prefilter_altares(
+#' db = database_signauxfaibles,
+#' name = "wholesample_prefilter_altares",
+#' start = "2013-01-01",
+#' end = "2017-03-01")
+#' }
+#'
+compute_wholesample_prefilter_altares <- function(db, name, start, end) {
+
+  db_drop_table_ifexist(db = db, table = name)
+
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_prefilter_altares(
+        db = db,
+        .date = x) %>%
+        collect(n = Inf) %>%
+        mutate(periode = x)
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      temporary = FALSE,
+      indexes = list("siret", "periode")
+    )
+}
+
+
+
 #' Compute sample sirene
 #'
 #' @param db name of the database
@@ -354,8 +406,9 @@ compute_prefilter_altares <- function(db, .date) {
 compute_sample_sirene <- function(db) {
 
   dplyr::tbl(db, "table_sirene") %>%
-    dplyr::select(siren, siret, siege, date_creation_etablissement,
-                  libelle_naf_niveau1, code_naf_niveau1)
+    dplyr::select(
+      siren, siret, siege, date_creation_etablissement,
+      libelle_naf_niveau1, code_naf_niveau1)
 
 }
 
