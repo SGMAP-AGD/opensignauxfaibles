@@ -218,8 +218,9 @@ compute_sample_altares <- function(db, .date) {
 #' }
 #'
 collect_sample_altares <- function(db, .date) {
-  compute_sample_altares(db = database_signauxfaibles, .date = "2017-01-01") %>%
-    collect() %>%
+
+  compute_sample_altares(db = db, .date = .date) %>%
+    collect(n = Inf) %>%
     mutate(
       outcome_0_12 = factor(
         dplyr::if_else(
@@ -227,7 +228,8 @@ collect_sample_altares <- function(db, .date) {
           true = "default",
           false = "non_default",
           missing = "non_default"),
-        levels = c("non_default", "default")),
+        levels = c("non_default", "default")
+        ),
       outcome_12_24 = factor(
         dplyr::if_else(
           condition = (date_effet > lubridate::ymd(.date) %m+% months(12) & date_effet <= lubridate::ymd(.date) %m+% months(24)),
@@ -244,8 +246,6 @@ collect_sample_altares <- function(db, .date) {
         levels = c("non_default", "default"))
     )
 }
-
-
 
 #' Compute whole sample altares
 #'
@@ -267,11 +267,7 @@ collect_sample_altares <- function(db, .date) {
 #' end = "2017-03-01")
 #' }
 #'
-compute_wholesample_altares <- function(
-  db = database_signauxfaibles,
-  name = "wholesample_altares",
-  start = "2013-01-01",
-  end = "2017-03-01") {
+compute_wholesample_altares <- function(db, name, start, end) {
 
   periods <- as.character(seq(
     from = lubridate::ymd(start),

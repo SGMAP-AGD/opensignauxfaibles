@@ -4,8 +4,7 @@
 \alias{compute_wholesample_altares}
 \title{Compute whole sample altares}
 \usage{
-compute_wholesample_altares(db = database_signauxfaibles,
-  name = "wholesample_altares", start = "2013-01-01", end = "2017-03-01")
+compute_wholesample_altares(db, name, start, end)
 }
 \arguments{
 \item{db}{a database}
