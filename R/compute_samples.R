@@ -81,6 +81,21 @@ collect_sample_effectif <- function(db, .date) {
         condition = (lag_effectif_missing == FALSE),
         true = log(growthrate_effectif),
         false = 0),
+      cut_effectif = dplyr::case_when(
+          .$effectif < 20 ~ "10-20",
+          .$effectif < 50 ~ "21-50",
+          TRUE ~ "Plus de 50"
+        ),
+      cut_growthrate = forcats::fct_relevel(
+          dplyr::case_when(
+            .$lag_effectif_missing == TRUE ~ "manquant",
+            .$growthrate_effectif < .80 ~ "moins 20%",
+            .$growthrate_effectif < .95 ~ "moins 20 à 5%",
+            .$growthrate_effectif < 1.05 ~ "stable",
+            .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
+            TRUE ~ "plus 20%"),
+          c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
+        ),
       region = forcats::fct_collapse(
         code_departement,
         bourgogne = c("21", "58", "71", "89"),
@@ -88,12 +103,12 @@ collect_sample_effectif <- function(db, .date) {
       )
     ) %>%
     select(siret, numero_compte, raison_sociale, periode,
-           code_departement, region, effectif, log_effectif,
-           growthrate_effectif, log_growthrate_effectif,
+           code_departement, region,
+           effectif, log_effectif, cut_effectif,
+           growthrate_effectif, log_growthrate_effectif, cut_growthrate,
            lag_effectif_missing) %>%
     filter(effectif >= 10)
 }
-
 
 #' Compute whole sample effectif
 #'

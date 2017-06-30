@@ -24,6 +24,10 @@ compute_sample_effectif(
 ```
 
 ```{r}
+collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+```{r}
 compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
 ```
 
@@ -39,6 +43,8 @@ compute_prefilter_altares(
   .date = "2017-01-01"
   )
 ```
+
+## SIRENE
 
 ```{r}
 compute_sample_sirene(db = database_signauxfaibles)
