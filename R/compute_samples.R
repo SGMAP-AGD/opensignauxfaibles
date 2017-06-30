@@ -61,6 +61,7 @@ compute_sample_effectif <- function(db, .date) {
 
 #' Collect sample effectif
 #'
+#'
 #' @param db database
 #' @param .date a date
 #'
@@ -76,6 +77,7 @@ collect_sample_effectif <- function(db, .date) {
 
   compute_sample_effectif(db = db, .date = .date) %>%
     dplyr::collect(n = Inf) %>%
+    dplyr::distinct(siret, .keep_all = TRUE) %>%
     dplyr::mutate_(
       .dots = list(
         "log_effectif" = ~ log(x = effectif),
@@ -116,6 +118,7 @@ collect_sample_effectif <- function(db, .date) {
 
 #' Compute whole sample effectif
 #'
+#'
 #' @param db database
 #' @param name name of the table
 #'
@@ -141,7 +144,7 @@ compute_wholesample_effectif <- function(db, name, start, end) {
   plyr::llply(
     .data = periods,
     .fun = function(x) {collect_sample_effectif(db = db, .date = x)}
-  ) %>%
+    ) %>%
     dplyr::bind_rows() %>%
     dplyr::copy_to(
       dest = db,
