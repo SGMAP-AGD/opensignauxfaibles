@@ -3,7 +3,6 @@
 export("%>%")
 export("%m+%")
 export("%m-%")
-export(collect_sample_altares)
 export(collect_sample_effectif)
 export(compute_filter_ccsv)
 export(compute_filter_proccollectives)

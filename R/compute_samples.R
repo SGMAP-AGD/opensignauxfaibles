@@ -208,49 +208,6 @@ compute_sample_altares <- function(db, .date) {
 
 }
 
-#' Collect sample Altares
-#'
-#' @param db database
-#' @param .date date
-#'
-#' @return a table
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' collect_sample_altares(db = database_signauxfaibles, .date = "2017-01-01")
-#' }
-#'
-collect_sample_altares <- function(db, .date) {
-
-  compute_sample_altares(db = db, .date = .date) %>%
-    collect(n = Inf) %>%
-    mutate(
-      outcome_0_12 = factor(
-        dplyr::if_else(
-          condition = date_effet <= lubridate::ymd(.date) %m+% months(12),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")
-        ),
-      outcome_12_24 = factor(
-        dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(12) & date_effet <= lubridate::ymd(.date) %m+% months(24)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")),
-      outcome_6_18 = factor(
-        dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(6) & date_effet <= lubridate::ymd(.date) %m+% months(18)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default"))
-    )
-}
-
 #' Compute whole sample altares
 #'
 #' @param db a database
@@ -284,7 +241,8 @@ compute_wholesample_altares <- function(db, name, start, end) {
   plyr::llply(
     .data = periods,
     .fun = function(x) {
-      collect_sample_altares(db = db, .date = x)
+      compute_sample_altares(db = db, .date = x) %>%
+        dplyr::collect()
     }
   ) %>%
     dplyr::bind_rows() %>%
