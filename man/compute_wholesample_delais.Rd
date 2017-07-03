@@ -22,6 +22,7 @@ a table in the database
 Compute wholesample delais
 }
 \examples{
+
 \dontrun{
 compute_wholesample_delais(
 db = database_signauxfaibles,

@@ -965,6 +965,7 @@ compute_sample_delais <- function(db, .date) {
 #' @export
 #'
 #' @examples
+#'
 #' \dontrun{
 #' compute_wholesample_delais(
 #' db = database_signauxfaibles,
@@ -1017,6 +1018,7 @@ compute_wholesample_delais <- function(db, name, start, end) {
 #'
 compute_sample_apart_consommee <- function(db, .date) {
 
+  periode <- .date
   .date <- lubridate::ymd(.date)
   .lag_date <- .date %m-% months(12)
 
@@ -1061,14 +1063,59 @@ compute_sample_apart_consommee <- function(db, .date) {
     dplyr::summarise(
       apart_consommee = ifelse(sum(heures_consommees) > 0, 1, 0),
       apart_share_heuresconsommees = 100 * sum(heures_consommees) / sum(effectif * 1607/12)
-    )
+    ) %>%
+    mutate(periode = as.character(periode))
 
 }
 
+#' Compute wholesample activite partielle consommmee
+#'
+#' @param db name of the database
+#' @param name name of the table
+#' @param start starting date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_apartconsommee(
+#' db = database_signauxfaibles,
+#' name = "wholesample_apartconsommee",
+#' start = "2013-01-01",
+#' end = "2017-03-01"
+#' )
+#' }
+#'
+compute_wholesample_apartconsommee <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_apart_consommee(
+        db = db,
+        .date = x
+      ) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("siret", "periode"),
+      temporary = FALSE
+    )
+}
 
-
-
-#' Compute sample
+#' DEPRECATED Compute sample
 #'
 #' @param db a database
 #' @param .date a date
