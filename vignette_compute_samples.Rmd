@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r setup}
+library("opensignauxfaibles")
+library("dplyr")
+database_signauxfaibles <- database_connect()
+```
+
+```{r}
+src_tbls(x = database_signauxfaibles)
+```
+
+```{r}
+compute_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+```{r}
+collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+## Altares
+
+### Prefilter
+
+```{r}
+compute_prefilter_altares(
+  db = database_signauxfaibles,
+  .date = "2017-01-01"
+  )
+```
+
+
+## SIRENE
+
+```{r}
+compute_sample_sirene(db = database_signauxfaibles)
+```
+
+## Activité partielle 
+
+```{r}
+compute_sample_apart_consommee(
+  db = database_signauxfaibles, 
+  .date = "2017-03-01")
+```
+
+## Cotisations 
+
+```{r}
+compute_sample_meancotisation(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+## Dettes URSSAF
+
+```{r}
+compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
+```
+
+```{r}
+compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = "2017-01-01")
+```
+
+## Nombre de débits
+
+```{r}
+compute_sample_nbdebits(
+  db = database_signauxfaibles, 
+  .date = "2017-01-01", 
+  n_months = 12)
+```
+
+## Délais 
+
+```{r}
+compute_sample_delais(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+## Filtre CCSV
+
+```{r}
+compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
+## Filter procédures collectives
+
+```{r}
+compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01")
+```
+
