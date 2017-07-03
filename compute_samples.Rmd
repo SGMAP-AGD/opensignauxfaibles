@@ -125,3 +125,10 @@ compute_wholesample_ccsv(
   end = "2017-03-01"
   )
 ```
+
+## Whole sample
+
+```{r}
+compute_wholesample(db = database_signauxfaibles, name = "wholesample")
+```
+

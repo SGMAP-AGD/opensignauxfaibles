@@ -1235,3 +1235,66 @@ compute_sample <- function(db, .date, .fallback_date) {
 
 }
 
+
+#' Compute whole sample
+#'
+#' @param db database
+#' @param name name of the table
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_wholesample(
+#' db = database_signauxfaibles,
+#' name = "wholesample")
+#' }
+#'
+compute_wholesample <- function(db, name) {
+
+  db_drop_table_ifexist(db = db, table = name)
+  dplyr::left_join(
+    x = dplyr::tbl(src = db, from = "wholesample_effectif"),
+    y = dplyr::tbl(src = db, from = "wholesample_altares"),
+    by = c("siret", "periode")
+  ) %>%
+    dplyr::anti_join(
+      y = tbl(src = db, from = "wholesample_prefilter_altares"),
+      by = c("siret", "periode")
+    ) %>%
+    dplyr::inner_join(
+      y = compute_sample_sirene(db = db),
+      by = "siret"
+    ) %>%
+    dplyr::inner_join(
+      y = dplyr::tbl(src = db, from = "wholesample_meancotisation"),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, from = "wholesample_dettecumulee"),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, from = "wholesample_lagdettecumulee"),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, "wholesample_nbdebits"),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, "wholesample_delais"),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, "wholesample_apartconsommee"),
+      by = c("siret", "periode")
+    ) %>%
+    dplyr::compute(name = name, temporary = FALSE)
+
+}
+
+
+
+
