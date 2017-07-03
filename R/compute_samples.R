@@ -677,10 +677,57 @@ compute_sample_lag_dettecumulee <- function(db, .date, lag) {
         numero_compte,
         lag_montant_part_ouvriere = montant_part_ouvriere,
         lag_montant_part_patronale = montant_part_patronale
-      )
+      ) %>%
+    dplyr::mutate(periode = as.character(.date))
 
 }
 
+
+#' Compute wholesample lag dette cumulee
+#'
+#' @param db database
+#' @param name name of the table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_lagdettecumulee(
+#' db = database_signauxfaibles,
+#' name = "wholesample_lagdettecumulee",
+#' start = "2013-01-01",
+#' end = "2017-03-01")
+#' }
+#'
+compute_wholesample_lagdettecumulee <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_lag_dettecumulee(
+        db = db,
+        .date = x,
+        lag = 12) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE
+    )
+}
 
 #' Compute filter CCSV
 #'
