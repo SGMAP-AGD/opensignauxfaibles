@@ -12,7 +12,7 @@ compute_sample_delais(db, .date)
 \item{.date}{date}
 }
 \value{
-a tibble
+a table in the database
 }
 \description{
 Compute sample delais

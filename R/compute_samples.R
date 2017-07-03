@@ -838,8 +838,56 @@ compute_sample_nbdebits <- function(db, .date, n_months) {
     dplyr::distinct_(.dots = list(~ numero_compte, ~ period)) %>%
     dplyr::group_by_(.dots = ~ numero_compte) %>%
     dplyr::count_() %>%
-    dplyr::rename_(.dots = list("nb_debits" = ~ n))
+    dplyr::rename_(.dots = list("nb_debits" = ~ n)) %>%
+    dplyr::mutate(periode = as.character(.date))
 
+}
+
+#' Compue wholesample nbdebits
+#'
+#' @param db database
+#' @param name name of the table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_nbdebits(
+#' db = database_signauxfaibles,
+#' name = "wholesample_nbdebits",
+#' start = "2013-01-01",
+#' end = "2017-03-01")
+#' }
+#'
+compute_wholesample_nbdebits <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_nbdebits(
+        db = db,
+        .date = x,
+        n_months = 12
+      ) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE
+    )
 }
 
 #' Compute filter proccollectives
@@ -878,7 +926,7 @@ compute_filter_proccollectives <- function(db, .date) {
 #' @param db database
 #' @param .date date
 #'
-#' @return a tibble
+#' @return a table in the database
 #' @export
 #'
 #' @examples
@@ -888,7 +936,8 @@ compute_filter_proccollectives <- function(db, .date) {
 #'
 compute_sample_delais <- function(db, .date) {
 
-  .date = lubridate::ymd(.date)
+  periode <- .date
+  .date <- lubridate::ymd(.date)
 
   dplyr::tbl(src = db, from = "table_delais") %>%
     dplyr::filter(
@@ -896,8 +945,59 @@ compute_sample_delais <- function(db, .date) {
       date_echeance >= .date
     ) %>%
     dplyr::select(numero_compte, "delai_sup_6mois" = indic_6m) %>%
-    dplyr::mutate(delai = 1, delai_sup_6mois = ifelse(delai_sup_6mois == "SUP", 1, 0))
+    dplyr::mutate(
+      periode = as.character(periode),
+      delai = 1,
+      delai_sup_6mois = ifelse(delai_sup_6mois == "SUP", 1, 0)
+      )
 
+}
+
+
+#' Compute wholesample delais
+#'
+#' @param db database
+#' @param name name of the table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_wholesample_delais(
+#' db = database_signauxfaibles,
+#' name = "wholesample_delais",
+#' start = "2013-01-01",
+#' end = "2017-03-01"
+#' )
+#' }
+#'
+compute_wholesample_delais <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_delais(
+        db = db,
+        .date = x
+      ) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE
+    )
 }
 
 

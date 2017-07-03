@@ -8,6 +8,15 @@ periods <- as.character(seq(
   by = "month")
 )
 
+compute_wholesample_nbdebits(
+  db = database_signauxfaibles,
+  name = "wholesample_nbdebits",
+  start =  "2013-01-01",
+  end = "2017-03-01")
+
+
+
+
 compute_wholesample_ccsv(
   db = database_signauxfaibles,
   name = "wholesample_ccsv",
