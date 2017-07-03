@@ -47,6 +47,15 @@ compute_wholesample_prefilter_altares(
 ## Activité partielle
 
 ```{r}
+compute_wholesample_apart(
+  db = database_signauxfaibles,
+  name = "wholesample_apart",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
+```
+
+```{r}
 compute_wholesample_apartconsommee(
   db = database_signauxfaibles,
   name = "wholesample_apartconsommee",
@@ -95,8 +104,7 @@ compute_wholesample_nbdebits(
   end = "2017-03-01")
 ```
 
-### Délais URSSAF
-
+## Délais URSSAF
 
 ```{r}
 compute_wholesample_delais(

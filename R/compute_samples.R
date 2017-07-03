@@ -443,10 +443,56 @@ compute_sample_apart <- function(db, .date, n_months = 12) {
       date_debut_periode_autorisee < end_date
     ) %>%
     dplyr::group_by(siret) %>%
-    dplyr::summarise(apart_last12_months = ifelse(n() >= 1, 1, 0))
+    dplyr::summarise(apart_last12_months = ifelse(n() >= 1, 1, 0)) %>%
+    dplyr::mutate(periode = as.character(.date))
 
 }
 
+#' Compute wholesample Activité partielle
+#'
+#' @param db database
+#' @param name name of the database
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_apart(
+#' db = database_signauxfaibles,
+#' name = "wholesample_apart",
+#' start = "2013-01-01",
+#' end = "2017-03-01")
+#' }
+#'
+compute_wholesample_apart <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_apart(
+        db = db,
+        .date = x
+      ) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("siret", "periode"),
+      temporary = FALSE
+    )
+}
 
 #' Compute sample cotisations
 #'
@@ -565,8 +611,6 @@ compute_sample_dettecumulee <- function(db, .date) {
     mutate(periode = as.character(periode))
 
 }
-
-
 
 #' Compute wholesample dettecumulee
 #'

@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_samples.R
 \name{compute_sample}
 \alias{compute_sample}
-\title{Compute sample}
+\title{DEPRECATED Compute sample}
 \usage{
 compute_sample(db, .date, .fallback_date)
 }
@@ -17,7 +17,7 @@ compute_sample(db, .date, .fallback_date)
 a table in the database
 }
 \description{
-Compute sample
+DEPRECATED Compute sample
 }
 \examples{
 
