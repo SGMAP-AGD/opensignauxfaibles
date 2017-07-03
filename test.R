@@ -10,7 +10,7 @@ periods <- as.character(seq(
 
 ## Compute whole sample
 
-tbl(src = database_signauxfaibles, from = "wholesample") %>%
+table_wholesample <- tbl(src = database_signauxfaibles, from = "wholesample") %>%
   dplyr::collect(n = Inf) %>%
   tidyr::replace_na(
     replace = list(
@@ -22,9 +22,7 @@ tbl(src = database_signauxfaibles, from = "wholesample") %>%
       "delai" = 0,
       "delai_sup_6mois" = 0
     )
-  )
-
-
+  ) %>%
   mutate(
     outcome_0_12 = factor(
         dplyr::if_else(
@@ -50,7 +48,15 @@ tbl(src = database_signauxfaibles, from = "wholesample") %>%
         levels = c("non_default", "default")),
     cotisationdue_effectif = (mean_cotisation_due) / effectif,
     log_cotisationdue_effectif = log(cotisationdue_effectif),
-    ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due
-  ) %>%
+    ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
+    indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
+    log_ratio_dettecumulee_cotisation = dplyr::if_else(
+      condition = indicatrice_dettecumulee == TRUE,
+      true = log(ratio_dettecumulee_cotisation),
+      false = 0
+    )
+  )
+
+table_wholesample %>%
   detect_na()
 
