@@ -566,6 +566,54 @@ compute_sample_dettecumulee <- function(db, .date) {
 
 }
 
+
+
+#' Compute wholesample dettecumulee
+#'
+#' @param db database
+#' @param name name of the output table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_dettecumulee(
+#' db = database_signauxfaibles,
+#' name = "wholesample_dettecumulee",
+#' start = "2013-01-01",
+#' end = "2017-03-01"
+#' )
+#' }
+#'
+compute_wholesample_dettecumulee <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_sample_dettecumulee(
+        db = db,
+        .date = x) %>%
+        dplyr::collect()
+    }
+  ) %>%
+  dplyr::bind_rows() %>%
+  dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE
+    )
+}
+
 #' DEPRECATED Compute sample growth dette cumulee
 #'
 #' @param db name of the database
