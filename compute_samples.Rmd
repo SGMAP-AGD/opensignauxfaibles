@@ -56,7 +56,9 @@ compute_sample_apart(
 ```
 
 ```{r}
-compute_sample_apart_consommee(db = database_signauxfaibles, .date = "2017-03-01")
+compute_sample_apart_consommee(
+  db = database_signauxfaibles, 
+  .date = "2017-03-01")
 ```
 
 ## Cotisations moyennes

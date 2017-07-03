@@ -8,8 +8,12 @@ periods <- as.character(seq(
   by = "month")
 )
 
-compute_sample_lag_dettecumulee(db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
-
+compute_wholesample_ccsv(
+  db = database_signauxfaibles,
+  name = "wholesample_ccsv",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
 
 compute_wholesample_lagdettecumulee(
   db = database_signauxfaibles,
@@ -44,7 +48,6 @@ compute_wholesample_prefilter_altares(
   start = "2013-01-01",
   end = "2017-03-01"
   )
-
 
 compute_wholesample_altares(
   db = database_signauxfaibles,
@@ -85,8 +88,6 @@ tbl(src = database_signauxfaibles, from = "wholesample") %>%
     y = tbl(database_signauxfaibles, "wholesample_lagdettecumulee"),
     by = c("numero_compte", "periode")
     )
-
-
 
 
 

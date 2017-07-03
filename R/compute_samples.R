@@ -747,12 +747,60 @@ compute_wholesample_lagdettecumulee <- function(db, name, start, end) {
 #'
 compute_filter_ccsv <- function(db, .date) {
 
+  periode <- .date
   .date <- lubridate::ymd(.date)
 
   dplyr::tbl(src = db, from = "table_ccsv") %>%
     dplyr::filter_(.dots = ~ date_de_traitement < .date) %>%
-    dplyr::distinct_(.dots = ~ compte)
+    dplyr::distinct_(.dots = ~ compte) %>%
+    dplyr::select(numero_compte = compte) %>%
+    dplyr::mutate(periode = as.character(periode))
 
+}
+
+#' Compute wholesample CCSV
+#'
+#' @param db database
+#' @param name name of the table
+#' @param start start date
+#' @param end end date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#' compute_wholesample_ccsv(
+#' db = database_signauxfaibles,
+#' name = "wholesample_ccsv",
+#' start = "2013-01-01",
+#' end = "2017-03-01"
+#' )
+#'
+compute_wholesample_ccsv <- function(db, name, start, end) {
+  db_drop_table_ifexist(db = db, table = name)
+  periods <- as.character(seq(
+    from = lubridate::ymd(start),
+    to = lubridate::ymd(end),
+    by = "month")
+  )
+  plyr::llply(
+    .data = periods,
+    .fun = function(x) {
+      compute_filter_ccsv(
+        db = db,
+        .date = x
+      ) %>%
+        dplyr::collect()
+    }
+  ) %>%
+    dplyr::bind_rows() %>%
+    dplyr::copy_to(
+      dest = db,
+      name = name,
+      indexes = list("numero_compte", "periode"),
+      temporary = FALSE
+    )
 }
 
 #' Compute sample nbdebits
