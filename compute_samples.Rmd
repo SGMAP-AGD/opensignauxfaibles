@@ -1,5 +1,5 @@
 ---
-title: "Compute samples"
+title: "Compute whole samples"
 output: html_notebook
 ---
 
@@ -33,87 +33,87 @@ compute_wholesample_altares(
   end = "2017-03-01")
 ```
 
+### Préfiltre ALTARES
+
 ```{r}
-compute_prefilter_altares(
+compute_wholesample_prefilter_altares(
   db = database_signauxfaibles,
-  .date = "2017-01-01"
+  name = "wholesample_prefilter_altares",
+  start = "2013-01-01",
+  end = "2017-03-01"
   )
-```
-
-## SIRENE
-
-```{r}
-compute_sample_sirene(db = database_signauxfaibles)
 ```
 
 ## Activité partielle
 
 ```{r}
-compute_sample_apart(
-  db = database_signauxfaibles, 
-  .date = "2017-01-01", 
-  n_months = 12)
-```
-
-```{r}
-compute_sample_apart_consommee(
-  db = database_signauxfaibles, 
-  .date = "2017-03-01")
+compute_wholesample_apartconsommee(
+  db = database_signauxfaibles,
+  name = "wholesample_apartconsommee",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
 ```
 
 ## Cotisations moyennes
 
 ```{r}
-get_table_last_n_months(.date = "2017-01-01", .n_months = 12) 
+compute_wholesample_meancotisation(
+  db = database_signauxfaibles,
+  name = "wholesample_meancotisation",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
+```
+
+## Dette cumulée 
+
+```{r}
+compute_wholesample_dettecumulee(
+  db = database_signauxfaibles,
+  name = "wholesample_dettecumulee",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
 ```
 
 ```{r}
-compute_sample_meancotisation(db = database_signauxfaibles, .date = "2017-01-01")
+compute_wholesample_lagdettecumulee(
+  db = database_signauxfaibles,
+  name = "wholesample_lagdettecumulee",
+  start = "2013-01-01",
+  end = "2017-03-01")
 ```
 
-```{r}
-compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
-```
+## Nombre de débits
 
 ```{r}
-compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = "2017-01-01")
-```
-
-
-```{r}
-compute_sample_growth_dettecumulee(
-  db = database_signauxfaibles, .date = "2017-01-01", lag = 12)
-```
-
-```{r}
-compute_sample_nbdebits(
-  db = database_signauxfaibles, 
-  .date = "2017-01-01", 
-  n_months = 12)
+compute_wholesample_nbdebits(
+  db = database_signauxfaibles,
+  name = "wholesample_nbdebits",
+  start =  "2013-01-01",
+  end = "2017-03-01")
 ```
 
 ### Délais URSSAF
 
-```{r}
-compute_sample_delais(db = database_signauxfaibles, .date = "2017-01-01")
-```
-
-
-## Filtre CCSV
 
 ```{r}
-compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-01-01")
+compute_wholesample_delais(
+  db = database_signauxfaibles,
+  name = "wholesample_delais",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
 ```
 
-### Filter procédures collectives
+## Plan CCSV
 
 ```{r}
-compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01")
+compute_wholesample_ccsv(
+  db = database_signauxfaibles,
+  name = "wholesample_ccsv",
+  start = "2013-01-01",
+  end = "2017-03-01"
+  )
 ```
-
-## Compute sample
-
-```{r}
-compute_sample(db = database_signauxfaibles, .date = "2017-01-01")
-```
-
