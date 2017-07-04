@@ -1,19 +1,22 @@
-#' convert urssaf periods to standard format
+#' Convert urssaf periods to standard format
 #'
 #' Urssaf store dates in a very specific format.
 #' This can be years + 62 for annual values,
 #' years + quarter + 0 for quarterly values
 #' years + quarter + number of the month in the quarter for monthly values.
 #'
-#' @param .data a tibble with a period
+#' @param .data a table with a period
 #' @param .variable the name of the variable with urssaf periods
 #' @param format can bee yyqm or yyyyqm
 #'
-#' @return an new tibble with two more columns : periodicity and period
+#' @return an new table with two more columns : periodicity and period
 #' @export
 #'
 #' @examples
+#'
+#' \dontrun{
 #' convert_urssaf_periods_(.variable = ~ yyyyqm, format = "yyyyqm")
+#' }
 #'
 
 convert_urssaf_periods_ <- function(.data, .variable, format = "yyqm") {
@@ -68,12 +71,13 @@ convert_urssaf_periods_ <- function(.data, .variable, format = "yyqm") {
 
 #' Convert URSSAF weird dates to normal dates
 #'
-#' @param weird_date
+#' @param weird_date a date in the URSSAF format
 #'
 #' @return a date
 #' @export
 #'
 #' @examples
+#'
 #' convert_urssaf_date(weird_date = "1010115")
 #'
 convert_urssaf_date <- function(weird_date) {

@@ -2,19 +2,19 @@
 % Please edit documentation in R/urssaf.R
 \name{convert_urssaf_periods_}
 \alias{convert_urssaf_periods_}
-\title{convert urssaf periods to standard format}
+\title{Convert urssaf periods to standard format}
 \usage{
 convert_urssaf_periods_(.data, .variable, format = "yyqm")
 }
 \arguments{
-\item{.data}{a tibble with a period}
+\item{.data}{a table with a period}
 
 \item{.variable}{the name of the variable with urssaf periods}
 
 \item{format}{can bee yyqm or yyyyqm}
 }
 \value{
-an new tibble with two more columns : periodicity and period
+an new table with two more columns : periodicity and period
 }
 \description{
 Urssaf store dates in a very specific format.
@@ -23,6 +23,9 @@ years + quarter + 0 for quarterly values
 years + quarter + number of the month in the quarter for monthly values.
 }
 \examples{
+
+\dontrun{
 convert_urssaf_periods_(.variable = ~ yyyyqm, format = "yyyyqm")
+}
 
 }

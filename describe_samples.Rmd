@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+library("opensignauxfaibles")
+library("dplyr", quietly = TRUE)
+database_signauxfaibles <- database_connect()
+table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+```
+
+
+```{r get-samples}
+sample_train <- table_wholesample %>% 
+  filter(periode == "2014-01-01")
+
+sample_test <- table_wholesample %>% 
+  filter(periode == "2015-01-01")
+
+sample_actual <- table_wholesample %>% 
+  filter(periode == "2017-01-01")
+```

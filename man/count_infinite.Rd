@@ -17,6 +17,6 @@ Count infinite
 }
 \examples{
 
-count_infinite(x = c(Inf, -))
+count_infinite(x = c(Inf, 1, 2, 3, 0, -Inf))
 
 }

@@ -3,3 +3,6 @@
 data-raw/*
 ^.*\.Rmd
 ^.*\.nb\.html
+^.*\.md
+^.*\.json
+docs/*

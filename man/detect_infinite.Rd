@@ -17,4 +17,7 @@ Detect infinite values
 }
 \examples{
 
+tibble::tibble(col1 = c(1,Inf,3,4), col2 = c(-Inf,Inf,-Inf,0)) \%>\%
+detect_infinite()
+
 }

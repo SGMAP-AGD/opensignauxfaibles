@@ -61,18 +61,18 @@ count_na <- function(x) {
 }
 
 
-#' Detect NA
+#' Detect missing values
 #'
-#' Detect NA takes a tibble and return the number and share of missing values for each variable
+#' Detect na takes a table as input and returns a table with the number and the share of missing values by column
 #'
 #' @param table name of the input variable
 #'
-#' @return a tibble with 3 columns (variable, n_missing, share_missing)
+#' @return a table with 3 columns (variable, n_missing, share_missing)
 #' @export
 #'
 #' @examples
-#' dplyr::tbl(src = database_signauxfaibles, from = "table_training") %>%
-#' dplyr::collect() %>%
+#'
+#' tibble::tibble(col1 = c(1,NA,3,4), col2 = c(NA,NA,NA,NA)) %>%
 #' detect_na()
 #'
 detect_na <- function(table) {
@@ -103,7 +103,7 @@ detect_na <- function(table) {
 #'
 #' @examples
 #'
-#' count_infinite(x = c(Inf, -))
+#' count_infinite(x = c(Inf, 1, 2, 3, 0, -Inf))
 #'
 count_infinite <- function(x) {
   x %>%
@@ -121,6 +121,9 @@ count_infinite <- function(x) {
 #' @export
 #'
 #' @examples
+#'
+#' tibble::tibble(col1 = c(1,Inf,3,4), col2 = c(-Inf,Inf,-Inf,0)) %>%
+#' detect_infinite()
 #'
 detect_infinite <- function(table) {
 

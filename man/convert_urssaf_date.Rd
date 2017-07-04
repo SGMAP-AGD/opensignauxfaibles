@@ -7,7 +7,7 @@
 convert_urssaf_date(weird_date)
 }
 \arguments{
-\item{weird_date}{}
+\item{weird_date}{a date in the URSSAF format}
 }
 \value{
 a date
@@ -16,6 +16,7 @@ a date
 Convert URSSAF weird dates to normal dates
 }
 \examples{
+
 convert_urssaf_date(weird_date = "1010115")
 
 }

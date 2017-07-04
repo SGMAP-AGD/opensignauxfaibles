@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{detect_na}
 \alias{detect_na}
-\title{Detect NA}
+\title{Detect missing values}
 \usage{
 detect_na(table)
 }
@@ -10,14 +10,14 @@ detect_na(table)
 \item{table}{name of the input variable}
 }
 \value{
-a tibble with 3 columns (variable, n_missing, share_missing)
+a table with 3 columns (variable, n_missing, share_missing)
 }
 \description{
-Detect NA takes a tibble and return the number and share of missing values for each variable
+Detect na takes a table as input and returns a table with the number and the share of missing values by column
 }
 \examples{
-dplyr::tbl(src = database_signauxfaibles, from = "table_training") \%>\%
-dplyr::collect() \%>\%
+
+tibble::tibble(col1 = c(1,NA,3,4), col2 = c(NA,NA,NA,NA)) \%>\%
 detect_na()
 
 }
