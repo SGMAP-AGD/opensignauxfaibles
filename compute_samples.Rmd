@@ -3,19 +3,19 @@ title: "Compute whole samples"
 output: html_notebook
 ---
 
-```{r}
+```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
 database_signauxfaibles <- database_connect()
 ```
 
-```{r}
+```{r list-tables}
 src_tbls(x = database_signauxfaibles)
 ```
 
 ## Effectif
 
-```{r}
+```{r compute-effectif}
 compute_wholesample_effectif(
   db = database_signauxfaibles,
   name = "wholesample_effectif",

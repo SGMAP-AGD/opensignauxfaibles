@@ -85,21 +85,6 @@ collect_sample_effectif <- function(db, .date) {
           condition = (lag_effectif_missing == FALSE),
           true = log(growthrate_effectif),
           false = 0),
-        "cut_effectif" = ~ dplyr::case_when(
-          .$effectif < 20 ~ "10-20",
-          .$effectif < 50 ~ "21-50",
-          TRUE ~ "Plus de 50"
-          ),
-        "cut_growthrate" = ~ forcats::fct_relevel(
-          dplyr::case_when(
-            .$lag_effectif_missing == TRUE ~ "manquant",
-            .$growthrate_effectif < .80 ~ "moins 20%",
-            .$growthrate_effectif < .95 ~ "moins 20 à 5%",
-            .$growthrate_effectif < 1.05 ~ "stable",
-            .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
-            TRUE ~ "plus 20%"),
-          c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
-        ),
       "region" = ~ forcats::fct_collapse(
         code_departement,
         bourgogne = c("21", "58", "71", "89"),
@@ -109,8 +94,8 @@ collect_sample_effectif <- function(db, .date) {
     ) %>%
     dplyr::select(siret, numero_compte, raison_sociale, periode,
            code_departement, region,
-           effectif, log_effectif, cut_effectif,
-           growthrate_effectif, log_growthrate_effectif, cut_growthrate,
+           effectif, log_effectif,
+           growthrate_effectif, log_growthrate_effectif,
            lag_effectif_missing) %>%
     dplyr::filter_(.dots = list( ~ effectif >= 10))
 
@@ -242,7 +227,7 @@ compute_wholesample_altares <- function(db, name, start, end) {
     .data = periods,
     .fun = function(x) {
       compute_sample_altares(db = db, .date = x) %>%
-        dplyr::collect()
+      dplyr::collect()
     }
   ) %>%
     dplyr::bind_rows() %>%
@@ -1253,6 +1238,95 @@ compute_wholesample <- function(db, name) {
 
 }
 
+#' Collect wholesample
+#'
+#' @param db database
+#' @param table name of the table
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+#' }
+#'
+collect_wholesample <- function(db, table) {
+  dplyr::tbl(
+    src = db,
+    from = "wholesample"
+  ) %>%
+    dplyr::collect(n = Inf) %>%
+    tidyr::replace_na(
+      replace = list(
+        "montant_part_ouvriere" = 0,
+        "montant_part_patronale" = 0,
+        "lag_montant_part_ouvriere" = 0,
+        "lag_montant_part_patronale" = 0,
+        "nb_debits" = 0,
+        "delai" = 0,
+        "delai_sup_6mois" = 0
+      )
+    ) %>%
+    dplyr::mutate(
+      cut_effectif = forcats::fct_relevel(
+        dplyr::case_when(
+          .$effectif < 20 ~ "10-20",
+          .$effectif < 50 ~ "21-50",
+          TRUE ~ "Plus de 50"
+        )
+      ),
+      cut_growthrate = forcats::fct_relevel(
+        dplyr::case_when(
+          .$lag_effectif_missing == TRUE ~ "manquant",
+          .$growthrate_effectif < .80 ~ "moins 20%",
+          .$growthrate_effectif < .95 ~ "moins 20 à 5%",
+          .$growthrate_effectif < 1.05 ~ "stable",
+          .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
+          TRUE ~ "plus 20%"
+        ),
+        c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
+      ),
+      outcome_0_12 = factor(
+        dplyr::if_else(
+          condition = date_effet <= lubridate::ymd(.date) %m+% months(12),
+          true = "default",
+          false = "non_default",
+          missing = "non_default"),
+        levels = c("non_default", "default")
+      ),
+      outcome_12_24 = factor(
+        dplyr::if_else(
+          condition = (date_effet > lubridate::ymd(.date) %m+% months(12) & date_effet <= lubridate::ymd(.date) %m+% months(24)),
+          true = "default",
+          false = "non_default",
+          missing = "non_default"),
+        levels = c("non_default", "default")
+      ),
+      outcome_6_18 = factor(
+        dplyr::if_else(
+          condition = (date_effet > lubridate::ymd(.date) %m+% months(6) & date_effet <= lubridate::ymd(.date) %m+% months(18)),
+          true = "default",
+          false = "non_default",
+          missing = "non_default"),
+        levels = c("non_default", "default")
+      ),
+      cotisationdue_effectif = (mean_cotisation_due) / effectif,
+      log_cotisationdue_effectif = log(cotisationdue_effectif),
+      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
+      indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
+      log_ratio_dettecumulee_cotisation = dplyr::if_else(
+        condition = indicatrice_dettecumulee == TRUE,
+        true = log(ratio_dettecumulee_cotisation),
+        false = 0
+      ),
+      indicatrice_lag_dettecumulee = (lag_montant_part_ouvriere + lag_montant_part_patronale > 0),
+      indicatrice_croissance_dettecumulee = (
+        montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
+      )
+    )
+}
 
 
 
