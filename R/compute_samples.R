@@ -159,6 +159,10 @@ compute_wholesample_effectif <- function(db, name, start, end) {
 compute_sample_altares <- function(db, .date) {
 
   .date <- lubridate::ymd(.date)
+  .dateplus6 <- .date %m+% months(6)
+  .dateplus12 <- .date %m+% months(12)
+  .dateplus18 <- .date %m+% months(18)
+  .dateplus24 <- .date %m+% months(24)
 
   dplyr::semi_join(
     x = dplyr::tbl(src = db, from = "table_altares"),
@@ -189,7 +193,12 @@ compute_sample_altares <- function(db, .date) {
     dplyr::select_(
       .dots = list(~ siret, ~ periode, ~ date_effet)
     ) %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      outcome_0_12 = ifelse((date_effet <= .dateplus12), "default", "non-default"),
+      outcome_12_24 = ifelse((date_effet > .dateplus12 & date_effet <= .dateplus24), "default", "non-default"),
+      outcome_6_18 = ifelse((date_effet > .dateplus6 & date_effet <= .dateplus18), "default", "non-default")
+      )
 
 }
 
@@ -471,8 +480,7 @@ compute_sample_meancotisation <- function(db, .date) {
 
 }
 
-
-#' compute_wholesample_meancotisation
+#' Compute wholesample meancotisation
 #'
 #' @param db database
 #' @param name name of the output table
@@ -1288,30 +1296,15 @@ collect_wholesample <- function(db, table) {
         ),
         c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
       ),
-      outcome_0_12 = factor(
-        dplyr::if_else(
-          condition = date_effet <= lubridate::ymd(.date) %m+% months(12),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")
-      ),
-      outcome_12_24 = factor(
-        dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(12) & date_effet <= lubridate::ymd(.date) %m+% months(24)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")
-      ),
-      outcome_6_18 = factor(
-        dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(6) & date_effet <= lubridate::ymd(.date) %m+% months(18)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")
-      ),
+      outcome_0_12 = forcats::fct_explicit_na(
+        factor(outcome_0_12, levels = c("default", "non-default")),
+        na_level = "non-default"),
+      outcome_6_18 = forcats::fct_explicit_na(
+        factor(outcome_6_18, levels = c("default", "non-default")),
+        na_level = "non-default"),
+      outcome_12_24 = forcats::fct_explicit_na(
+        factor(outcome_6_18, levels = c("default", "non-default")),
+        na_level = "non-default"),
       cotisationdue_effectif = (mean_cotisation_due) / effectif,
       log_cotisationdue_effectif = log(cotisationdue_effectif),
       ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,

@@ -132,3 +132,7 @@ compute_wholesample_ccsv(
 compute_wholesample(db = database_signauxfaibles, name = "wholesample")
 ```
 
+```{r}
+collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+```
+
