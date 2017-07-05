@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_samples.R
 \name{compute_wholesample_meancotisation}
 \alias{compute_wholesample_meancotisation}
-\title{compute_wholesample_meancotisation}
+\title{Compute wholesample meancotisation}
 \usage{
 compute_wholesample_meancotisation(db, name, start, end)
 }
@@ -19,7 +19,7 @@ compute_wholesample_meancotisation(db, name, start, end)
 table in the database
 }
 \description{
-compute_wholesample_meancotisation
+Compute wholesample meancotisation
 }
 \examples{
 \dontrun{

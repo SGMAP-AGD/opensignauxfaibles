@@ -20,4 +20,5 @@ Imports: readr,
     tricky,
     haven,
     zoo,
-    tibble
+    tibble,
+    pROC
