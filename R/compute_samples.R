@@ -1165,6 +1165,10 @@ compute_wholesample <- function(db, name) {
       y = dplyr::tbl(src = db, "wholesample_apartconsommee"),
       by = c("siret", "periode")
     ) %>%
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, "wholesample_apart"),
+      by = c("siret", "periode")
+      ) %>%
     dplyr::compute(name = name, temporary = FALSE)
 
 }
@@ -1197,7 +1201,8 @@ collect_wholesample <- function(db, table) {
         "lag_montant_part_patronale" = 0,
         "nb_debits" = 0,
         "delai" = 0,
-        "delai_sup_6mois" = 0
+        "delai_sup_6mois" = 0,
+        "apart_last12_months" = 0
       )
     ) %>%
     dplyr::mutate(
