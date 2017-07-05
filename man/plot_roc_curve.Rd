@@ -2,7 +2,7 @@
 % Please edit documentation in R/models.R
 \name{plot_roc_curve}
 \alias{plot_roc_curve}
-\title{Plot roc curve}
+\title{DEPRECATED Plot roc curve}
 \usage{
 plot_roc_curve(model, table)
 }
@@ -15,7 +15,7 @@ plot_roc_curve(model, table)
 a ggplot graph
 }
 \description{
-Plot roc curve
+DEPRECATED Plot roc curve
 }
 \examples{
 \dontrun{

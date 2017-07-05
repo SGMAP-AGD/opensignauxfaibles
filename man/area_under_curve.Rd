@@ -2,9 +2,9 @@
 % Please edit documentation in R/models.R
 \name{area_under_curve}
 \alias{area_under_curve}
-\title{Area under curve}
+\title{DEPRECATED Area under curve}
 \usage{
-area_under_curve(model, table)
+area_under_curve(model, table, outcome)
 }
 \arguments{
 \item{model}{a model}
@@ -15,7 +15,7 @@ area_under_curve(model, table)
 a scalar value with area under curve
 }
 \description{
-Area under curve
+DEPRECATED Area under curve
 }
 \examples{
 \dontrun{

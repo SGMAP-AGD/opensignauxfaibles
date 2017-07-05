@@ -1,4 +1,4 @@
-#' Area under curve
+#' DEPRECATED Area under curve
 #'
 #' @param model a model
 #' @param table_test the name of the table including test data
@@ -12,14 +12,14 @@
 #' }
 #'
 #'
-area_under_curve <- function(model, table) {
+area_under_curve <- function(model, table, outcome) {
   table_test_augmented <- model %>%
     broom::augment(newdata = table,  type.predict = "response")
   roc_curve <- pROC::roc(outcome ~ .fitted, data = table_test_augmented , smooth = FALSE)
   return(roc_curve$auc)
 }
 
-#' Plot roc curve
+#' DEPRECATED Plot roc curve
 #'
 #' @param model the name of a model
 #' @param table the name of the test data
