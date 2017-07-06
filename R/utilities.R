@@ -143,3 +143,48 @@ detect_infinite <- function(table) {
     )
 
 }
+
+#' Make sequence
+#'
+#' @param start start date
+#' @param end end date
+#'
+#' @return a vector of dates as a string
+#' @export
+#'
+#' @examples
+#'
+#' make_sequence(start = "2013-01-01", end = "2017-03-01")
+#'
+make_sequence <- function(start, end) {
+  as.character(
+    seq(
+      from = lubridate::ymd(start),
+      to = lubridate::ymd(end),
+      by = "month")
+  )
+}
+
+#' Make fake sequence
+#'
+#' Cette fonction permet de générer une fausse séquence.
+#' C'est utile pour générer l'échantillon sur les effectifs
+#' lorsque la date de dernière mise à jour est en retard
+#' par rapport aux autres datasets.
+#'
+#' @param start a start date
+#' @param end an end date
+#' @param last the last update
+#'
+#' @return a character vector
+#' @export
+#'
+#' @examples
+#'
+#' make_fake_sequence(start = "2013-01-01", end = "2017-03-01", last = "2017-01-01")
+#'
+make_fake_sequence <- function(start, end, last) {
+  sequence_ <- make_sequence(start = start, end = end)
+  sequence_[sequence_ %in% make_sequence(start = start, end = end) == FALSE] <- last
+}
+
