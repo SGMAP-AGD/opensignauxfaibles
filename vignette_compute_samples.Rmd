@@ -19,7 +19,7 @@ compute_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
 ```
 
 ```{r}
-collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
+collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01", .periode = "2017-03-01")
 ```
 
 ## Altares

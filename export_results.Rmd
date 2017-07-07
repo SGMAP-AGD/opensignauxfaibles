@@ -1,0 +1,35 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("opensignauxfaibles")
+```
+
+```{r}
+dplyr::tbl(database_signauxfaibles, "output_2017_07_05") %>% 
+  dplyr::anti_join(
+    y = compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01"), 
+    by = "numero_compte"
+  ) %>% 
+  dplyr::anti_join(
+    y = compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-03-01"), 
+    by = c("numero_compte") 
+  ) %>% 
+  arrange(
+    desc(
+      prediction_0_12
+      )
+    ) %>% 
+  filter(is.na(prediction_0_12) == FALSE) %>% 
+  select(raison_sociale, siren, siret, 
+         libelle_naf_niveau1, code_departement, siege, 
+         prediction_0_12, 
+         effectif, 
+         apart_last12_months, apart_consommee, apart_share_heuresconsommees, 
+         nb_debits, delai, delai_sup_6mois
+  ) %>%
+  collect() %>%
+  slice(1:100) 
+```

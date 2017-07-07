@@ -4,7 +4,7 @@
 \alias{collect_sample_effectif}
 \title{Collect sample effectif}
 \usage{
-collect_sample_effectif(db, .date)
+collect_sample_effectif(db, .date, .periode)
 }
 \arguments{
 \item{db}{database}

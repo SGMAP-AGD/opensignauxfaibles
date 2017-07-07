@@ -20,7 +20,8 @@ compute_wholesample_effectif(
   db = database_signauxfaibles,
   name = "wholesample_effectif",
   start = "2013-01-01",
-  end = "2017-01-01")
+  end = "2017-03-01", 
+  last = "2017-01-01")
 ```
 
 ## Altares
@@ -134,5 +135,10 @@ compute_wholesample(db = database_signauxfaibles, name = "wholesample")
 
 ```{r}
 collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+```
+
+```{r}
+write_csv(wholesample, path = "data/wholesample.csv")
+save(wholesample, file = "data/wholesample.Rda")
 ```
 

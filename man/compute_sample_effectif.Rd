@@ -4,7 +4,7 @@
 \alias{compute_sample_effectif}
 \title{Compute sample effectif}
 \usage{
-compute_sample_effectif(db, .date)
+compute_sample_effectif(db, .date, .periode)
 }
 \arguments{
 \item{db}{the name of the database}

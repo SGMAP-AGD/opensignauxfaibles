@@ -185,6 +185,29 @@ make_sequence <- function(start, end) {
 #'
 make_fake_sequence <- function(start, end, last) {
   sequence_ <- make_sequence(start = start, end = end)
-  sequence_[sequence_ %in% make_sequence(start = start, end = end) == FALSE] <- last
+  sequence_[sequence_ %in% make_sequence(start = start, end = last) == FALSE] <- last
+  return(sequence_)
 }
 
+#' Return lastperiods
+#'
+#' @param x a date
+#' @param sequence1 a sequence
+#' @param sequence2 a sequence
+#'
+#' @return a date
+#' @export
+#'
+#' @examples
+#'
+#' return_lastperiod(
+#' x = "2017-02-01",
+#' sequence1 = make_sequence(start = "2013-01-01", end = "2017-03-01"),
+#' sequence2 = make_fake_sequence(start = "2013-01-01", end = "2017-03-01", last = "2017-01-01")
+#' )
+#'
+return_lastperiod <- function(x, sequence1, sequence2) {
+  tibble::tibble(sequence1, sequence2) %>%
+    dplyr::filter(sequence1 == x) %>%
+    .$sequence2
+}

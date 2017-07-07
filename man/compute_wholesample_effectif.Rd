@@ -4,7 +4,7 @@
 \alias{compute_wholesample_effectif}
 \title{Compute whole sample effectif}
 \usage{
-compute_wholesample_effectif(db, name, start, end)
+compute_wholesample_effectif(db, name, start, end, last)
 }
 \arguments{
 \item{db}{database}

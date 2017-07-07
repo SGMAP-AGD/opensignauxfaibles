@@ -16,12 +16,13 @@
 #' .date = "2013-01-01")
 #' }
 #'
-compute_sample_effectif <- function(db, .date) {
+compute_sample_effectif <- function(db, .date, .periode) {
 
+  .periode <- ifelse(missing(.periode), .date, .periode)
   initial_date_year_month <- format(lubridate::ymd(.date), "%Y-%m")
   initial_date_minus_one_year <- format(
-    (lubridate::ymd(.date) - lubridate::dyears(1)
-    ), "%Y-%m")
+    (lubridate::ymd(.date) - lubridate::dyears(1)),
+    "%Y-%m")
 
   dplyr::tbl(db, "table_effectif") %>%
     dplyr::filter(
@@ -50,7 +51,7 @@ compute_sample_effectif <- function(db, .date) {
         0,
         effectif / lag_effectif
       ),
-      periode = as.character(.date)
+      periode = as.character(.periode)
     ) %>%
     dplyr::rename(numero_compte = compte) %>%
     dplyr::select(siret, numero_compte, raison_sociale, periode,
@@ -73,9 +74,9 @@ compute_sample_effectif <- function(db, .date) {
 #' collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
 #' }
 #'
-collect_sample_effectif <- function(db, .date) {
+collect_sample_effectif <- function(db, .date, .periode) {
 
-  compute_sample_effectif(db = db, .date = .date) %>%
+  compute_sample_effectif(db = db, .date = .date, .periode = .periode) %>%
     dplyr::collect(n = Inf) %>%
     dplyr::distinct(siret, .keep_all = TRUE) %>%
     dplyr::mutate_(
@@ -116,19 +117,21 @@ collect_sample_effectif <- function(db, .date) {
 #' compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_effectif")
 #' }
 #'
-compute_wholesample_effectif <- function(db, name, start, end) {
+compute_wholesample_effectif <- function(db, name, start, end, last) {
 
-  periods <- as.character(seq(
-    from = lubridate::ymd(start),
-    to = lubridate::ymd(end),
-    by = "month")
-    )
+  periods <- make_sequence(start = start, end = end)
+  periods2 <- make_fake_sequence(start = start, end = end, last = last)
 
   db_drop_table_ifexist(db = db, table = name)
 
   plyr::llply(
     .data = periods,
-    .fun = function(x) {collect_sample_effectif(db = db, .date = x)}
+    .fun = function(x) {
+      collect_sample_effectif(
+        db = db,
+        .date = return_lastperiod(x = x, sequence1 = periods, sequence2 = periods2),
+        .periode = x)
+      }
     ) %>%
     dplyr::bind_rows() %>%
     dplyr::copy_to(
