@@ -8,3 +8,4 @@ data-raw/
 *.nb.html
 keys.json
 data/
+packrat/lib*/

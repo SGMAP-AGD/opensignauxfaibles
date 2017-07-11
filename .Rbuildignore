@@ -6,3 +6,5 @@ data-raw/*
 ^.*\.md
 ^.*\.json
 docs/*
+^packrat/
+^\.Rprofile$
