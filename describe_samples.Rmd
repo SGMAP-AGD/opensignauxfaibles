@@ -10,7 +10,6 @@ database_signauxfaibles <- database_connect()
 table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 ```
 
-
 ```{r get-samples}
 sample_train <- table_wholesample %>% 
   filter(periode == "2014-01-01")
@@ -21,3 +20,26 @@ sample_test <- table_wholesample %>%
 sample_actual <- table_wholesample %>% 
   filter(periode == "2017-01-01")
 ```
+
+```{r}
+library("ggplot2")
+sample_train %>% 
+  ggplot() + 
+  geom_histogram(
+    mapping = aes(x = effectif), 
+    color = "white"
+      ) + 
+  scale_x_continuous(
+    name = "taille de l'établissement", 
+    trans = "log", 
+    labels = function(x) {format(x, big.mark = " ", decimal.mark = ",")}, 
+    breaks = c(10, 100, 1000)
+    ) + 
+  scale_y_continuous(
+    name = "nombre d'établissements", 
+    labels = function(x) {format(x, big.mark = " ", decimal.mark = ",")}
+    ) + 
+  facet_wrap(facets = ~ outcome_0_12, scales = "free_y") + 
+  labs(title = "Répartition des établissements par effectif")
+```
+
