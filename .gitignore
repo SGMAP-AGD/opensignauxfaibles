@@ -9,3 +9,4 @@ data-raw/
 keys.json
 data/
 packrat/lib*/
+packrat/src/*
