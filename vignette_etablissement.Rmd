@@ -1,0 +1,17 @@
+---
+title: "Vignette établissement"
+output: html_notebook
+params:
+  siret: '34322975300037'
+---
+
+
+```{r}
+library("opensignauxfaibles")
+library("openentreprise")
+```
+
+```{r}
+
+```
+
