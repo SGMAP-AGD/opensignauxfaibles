@@ -138,7 +138,7 @@ collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 ```
 
 ```{r}
-write_csv(wholesample, path = "data/wholesample.csv")
+readr::write_csv(wholesample, path = "data/wholesample.csv")
 save(wholesample, file = "data/wholesample.Rda")
 ```
 

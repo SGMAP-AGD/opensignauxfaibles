@@ -1228,13 +1228,13 @@ collect_wholesample <- function(db, table) {
         c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
       ),
       outcome_0_12 = forcats::fct_explicit_na(
-        factor(outcome_0_12, levels = c("default", "non-default")),
+        factor(outcome_0_12, levels = c("non-default", "default")),
         na_level = "non-default"),
       outcome_6_18 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("default", "non-default")),
+        factor(outcome_6_18, levels = c("non-default", "default")),
         na_level = "non-default"),
       outcome_12_24 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("default", "non-default")),
+        factor(outcome_6_18, levels = c("non-default", "default")),
         na_level = "non-default"),
       cotisationdue_effectif = (mean_cotisation_due) / effectif,
       log_cotisationdue_effectif = log(cotisationdue_effectif),
