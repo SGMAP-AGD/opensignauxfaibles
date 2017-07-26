@@ -1,23 +1,27 @@
-#' DEPRECATED Area under curve
+#' Compute AUC
 #'
-#' @param model a model
-#' @param table_test the name of the table including test data
+#' @param f a formula
+#' @param df_train a training table
+#' @param df_test a testing table
 #'
-#' @return a scalar value with area under curve
+#' @return a number
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' area_under_curve(model = model_1, table_test = table_test_preprocessed)
+#' compute_auc(f = formulas_0_12$m5, df_train = sample_train, df_test = sample_test)
 #' }
 #'
-#'
-area_under_curve <- function(model, table, outcome) {
-  table_test_augmented <- model %>%
-    broom::augment(newdata = table,  type.predict = "response")
-  roc_curve <- pROC::roc(outcome ~ .fitted, data = table_test_augmented , smooth = FALSE)
-  return(roc_curve$auc)
+compute_auc <- function(f, df_train, df_test) {
+  glm(formula = f, family = "binomial", data = df_train) %>%
+    broom::augment(newdata = df_test,  type.predict = "response") %>%
+    pROC::roc(
+      lazyeval::f_new(lhs = f_lhs(f), rhs = quote(.fitted)),
+      data = . ,
+      smooth = FALSE) %>%
+    .$auc
 }
+
 
 #' DEPRECATED Plot roc curve
 #'
