@@ -9,9 +9,10 @@ params:
 ```{r}
 library("opensignauxfaibles")
 library("openentreprise")
+database_signauxfaibles <- database_connect()
 ```
 
 ```{r}
-
+get_sirene(db = database_signauxfaibles, .siret = params$siret)
 ```
 
