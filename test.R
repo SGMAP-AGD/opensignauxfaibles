@@ -1,5 +1,10 @@
 library("opensignauxfaibles")
 library("dplyr")
+library("purrr")
+library("forcats")
+library("corrr")
+library("modelr")
+
 database_signauxfaibles <- database_connect()
 src_tbls(database_signauxfaibles)
 periods <- as.character(seq(
@@ -7,56 +12,36 @@ periods <- as.character(seq(
   to = lubridate::ymd("2017-03-01"),
   by = "month")
 )
+wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 
-## Compute whole sample
+model_matrix(
+  data = sample_actual,
+  formula = ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+               apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+               log_cotisationdue_effectif +
+               log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+               indicatrice_croissance_dettecumulee +
+               nb_debits +
+               delai + delai_sup_6mois +
+               libelle_naf_niveau1) %>%
+  correlate() %>%
+  fashion() %>%
+  shave()
 
-table_wholesample <- tbl(src = database_signauxfaibles, from = "wholesample") %>%
-  dplyr::collect(n = Inf) %>%
-  tidyr::replace_na(
-    replace = list(
-      "montant_part_ouvriere" = 0,
-      "montant_part_patronale" = 0,
-      "lag_montant_part_ouvriere" = 0,
-      "lag_montant_part_patronale" = 0,
-      "nb_debits" = 0,
-      "delai" = 0,
-      "delai_sup_6mois" = 0
-    )
-  ) %>%
-  mutate(
-    outcome_0_12 = factor(
-        dplyr::if_else(
-          condition = date_effet <= lubridate::ymd(.date) %m+% months(12),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")
-      ),
-    outcome_12_24 = factor(
-      dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(12) & date_effet <= lubridate::ymd(.date) %m+% months(24)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")),
-    outcome_6_18 = factor(
-      dplyr::if_else(
-          condition = (date_effet > lubridate::ymd(.date) %m+% months(6) & date_effet <= lubridate::ymd(.date) %m+% months(18)),
-          true = "default",
-          false = "non_default",
-          missing = "non_default"),
-        levels = c("non_default", "default")),
-    cotisationdue_effectif = (mean_cotisation_due) / effectif,
-    log_cotisationdue_effectif = log(cotisationdue_effectif),
-    ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
-    indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
-    log_ratio_dettecumulee_cotisation = dplyr::if_else(
-      condition = indicatrice_dettecumulee == TRUE,
-      true = log(ratio_dettecumulee_cotisation),
-      false = 0
-    )
-  )
 
-table_wholesample %>%
-  detect_na()
+
+model_matrix(
+  data = sample_actual,
+  formula = ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+    indicatrice_croissance_dettecumulee +
+    nb_debits +
+    delai + delai_sup_6mois +
+    libelle_naf_niveau1) %>%
+  correlate() %>%
+  network_plot(min_cor = .2)
+
+
 

@@ -1,0 +1,176 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("opensignauxfaibles")
+library("broom")
+library("dplyr")
+database_signauxfaibles <- database_connect()
+table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+sample_train <- table_wholesample %>%
+  filter(periode == "2014-01-01")
+sample_test <- table_wholesample %>%
+  filter(periode == "2015-01-01")
+sample_actual <- table_wholesample %>%
+  filter(periode == "2017-01-01")
+```
+
+```{r}
+sample_train %>%
+  count(outcome_0_12) %>% 
+  mutate(share = 100 * n / sum(n))
+```
+
+```{r}
+formulas_0_12 <- list(
+  "m0" = outcome_0_12 ~ cut_effectif,
+  "m1" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing,
+  "m2" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees,
+  "m3" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif,
+  "m4" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee,
+  "m5" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+    indicatrice_croissance_dettecumulee,
+  "m6" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+    indicatrice_croissance_dettecumulee +
+    nb_debits,
+  "m7" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+    indicatrice_croissance_dettecumulee +
+    nb_debits +
+    delai + delai_sup_6mois,
+  "m8" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+    indicatrice_croissance_dettecumulee +
+    nb_debits +
+    delai + delai_sup_6mois +
+    libelle_naf_niveau1
+)
+```
+
+
+```{r}
+glm(
+  data = sample_train,
+  formula = outcome_0_12 ~ cut_effectif,
+  family = binomial
+  ) %>%
+  tidy()
+```
+
+```{r}
+glm(formula = outcome_0_12 ~ cut_effectif, family = "binomial", data = sample_train) %>%
+  broom::augment(newdata = sample_test,  type.predict = "response") %>%
+  pROC::roc(outcome_0_12 ~ .fitted, data = . , smooth = FALSE) %>%
+  .$auc 
+```
+
+```{r}
+glm(formula = formulas_0_12$m1, 
+    data = sample_train, family = binomial) %>% 
+  tidy()
+```
+
+```{r}
+lrtest(
+  glm(formula = formulas_0_12$m0, family = "binomial", data = sample_train),
+  glm(formula = formulas_0_12$m1, family = "binomial", data = sample_train)
+  ) 
+```
+
+```{r}
+glm(formula = formulas_0_12$m1, family = "binomial", data = sample_train) %>%
+  broom::augment(newdata = sample_test,  type.predict = "response") %>%
+  pROC::roc(outcome_0_12 ~ .fitted, data = . , smooth = FALSE) %>%
+  .$auc 
+```
+
+## Activité partielle
+
+
+```{r}
+glm(formula = formulas_0_12$m2, family = "binomial", data = sample_train) %>% 
+  tidy()
+```
+
+```{r}
+compute_auc(f = formulas_0_12$m2, df_train = sample_train, df_test = sample_test)
+```
+
+```{r}
+lrtest(
+  glm(formula = formulas_0_12$m1, family = "binomial", data = sample_train),
+  glm(formula = formulas_0_12$m2, family = "binomial", data = sample_train)
+  )
+```
+
+```{r}
+glm(formula = formulas_0_12$m3, family = "binomial", data = sample_train) %>% 
+  tidy()
+```
+
+```{r}
+compute_auc(f = formulas_0_12$m3, df_train = sample_train, df_test = sample_test)
+```
+
+```{r}
+lrtest(
+  glm(formula = formulas_0_12$m2, family = "binomial", data = sample_train),
+  glm(formula = formulas_0_12$m3, family = "binomial", data = sample_train)
+  ) 
+```
+
+```{r}
+glm(formula = formulas_0_12$m4, family = "binomial", data = sample_train) %>%
+  tidy()
+```
+
+```{r}
+lrtest(
+  glm(formula = formulas_0_12$m3, family = "binomial", data = sample_train),
+  glm(formula = formulas_0_12$m4, family = "binomial", data = sample_train)
+  ) 
+```
+
+## Tests du rapport de vraisemblance pour les différents modèles testés
+
+```{r}
+plyr::ldply(
+  .data = 2:9,
+  .fun = function(x) {
+    lrtest(
+      glm(formula = formulas_0_12[[x-1]], family = "binomial", data = sample_train),
+      glm(formula = formulas_0_12[[x]], family = "binomial", data = sample_train)
+      ) %>%
+      tidy() %>%
+      filter(is.na(statistic) == FALSE) %>%
+      select(statistic, p.value) %>%
+      mutate(
+        reject = (p.value <= .05),
+        model_number = x)
+    }
+  )
+```
+
+
+```{r}
+plyr::ldply(.data = formulas_0_12, .fun = function(x) {compute_auc(f = x, df_train = sample_train, df_test = sample_test)})
+```
+
