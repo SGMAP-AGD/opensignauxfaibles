@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(opensignauxfaibles)
+library(dplyr)
+library(ggplot2)
+database_signauxfaibles <- database_connect()
+```
+
+## Activité partielle consommée
+
+```{r}
+tbl(database_signauxfaibles, "table_apart_consommee") %>%
+  collect() %>% 
+  glimpse()
+```
+
+```{r}
+tbl(database_signauxfaibles, "table_apart_consommee") %>%
+  filter(is.na(date) == FALSE) %>%
+  group_by(date) %>% 
+  summarise(
+    heures_consommees = sum(heures_consommees, na.rm = TRUE)
+    ) %>%
+  collect() %>%
+  mutate(year = lubridate::year(date)) %>%
+  ggplot() + 
+    geom_col(
+      mapping = aes(x = date, y = heures_consommees)
+    ) +
+  facet_wrap(~ year, scale = "free_x", ncol = 2)
+```
+
