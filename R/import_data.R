@@ -438,10 +438,15 @@ import_table_activite_partielle <- function(path) {
 }
 
 
-
 #' Import Apart heures consommées
 #'
 #' @param path path to the file
+#' @param sheet name of the sheet
+#' @param skip number of lines to skip
+#' @param date variable date
+#' @param effectif_concerne  variable effectif
+#' @param heures_consommees variable number of hours
+#' @param montants variable montants
 #'
 #' @return a tibble
 #' @export
@@ -449,24 +454,45 @@ import_table_activite_partielle <- function(path) {
 #' @examples
 #'
 #' \dontrun{
-#' import_apart_heuresconsommees(path = "raw-data/direccte/act_partielle_consommée.xlsx")
+#' import_apart_heuresconsommees(
+#' path = "data-raw/activite_partielle/act_partielle_consommée.xlsx",
+#' sheet = "INDEMNITE",
+#' skip = 0,
+#' date = "mois_concerne_par_le_paiement",
+#' effectif_concerne = "effectifs_concernes_par_le_paiement",
+#' heures_consommees = "heures_consommees",
+#' montants = "montants_des_heures_consommees")
 #' }
 #'
-import_apart_heuresconsommees <- function(path) {
-  readxl::read_excel(path = path) %>%
-    tricky::set_standard_names() %>%
-    dplyr::select(
-      id_da,
-      siret = etab_siret,
-      date = mois_concerne_par_le_paiement,
-      effectif_etablissement = eff_etab,
-      effectif_concerne = effectifs_concernes_par_le_paiement,
-      heures_consommees,
-      montants_des_heures_consommees,
-      source,
-      date_payement_annee_mois
+import_apart_heuresconsommees <- function(path, sheet, skip, date, effectif_concerne, heures_consommees, montants) {
+
+  table_temp <- readxl::read_excel(path = path, sheet =  sheet, skip = skip) %>%
+    tricky::set_standard_names()
+
+  table_temp <- table_temp[, c("id_da", "etab_siret", date, "eff_etab", effectif_concerne, heures_consommees, montants, "source", "date_payement_annee_mois")] %>%
+    magrittr::set_colnames(
+      value = c("id_da", "siret", "date", "effectif_etablissement", "effectif_concerne",  "heures_consommees", "montants", "source", "date_payement_annee_mois")
     )
+
+  return(table_temp)
+
 }
+
+# import_apart_heuresconsommees <- function(path) {
+#   readxl::read_excel(path = path) %>%
+#     tricky::set_standard_names() %>%
+#     dplyr::select(
+#       id_da,
+#       siret = etab_siret,
+#       date = mois_concerne_par_le_paiement,
+#       effectif_etablissement = eff_etab,
+#       effectif_concerne = effectifs_concernes_par_le_paiement,
+#       heures_consommees,
+#       montants_des_heures_consommees,
+#       source,
+#       date_payement_annee_mois
+#     )
+# }
 
 #' Import table SIREN
 #'
