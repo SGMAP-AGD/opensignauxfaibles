@@ -6,19 +6,26 @@ output: html_notebook
 ```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
+database_signauxfaibles <- database_connect() 
 ```
 
 ## Import table altares
 
 ```{bash}
-in2csv data-raw/direccte/altares/RECAP_ALTARES.xls > data-raw/direccte/altares/RECAP_ALTARES.csv
+in2csv data-raw/altares/RECAP_ALTARES.xls > data-raw/altares/RECAP_ALTARES.csv
 ```
 
 ```{r}
+db_drop_table_ifexist(db = database_signauxfaibles, table = "table_altares")
 import_table_altares(
-  path = "data-raw/direccte/altares/RECAP_ALTARES.csv"
-  ) %>% 
-  glimpse()
+  path = "data-raw/altares/RECAP_ALTARES.csv"
+  ) %>%
+  dplyr::copy_to(
+    dest = database_signauxfaibles, 
+    df = ., 
+    name = "table_altares", 
+    temporary = FALSE
+    )
 ```
 
 ### Tables des codes RJ/LJ
