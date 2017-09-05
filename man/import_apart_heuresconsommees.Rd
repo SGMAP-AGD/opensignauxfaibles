@@ -4,10 +4,23 @@
 \alias{import_apart_heuresconsommees}
 \title{Import Apart heures consommées}
 \usage{
-import_apart_heuresconsommees(path)
+import_apart_heuresconsommees(path, sheet, skip, date, effectif_concerne,
+  heures_consommees, montants)
 }
 \arguments{
 \item{path}{path to the file}
+
+\item{sheet}{name of the sheet}
+
+\item{skip}{number of lines to skip}
+
+\item{date}{variable date}
+
+\item{effectif_concerne}{variable effectif}
+
+\item{heures_consommees}{variable number of hours}
+
+\item{montants}{variable montants}
 }
 \value{
 a tibble
@@ -18,7 +31,14 @@ Import Apart heures consommées
 \examples{
 
 \dontrun{
-import_apart_heuresconsommees(path = "raw-data/direccte/act_partielle_consommée.xlsx")
+import_apart_heuresconsommees(
+path = "data-raw/activite_partielle/act_partielle_consommée.xlsx",
+sheet = "INDEMNITE",
+skip = 0,
+date = "mois_concerne_par_le_paiement",
+effectif_concerne = "effectifs_concernes_par_le_paiement",
+heures_consommees = "heures_consommees",
+montants = "montants_des_heures_consommees")
 }
 
 }

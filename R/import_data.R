@@ -408,6 +408,9 @@ import_table_delais <- function(path) {
 #' Import de la table d'activité partielle augmentée
 #'
 #' @param path path
+#' @param hta heures totales autorisees
+#' @param mta montant total autorise
+#' @param effectif_autorise effectif autorise
 #'
 #' @return a tibble
 #' @export
@@ -415,19 +418,25 @@ import_table_delais <- function(path) {
 #' @examples
 #'
 #' \dontrun{
-#' import_table_activite_partielle(path = "raw-data/direccte/act_partielle_ddes_2012_mai2017.xlsx")
+#'   import_table_activite_partielle(
+#'   path = "data-raw/activite_partielle/act_partielle_ddes_2012_juin2017.xlsx",
+#'   hta = "hta",
+#'   mta = "mta",
+#'   effectif_autorise = "eff_auto"
+#'   )
 #' }
 #'
-import_table_activite_partielle <- function(path) {
-  readxl::read_excel(path = path) %>%
-    tricky::set_standard_names() %>%
-    dplyr::select(id_da,
-                  siret = etab_siret,
-                  effectif = eff_etab,
-                  hta_heures_totales_autorisees,
-                  mta_montant_total_autorise,
-                  motif_recours_se,
-                  effectif_autorise = `eff_auto_:_effectif_autorise_a_chomer`
+import_table_activite_partielle <- function(
+  path,
+  hta = "hta_heures_totales_autorisees",
+  mta = "mta_montant_total_autorise",
+  effectif_autorise = "eff_auto_:_effectif_autorise_a_chomer") {
+  table_temp <- readxl::read_excel(path = path) %>%
+    tricky::set_standard_names()
+
+  table_temp <- table_temp[, c("id_da", "etab_siret", "eff_etab", hta, mta, "motif_recours_se", effectif_autorise)] %>%
+    magrittr::set_colnames(
+      value = c("id_da", "siret", "effectif", "hta", "mta", "motif_recours_se", "effectif_autorise")
     ) %>%
     dplyr::mutate(
       motif_label = factor(
@@ -435,8 +444,9 @@ import_table_activite_partielle <- function(path) {
         levels = c(1,2,3,4,5),
         labels = c("conjoncture", "approvisionnement", "intemperies", "restructuration", "autres"))
     )
-}
 
+  return(table_temp)
+}
 
 #' Import Apart heures consommées
 #'

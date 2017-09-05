@@ -4,10 +4,18 @@
 \alias{import_table_activite_partielle}
 \title{Import table activite partielle}
 \usage{
-import_table_activite_partielle(path)
+import_table_activite_partielle(path, hta = "hta_heures_totales_autorisees",
+  mta = "mta_montant_total_autorise",
+  effectif_autorise = "eff_auto_:_effectif_autorise_a_chomer")
 }
 \arguments{
 \item{path}{path}
+
+\item{hta}{heures totales autorisees}
+
+\item{mta}{montant total autorise}
+
+\item{effectif_autorise}{effectif autorise}
 }
 \value{
 a tibble
@@ -18,7 +26,12 @@ Import de la table d'activité partielle augmentée
 \examples{
 
 \dontrun{
-import_table_activite_partielle(path = "raw-data/direccte/act_partielle_ddes_2012_mai2017.xlsx")
+  import_table_activite_partielle(
+  path = "data-raw/activite_partielle/act_partielle_ddes_2012_juin2017.xlsx",
+  hta = "hta",
+  mta = "mta",
+  effectif_autorise = "eff_auto"
+  )
 }
 
 }

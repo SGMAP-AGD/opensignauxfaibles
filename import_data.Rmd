@@ -40,18 +40,28 @@ copy_to(dest = database_signauxfaibles, df = table_code_rj_lj, temporary = FALSE
 
 ## Activité partielle
 
-```{r}
-import_table_apart(
-  path = "data-raw/direccte/activite_partielle/201705_POP_Bourg Fr Comté_Janv2008àavril2017.xls"
-  ) %>% 
-  glimpse()
-```
+```{r import_apart}
+db_drop_table_ifexist(db = database_signauxfaibles, table = "table_activitepartielle")
 
-```{r}
-import_table_activite_partielle(
-  path = "data-raw/direccte/activite_partielle/act_partielle_ddes_2012_mai2017.xlsx"
-  ) %>% 
-  glimpse()
+dplyr::bind_rows(
+  import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_mai2017.xlsx"
+    ),
+  import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_juin2017.xlsx",
+    hta = "hta",
+    mta = "mta",
+    effectif_autorise = "eff_auto"
+    ),
+  import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_juillet2017.xlsx",
+    hta = "hta",
+    mta = "mta",
+    effectif_autorise = "eff_auto"
+    )
+  ) %>%
+  dplyr::distinct() %>%
+  dplyr::copy_to(dest = database_signauxfaibles, df = ., temporary = FALSE, name = "table_activitepartielle")
 ```
 
 ### Heures consommées
