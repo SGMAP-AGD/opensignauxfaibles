@@ -211,10 +211,21 @@ dplyr::bind_rows(
 ## Délais URSSAF
 
 ```{r import-delais}
-import_table_delais(
-  path = "data-raw/urssaf/Délais/Délais_bourgogne_01_2013_01_2017.csv"
+db_drop_table_ifexist(db = database_signauxfaibles, "table_ccsv")
+
+purrr::map(
+  .x = dir(path = "data-raw/delais/", pattern = "*.csv") %>%
+    paste0("data-raw/delais/", .),
+  .f = import_table_delais
   ) %>%
-  glimpse()
+  dplyr::bind_rows() %>%
+  dplyr::distinct() %>%
+  dplyr::copy_to(
+    dest = database_signauxfaibles,
+    df = .,
+    name = "table_ccsv",
+    temporary = FALSE
+    )
 ```
 
 ## SIRENE
