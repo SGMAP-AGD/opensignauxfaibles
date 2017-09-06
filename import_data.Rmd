@@ -165,11 +165,21 @@ purrr::map(
 
 ## Effectifs
 
-```{r}
+```{r import-effectif}
+db_drop_table_ifexist(
+  db = database_signauxfaibles, 
+  table = "table_effectif"
+  )
+
 import_table_effectif2(
-  path = "data-raw/urssaf/emploi/Urssaf_emploi_BFC_201001_201701.csv"
+  path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201705.csv"
   ) %>% 
-  glimpse()
+  dplyr::copy_to(
+    dest = database_signauxfaibles,
+    df = .,
+    name = "table_effectif",
+    temporary = FALSE
+    )
 ```
 
 ## NAF
