@@ -135,6 +135,56 @@ import_table_cotisation_csv <- function(path) {
     )
 }
 
+#' Import table cotisation
+#'
+#' @param path path to the data
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' import_table_cotisation(path = "raw-data/urssaf/Urssaf_bourgogne_Cotis_dues_histo_31_08_2016.txt")
+#' }
+#'
+import_table_cotisation <- function(path) {
+  table <- readr::read_fwf(
+    file = path,
+    readr::fwf_empty(
+      file = path,
+      skip = 2,
+      col_names = c(
+        "numero_compte", "periode_debit", "cotisation_mise_en_recouvrement",
+        "cotisation_encaissee_directement", "periode",
+        "cotisation_due", "numero_ecart_negatif"
+      )
+    ),
+    skip = 2,
+    col_types = readr::cols(
+      numero_compte = readr::col_character(),
+      periode_debit = readr::col_character(),
+      cotisation_mise_en_recouvrement = readr::col_number(),
+      cotisation_encaissee_directement = readr::col_number(),
+      periode = readr::col_character(),
+      cotisation_due = readr::col_number(),
+      numero_ecart_negatif = readr::col_character()
+    )
+  )
+
+  table <- convert_urssaf_periods_(.data = table, .variable = ~ periode)
+
+  table <- table %>%
+    dplyr::select(
+      numero_compte, periodicity, period,
+      numero_ecart_negatif,
+      cotisation_mise_en_recouvrement,
+      cotisation_encaissee_directement,
+      cotisation_due
+    )
+
+  return(table)
+}
+
 #' Import table debits
 #'
 #' @param path the path to the debit files
