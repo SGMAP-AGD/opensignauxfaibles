@@ -191,9 +191,21 @@ import_table_naf(path = "data-raw/insee/naf/naf2008_5_niveaux.xls") %>%
 
 ## Données CCSV
 
-```{r}
-import_table_ccsv(path = "data-raw/urssaf/Ccsf/FRC_ccsf.csv") %>% 
-  glimpse()
+```{r import-ccsv}
+db_drop_table_ifexist(db = database_signauxfaibles, "table_ccsv")
+
+dplyr::bind_rows(
+  import_table_ccsv(path = "data-raw/ccsv/Bourgogne_ccsf.csv"),
+  import_table_ccsv(path = "data-raw/ccsv/FRC_ccsf.csv")
+  ) %>%
+  dplyr::distinct() %>%
+  dplyr::copy_to(
+    dest = database_signauxfaibles,
+    df = .,
+    name = "table_ccsv",
+    temporary = FALSE,
+    indexes = list("compte")
+  )
 ```
 
 ## Délais URSSAF
