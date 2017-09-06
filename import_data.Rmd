@@ -6,6 +6,7 @@ output: html_notebook
 ```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
+library("purrr")
 database_signauxfaibles <- database_connect() 
 ```
 
@@ -61,7 +62,12 @@ dplyr::bind_rows(
     )
   ) %>%
   dplyr::distinct() %>%
-  dplyr::copy_to(dest = database_signauxfaibles, df = ., temporary = FALSE, name = "table_activitepartielle")
+  dplyr::copy_to(
+    dest = database_signauxfaibles, 
+    df = ., 
+    temporary = FALSE, 
+    name = "table_activitepartielle"
+    )
 ```
 
 ### Heures consommées
@@ -98,12 +104,16 @@ table_apart_heuresconsommees3 <- import_apart_heuresconsommees(
 
 bind_rows(table_apart_heuresconsommees1, table_apart_heuresconsommees2, table_apart_heuresconsommees3) %>%
   dplyr::distinct() %>%
-  copy_to(dest = database_signauxfaibles, df = ., name = "table_apart_consommee", temporary = FALSE)
+  copy_to(
+    dest = database_signauxfaibles, 
+    df = ., 
+    name = "table_apart_consommee", 
+    temporary = FALSE
+    )
 ```
 
 
 ## Cotisations URSSAF
-
 
 ```{r import-cotisations}
 db_drop_table_ifexist(
@@ -124,25 +134,33 @@ dplyr::bind_rows(
   dplyr::copy_to(
     dest = database_signauxfaibles,
     df = .,
+    name = "table_cotisation", 
     temporary = FALSE,
     indexes = list("numero_compte", "period")
     )
 ```
 
-```{r}
-import_table_cotisation_csv(
-  path = "data-raw/urssaf/cotisations dues/Urssaf_frc_cotis_dues_02_2017_03_2017.csv"
-  ) %>% 
-  glimpse()
-```
-
 ## Débits URSSAF
 
-```{r}
-import_table_debit(
-  path = "data-raw/urssaf/debits/Debits_frc_02_2017_03_2017.csv"
+```{r import-debits}
+db_drop_table_ifexist(
+  db = database_signauxfaibles,
+  table = "table_debit"
+)
+
+purrr::map(
+  .x = dir(path = "data-raw/debits/", pattern = "*\\.csv") %>%
+    paste0("data-raw/debits/", .),
+  .f = import_table_debit
   ) %>%
-  glimpse()
+  dplyr::bind_rows() %>%
+  dplyr::distinct() %>%
+  dplyr::copy_to(
+    dest = database_signauxfaibles,
+    df = .,
+    name = "table_debit", 
+    temporary = FALSE
+  )
 ```
 
 ## Effectifs
