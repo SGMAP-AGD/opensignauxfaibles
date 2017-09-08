@@ -748,11 +748,11 @@ compute_filter_ccsv <- function(db, .date) {
   periode <- .date
   .date <- lubridate::ymd(.date)
 
-  dplyr::tbl(src = db, from = "table_ccsv") %>%
-    dplyr::filter_(.dots = ~ date_de_traitement < .date) %>%
-    dplyr::distinct_(.dots = ~ compte) %>%
-    dplyr::select(numero_compte = compte) %>%
-    dplyr::mutate(periode = as.character(periode))
+  dplyr::tbl(src = database_signauxfaibles, from = "table_ccsv") %>%
+    dplyr::filter_(.dots = ~ date_creation < .date) %>%
+    dplyr::select_(.dots = ~ numero_compte ) %>%
+    dplyr::mutate_(.dots = list("periode" = ~ as.character(periode))) %>%
+    dplyr::distinct_()
 
 }
 

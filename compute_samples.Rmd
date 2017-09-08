@@ -1,6 +1,8 @@
 ---
 title: "Compute whole samples"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 ```{r setup}
