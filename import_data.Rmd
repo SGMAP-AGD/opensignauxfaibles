@@ -59,6 +59,12 @@ dplyr::bind_rows(
     hta = "hta",
     mta = "mta",
     effectif_autorise = "eff_auto"
+    ), 
+  import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_août2017.xlsx",
+    hta = "hta",
+    mta = "mta",
+    effectif_autorise = "eff_auto"
     )
   ) %>%
   dplyr::distinct() %>%
