@@ -361,16 +361,6 @@ Source: CRAN
 Version: 1.0-6
 Hash: 1f55cdac387721d4eda1126ac9aba73b
 
-Package: openentreprise
-Source: github
-Version: 0.1.0
-Hash: 3fa698228ac93d9f765b530d26f3de2d
-Requires: dplyr, httr, lubridate, magrittr, purrr, stringr, tibble
-GithubRepo: openentreprise
-GithubUsername: pachevalier
-GithubRef: master
-GithubSha1: 3fdaf32ba2b3cbc2ed2b18cb9bcbf95d811abe5e
-
 Package: openssl
 Source: CRAN
 Version: 0.9.6
