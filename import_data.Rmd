@@ -81,36 +81,43 @@ dplyr::bind_rows(
 ```{r import-apart-heuresconsommees}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consommee")
 
-table_apart_heuresconsommees1 <- import_apart_heuresconsommees(
-  path = "data-raw/activite_partielle/act_partielle_consommée.xlsx",
-  sheet = "INDEMNITE",
-  skip = 0,
-  date = "mois_concerne_par_le_paiement",
-  effectif_concerne = "effectifs_concernes_par_le_paiement",
-  heures_consommees = "heures_consommees",
-  montants = "montants_des_heures_consommees")
-
-table_apart_heuresconsommees2 <- import_apart_heuresconsommees(
-  path = "data-raw/activite_partielle/act_partielle_conso_juin17.xlsx",
-  sheet = "INDEMNITE",
-  skip = 0,
-  date = "mois",
-  effectif_concerne = "effectifs",
-  heures_consommees = "heures",
-  montants = "montants")
-
-table_apart_heuresconsommees3 <- import_apart_heuresconsommees(
-  path = "data-raw/activite_partielle/act_partielle_conso_juillet2017.xlsx",
-  sheet = "INDEMNITE",
-  skip = 1,
-  date = "mois",
-  effectif_concerne = "effectifs",
-  heures_consommees = "heures",
-  montants = "montants")
-
-bind_rows(table_apart_heuresconsommees1, table_apart_heuresconsommees2, table_apart_heuresconsommees3) %>%
+dplyr::bind_rows(
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_consommée.xlsx",
+    sheet = "INDEMNITE",
+    skip = 0,
+    date = "mois_concerne_par_le_paiement",
+    effectif_concerne = "effectifs_concernes_par_le_paiement",
+    heures_consommees = "heures_consommees",
+    montants = "montants_des_heures_consommees"), 
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_conso_juin17.xlsx",
+    sheet = "INDEMNITE",
+    skip = 0,
+    date = "mois",
+    effectif_concerne = "effectifs",
+    heures_consommees = "heures",
+    montants = "montants"), 
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_conso_juillet2017.xlsx",
+    sheet = "INDEMNITE",
+    skip = 1,
+    date = "mois",
+    effectif_concerne = "effectifs",
+    heures_consommees = "heures",
+    montants = "montants"), 
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_conso_août2017.xlsx",
+    sheet = "INDEMNITE",
+    skip = 0,
+    date = "mois",
+    effectif_concerne = "effectifs",
+    heures_consommees = "heures",
+    montants = "montants"
+    )
+  ) %>%
   dplyr::distinct() %>%
-  copy_to(
+  dplyr::copy_to(
     dest = database_signauxfaibles, 
     df = ., 
     name = "table_apart_consommee", 
