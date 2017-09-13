@@ -8,13 +8,13 @@ library("opensignauxfaibles")
 ```
 
 ```{r}
-dplyr::tbl(database_signauxfaibles, "output_2017_07_05") %>% 
+table_predictions <- dplyr::tbl(database_signauxfaibles, "output_2017_09_13") %>% 
   dplyr::anti_join(
-    y = compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01"), 
+    y = compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-07-01"), 
     by = "numero_compte"
   ) %>% 
   dplyr::anti_join(
-    y = compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-03-01"), 
+    y = compute_filter_ccsv(db = database_signauxfaibles, .date = "2017-07-01"), 
     by = c("numero_compte") 
   ) %>% 
   arrange(
@@ -33,3 +33,9 @@ dplyr::tbl(database_signauxfaibles, "output_2017_07_05") %>%
   collect() %>%
   slice(1:100) 
 ```
+
+```{r}
+table_predictions %>% 
+  readr::write_csv(path = "data/table_predictions_2017_09_13.csv")
+```
+
