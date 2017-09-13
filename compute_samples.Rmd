@@ -3,6 +3,10 @@ title: "Compute whole samples"
 output:
   html_document: default
   html_notebook: default
+params: 
+  start: "2013-01-01"
+  end: "2017-07-01"
+  last: "2017-05-01"
 ---
 
 ```{r setup}
@@ -21,9 +25,9 @@ src_tbls(x = database_signauxfaibles)
 compute_wholesample_effectif(
   db = database_signauxfaibles,
   name = "wholesample_effectif",
-  start = "2013-01-01",
-  end = "2017-03-01", 
-  last = "2017-01-01")
+  start = params$start,
+  end = params$end, 
+  last = params$last)
 ```
 
 ## Altares
@@ -32,8 +36,8 @@ compute_wholesample_effectif(
 compute_wholesample_altares(
   db = database_signauxfaibles,
   name = "wholesample_altares",
-  start = "2013-01-01",
-  end = "2017-03-01")
+  start = params$start,
+  end = params$end)
 ```
 
 ### Préfiltre ALTARES
@@ -42,8 +46,8 @@ compute_wholesample_altares(
 compute_wholesample_prefilter_altares(
   db = database_signauxfaibles,
   name = "wholesample_prefilter_altares",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -53,8 +57,8 @@ compute_wholesample_prefilter_altares(
 compute_wholesample_apart(
   db = database_signauxfaibles,
   name = "wholesample_apart",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -62,8 +66,8 @@ compute_wholesample_apart(
 compute_wholesample_apartconsommee(
   db = database_signauxfaibles,
   name = "wholesample_apartconsommee",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -73,8 +77,8 @@ compute_wholesample_apartconsommee(
 compute_wholesample_meancotisation(
   db = database_signauxfaibles,
   name = "wholesample_meancotisation",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -84,8 +88,8 @@ compute_wholesample_meancotisation(
 compute_wholesample_dettecumulee(
   db = database_signauxfaibles,
   name = "wholesample_dettecumulee",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -93,8 +97,9 @@ compute_wholesample_dettecumulee(
 compute_wholesample_lagdettecumulee(
   db = database_signauxfaibles,
   name = "wholesample_lagdettecumulee",
-  start = "2013-01-01",
-  end = "2017-03-01")
+  start = params$start,
+  end = params$end
+  )
 ```
 
 ## Nombre de débits
@@ -103,8 +108,8 @@ compute_wholesample_lagdettecumulee(
 compute_wholesample_nbdebits(
   db = database_signauxfaibles,
   name = "wholesample_nbdebits",
-  start =  "2013-01-01",
-  end = "2017-03-01")
+  start =  params$start,
+  end = params$end)
 ```
 
 ## Délais URSSAF
@@ -113,8 +118,8 @@ compute_wholesample_nbdebits(
 compute_wholesample_delais(
   db = database_signauxfaibles,
   name = "wholesample_delais",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
@@ -124,19 +129,22 @@ compute_wholesample_delais(
 compute_wholesample_ccsv(
   db = database_signauxfaibles,
   name = "wholesample_ccsv",
-  start = "2013-01-01",
-  end = "2017-03-01"
+  start = params$start,
+  end = params$end
   )
 ```
 
 ## Whole sample
 
 ```{r}
-compute_wholesample(db = database_signauxfaibles, name = "wholesample")
+compute_wholesample(
+  db = database_signauxfaibles, 
+  name = "wholesample"
+  )
 ```
 
 ```{r}
-collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 ```
 
 ```{r}
