@@ -10,6 +10,22 @@ library(ggplot2)
 database_signauxfaibles <- database_connect()
 ```
 
+## Table effectif
+
+```{r effectif-list-variables}
+tbl(database_signauxfaibles, "table_effectif") %>%
+  collect(n = 5) %>%
+  glimpse()
+```
+
+```{r}
+tbl(database_signauxfaibles, "table_effectif") %>%
+  count(period) %>%
+  collect() %>%
+  mutate(date = lubridate::ymd(paste0(period, "-01"))) %>%
+  arrange(date)
+```
+
 ## Activité partielle consommée
 
 ```{r}
