@@ -217,7 +217,7 @@ dplyr::bind_rows(
     df = .,
     name = "table_ccsv",
     temporary = FALSE,
-    indexes = list("compte")
+    indexes = list("numero_compte")
   )
 ```
 

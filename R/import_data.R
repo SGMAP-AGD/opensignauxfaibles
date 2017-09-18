@@ -408,7 +408,7 @@ import_table_ccsv <- function(path) {
       `Code externe de l'action` = readr::col_character()
     ),
     locale = readr::locale(decimal_mark = ",")
-  ) %>%
+    ) %>%
     tricky::set_standard_names(.data = .) %>%
     dplyr::mutate_(
       .dots = list(
@@ -417,7 +417,8 @@ import_table_ccsv <- function(path) {
           x = quote(date_de_traitement)
         )
       )
-    )
+    ) %>%
+    rename("numero_compte" = compte)
 }
 
 #' Import table délais
