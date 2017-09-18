@@ -46,3 +46,30 @@ get_siret <- function(db, .numero_compte) {
     dplyr::collect() %>%
     .$siret
 }
+
+#' Get accountnumber
+#'
+#' @param db a database connexion
+#' @param .siret a siret number
+#'
+#' @return a string
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' get_accountnumber(
+#' db = database_signauxfaibles,
+#' .siret = "33289883200040"
+#' )
+#' }
+#'
+get_accountnumber <- function(db, .siret) {
+  dplyr::tbl(src = db, "table_effectif") %>%
+    dplyr::filter_(.dots = list(~ siret == .siret)) %>%
+    dplyr::select_(.dots = ~ compte) %>%
+    dplyr::distinct_() %>%
+    dplyr::collect() %>%
+    .$compte
+}
+
