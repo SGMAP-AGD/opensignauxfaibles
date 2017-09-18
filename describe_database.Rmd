@@ -23,7 +23,7 @@ tbl(database_signauxfaibles, "table_effectif") %>%
   count(period) %>%
   collect() %>%
   mutate(date = lubridate::ymd(paste0(period, "-01"))) %>%
-  arrange(date)
+  arrange(desc(date))
 ```
 
 ## Activité partielle consommée
@@ -34,7 +34,7 @@ tbl(database_signauxfaibles, "table_apart_consommee") %>%
   glimpse()
 ```
 
-```{r}
+```{r count-apart-consommee}
 tbl(database_signauxfaibles, "table_apart_consommee") %>%
   filter(is.na(date) == FALSE) %>%
   group_by(date) %>% 
@@ -45,8 +45,50 @@ tbl(database_signauxfaibles, "table_apart_consommee") %>%
   mutate(year = lubridate::year(date)) %>%
   ggplot() + 
     geom_col(
-      mapping = aes(x = date, y = heures_consommees)
+      mapping = aes(x = date, y = heures_consommees), 
+      col = "white"
+    ) 
+```
+
+
+## Table CCSV
+
+### Répartition des plan CCSF par mois
+
+```{r count-ccsv}
+tbl(src = database_signauxfaibles, "table_ccsv") %>%
+  collect() %>%
+  mutate(ym = lubridate::ymd(
+    paste0(
+      lubridate::year(date_creation), "-",
+      lubridate::month(date_creation),
+      "-01")
+      )
+    ) %>%
+  count(ym) %>%
+  ggplot() +
+  geom_col(
+    mapping = aes(x = ym, y = n)
     ) +
-  facet_wrap(~ year, scale = "free_x", ncol = 2)
+  scale_x_date()
+```
+
+## Table des débits
+
+```{r count-table-debits}
+dplyr::tbl(database_signauxfaibles, "table_debit") %>%
+  filter(periodicity == "monthly") %>%
+  dplyr::count(period) %>%
+  dplyr::collect()   %>%
+  dplyr::mutate(date = lubridate::ymd(paste0(period, "-01"))) %>%
+  dplyr::arrange(desc(date)) %>%
+  ggplot2::ggplot() +
+  ggplot2::geom_col(
+    mapping = aes(x = date, y = n),
+    col = "white"
+    ) +
+  ggplot2::scale_x_date(
+    limits = lubridate::ymd(c("2010-01-01", "2017-12-01"))
+    )
 ```
 
