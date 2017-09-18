@@ -1,8 +1,10 @@
 ---
 title: "R Notebook"
-output: html_notebook
-params: 
-  actual_date: "2017-07-01"
+params:
+  actual_date: '2017-07-01'
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 ```{r}
