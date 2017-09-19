@@ -7,7 +7,7 @@ output:
   html_notebook: default
 ---
 
-```{r}
+```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
 database_signauxfaibles <- database_connect()
@@ -17,9 +17,10 @@ sample_train <- table_wholesample %>%
 sample_test <- table_wholesample %>%
   filter(periode == "2015-01-01")
 sample_actual <- table_wholesample %>%
-  filter(periode == "2017-01-01")
+  filter(periode == params$actual_date)
 ```
-```{r}
+
+```{r check-na}
 table_wholesample %>% 
   detect_na()
 ```
@@ -66,7 +67,7 @@ formulas_0_12 <- list(
 )
 ```
 
-```{r}
+```{r compare-auc}
 plyr::ldply(
   .data = formulas_0_12,
   .fun = function(x) {
@@ -79,7 +80,7 @@ plyr::ldply(
   )  
 ```
 
-```{r}
+```{r compute-prediction}
 output_prediction_0_12 <- formulas_0_12$dettecumulee %>%
   glm(
     formula = .,
@@ -90,18 +91,64 @@ output_prediction_0_12 <- formulas_0_12$dettecumulee %>%
     newdata = sample_actual,
     type.predict = "response"
   ) %>%
-  rename(prediction_0_12 = .fitted) 
+  dplyr::rename(prediction_0_12 = .fitted) 
+```
+
+```{r export-top100}
+output_prediction_0_12 %>%
+  dplyr::anti_join(
+    y = compute_filter_proccollectives(
+      db = database_signauxfaibles,
+      .date = "2017-08-01"),
+    by = "numero_compte",
+    copy = TRUE
+  ) %>%
+  dplyr::anti_join(
+    y = compute_filter_ccsv(
+      db = database_signauxfaibles,
+      .date = "2017-08-01"),
+    by = c("numero_compte"),
+    copy = TRUE
+  ) %>%
+  dplyr::arrange(
+    dplyr::desc(
+      prediction_0_12
+    )
+  ) %>%
+  dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
+  dplyr::select(raison_sociale, siren, siret,
+         libelle_naf_niveau1, code_departement, siege,
+         prediction_0_12,
+         effectif,
+         apart_last12_months, apart_consommee, apart_share_heuresconsommees,
+         nb_debits, delai, delai_sup_6mois
+  ) %>%
+  dplyr::slice(1:100) %>%
+  readr::write_csv(path = "data/table_predictions_2017_09_18.csv")
 ```
 
 ```{r}
-output_prediction_0_12
+output_prediction_0_12 %>%
+  dplyr::anti_join(
+    y = compute_filter_proccollectives(
+      db = database_signauxfaibles,
+      .date = "2017-08-01"),
+    by = "numero_compte",
+    copy = TRUE
+  ) %>%
+  dplyr::anti_join(
+    y = compute_filter_ccsv(
+      db = database_signauxfaibles,
+      .date = "2017-08-01"),
+    by = c("numero_compte"),
+    copy = TRUE
+  ) %>%
+  dplyr::arrange(
+    dplyr::desc(
+      prediction_0_12
+    )
+  ) %>%
+  dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
+  readr::write_csv(path = "data/table_predictions_2017_09_18_all.csv")
 ```
 
-```{r}
-db_drop_table_ifexist(db = database_signauxfaibles, "output_2017_09_13")
-dplyr::copy_to(
-  dest = database_signauxfaibles, 
-  df = output_prediction_0_12, 
-  name = "output_2017_09_13"
-  )
-```
