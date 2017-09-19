@@ -73,3 +73,30 @@ get_accountnumber <- function(db, .siret) {
     .$compte
 }
 
+
+#' is ccsf
+#'
+#' @param db a database connexion
+#' @param siret a valid siret number
+#'
+#' @return a boolean
+#' @export
+#'
+#' @examples
+#'
+
+is_ccsf <- function(db, siret) {
+
+  account_number <- get_accountnumber(
+    db = database_signauxfaibles,
+    .siret = siret
+  )
+
+  dplyr::tbl(src = db, from = "table_ccsv") %>%
+    dplyr::filter(numero_compte == account_number) %>%
+    dplyr::collect() %>%
+    nrow() > 0
+
+}
+
+
