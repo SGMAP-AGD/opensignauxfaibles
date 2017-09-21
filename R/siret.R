@@ -148,3 +148,30 @@ get_effectif <- function(db, .siret) {
     dplyr::collect()
 }
 
+#' Plot effectif
+#'
+#' @param db a database connexion
+#' @param .siret siret number
+#'
+#' @return a ggplot
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' plot_effectif(db = database_signauxfaibles, .siret = "40094678600011")
+#' }
+#'
+plot_effectif <- function(db, .siret) {
+  get_effectif(db = db, .siret = .siret) %>%
+    dplyr::mutate_(
+      .dots = list(
+        "date" = ~ lubridate::ymd(paste0(period, "-01")),
+        "yearmon" = ~ zoo::as.yearmon(date)
+      )) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes(x = yearmon, y = effectif),
+      color = "white"
+    ) +
+    zoo::scale_x_yearmon()
+}
