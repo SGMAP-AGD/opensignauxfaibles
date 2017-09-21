@@ -19,8 +19,5 @@ Get raison sociale
 }
 \examples{
 
-\dontrun{
-get_raisonsociale(db = database_signauxfaibles, .siret = "03578024600027")
-}
 
 }

@@ -14,12 +14,16 @@ database_signauxfaibles <- database_connect()
 sirene <- get_sirene(db = database_signauxfaibles, .siret = params$siret)
 ```
 
+## Informations principales
+
 - Raison sociale : `r get_raisonsociale(db = database_signauxfaibles, .siret = params$siret)`
 - SIRET : `r params$siret`
 - SIREN : `r sirene$siren`
 - Numero URSSAF : `r get_accountnumber(db = database_signauxfaibles, .siret = params$siret)`
 - Date de création : `r format(ymd(paste0(sirene$date_creation_etablissement, "-01")), "%m-%Y")` (source SIRENE)
 - Secteur d'activité : `r sirene$libelle_naf_niveau1`
+
+## Effectif
 
 ```{r}
 get_effectif(db = database_signauxfaibles, .siret = params$siret)
@@ -29,11 +33,20 @@ get_effectif(db = database_signauxfaibles, .siret = params$siret)
 plot_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
+## Plan CCSF
+
 ```{r}
 is_ccsf(db = database_signauxfaibles, siret = params$siret)
 ```
+
+## Cotisations
+
 ```{r}
 get_meancotisation(db = database_signauxfaibles, siret = params$siret)
+```
+
+```{r}
+plot_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
 

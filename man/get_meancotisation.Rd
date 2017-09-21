@@ -11,6 +11,9 @@ get_meancotisation(db, siret)
 
 \item{siret}{a valid siret number}
 }
+\value{
+a table
+}
 \description{
 Get meancotisation
 }

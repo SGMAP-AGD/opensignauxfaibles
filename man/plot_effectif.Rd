@@ -18,8 +18,5 @@ a ggplot
 Plot effectif
 }
 \examples{
-\dontrun{
-plot_effectif(db = database_signauxfaibles, .siret = "40094678600011")
-}
 
 }

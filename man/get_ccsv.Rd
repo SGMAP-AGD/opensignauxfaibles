@@ -18,7 +18,5 @@ a tibble
 Get information in the CCSV table for a siret number
 }
 \examples{
-\dontrun{
-get_ccsv(db = database_signauxfaibles, .siret = '40094678600011')
-}
+
 }

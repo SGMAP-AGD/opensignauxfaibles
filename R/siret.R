@@ -9,9 +9,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' get_sirene(db = database_signauxfaibles, .siret = '40094678600011')
-#' }
+#'
 #'
 get_sirene <- function(db, .siret) {
   dplyr::tbl(src = db, from = "table_sirene") %>%
@@ -31,12 +29,6 @@ get_sirene <- function(db, .siret) {
 #'
 #' @examples
 #'
-#' \dontrun{
-#' get_siret(
-#' db = database_signauxfaibles,
-#' .numero_compte = "267000001600093120"
-#' )
-#' }
 #'
 get_siret <- function(db, .numero_compte) {
   dplyr::tbl(src = db, "table_effectif") %>%
@@ -57,15 +49,8 @@ get_siret <- function(db, .numero_compte) {
 #'
 #' @examples
 #'
-#' \dontrun{
-#' get_accountnumber(
-#' db = database_signauxfaibles,
-#' .siret = "33289883200040"
-#' )
-#' }
-#'
 get_accountnumber <- function(db, .siret) {
-  dplyr::tbl(src = db, "table_effectif") %>%
+  dplyr::tbl(src = db, from = "table_effectif") %>%
     dplyr::filter_(.dots = list(~ siret == .siret)) %>%
     dplyr::select_(.dots = ~ compte) %>%
     dplyr::distinct_() %>%
@@ -110,9 +95,7 @@ is_ccsf <- function(db, siret) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' get_ccsv(db = database_signauxfaibles, .siret = '40094678600011')
-#' }
+#'
 get_ccsv <- function(db, .siret) {
   .compte <- get_accountnumber(db = db, .siret = .siret)
   dplyr::tbl(src = db, from = "table_ccsv") %>%
@@ -131,9 +114,6 @@ get_ccsv <- function(db, .siret) {
 #'
 #' @examples
 #'
-#' \dontrun{
-#' get_raisonsociale(db = database_signauxfaibles, .siret = "03578024600027")
-#' }
 #'
 get_raisonsociale <- function(db, .siret) {
 
@@ -144,8 +124,6 @@ get_raisonsociale <- function(db, .siret) {
     magrittr::extract2("raison_sociale")
 
 }
-
-
 
 #' Get effecitf
 #'
@@ -158,9 +136,6 @@ get_raisonsociale <- function(db, .siret) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' get_effectif(db = database_signauxfaibles, .siret = "40094678600011")
-#' }
 #'
 get_effectif <- function(db, .siret) {
   dplyr::tbl(src = db, from = "table_effectif") %>%
@@ -178,9 +153,6 @@ get_effectif <- function(db, .siret) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' plot_effectif(db = database_signauxfaibles, .siret = "40094678600011")
-#' }
 #'
 plot_effectif <- function(db, .siret) {
   get_effectif(db = db, .siret = .siret) %>%
@@ -210,11 +182,34 @@ plot_effectif <- function(db, .siret) {
 get_meancotisation <- function(db, siret) {
 
   account_number <- get_accountnumber(db = db, .siret = siret)
-  dplyr::tbl(database_signauxfaibles, "wholesample_meancotisation") %>%
+  dplyr::tbl(src = db, from = "wholesample_meancotisation") %>%
     dplyr::filter_(
       .dots = list(~ numero_compte ==  account_number)
     ) %>%
-    dplyr::collect()
+    dplyr::collect() %>%
+    dplyr::mutate(periode = lubridate::ymd(periode))
 
 }
-get_meancotisation(db = database_signauxfaibles, siret = "34322975300037")
+
+#' Plot mean cotisation
+#'
+#' @param db database connexion
+#' @param siret a siret number
+#'
+#' @return a ggplot
+#' @export
+#'
+#' @examples
+#'
+plot_meancotisation <- function(db, siret) {
+  get_meancotisation(
+    db = db,
+    siret = siret) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes(
+        x = periode,
+        y = mean_cotisation_due)
+    ) +
+    ggplot2::scale_x_date()
+}

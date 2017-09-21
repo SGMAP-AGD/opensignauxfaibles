@@ -18,8 +18,5 @@ a tibble
 Get the effectif table for a siret number
 }
 \examples{
-\dontrun{
-get_effectif(db = database_signauxfaibles, .siret = "40094678600011")
-}
 
 }

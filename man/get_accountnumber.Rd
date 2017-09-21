@@ -19,11 +19,4 @@ Get accountnumber
 }
 \examples{
 
-\dontrun{
-get_accountnumber(
-db = database_signauxfaibles,
-.siret = "33289883200040"
-)
-}
-
 }

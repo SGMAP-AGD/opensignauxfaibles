@@ -18,8 +18,6 @@ a list
 get a list of information from the SIRENE database
 }
 \examples{
-\dontrun{
-get_sirene(db = database_signauxfaibles, .siret = '40094678600011')
-}
+
 
 }

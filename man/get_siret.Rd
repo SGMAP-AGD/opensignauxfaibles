@@ -19,11 +19,5 @@ Get siret
 }
 \examples{
 
-\dontrun{
-get_siret(
-db = database_signauxfaibles,
-.numero_compte = "267000001600093120"
-)
-}
 
 }
