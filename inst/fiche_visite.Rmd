@@ -29,3 +29,8 @@ get_effectif(db = database_signauxfaibles, .siret = params$siret)
 plot_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
+```{r}
+is_ccsf(db = database_signauxfaibles, siret = params$siret)
+```
+
+

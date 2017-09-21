@@ -99,6 +99,27 @@ is_ccsf <- function(db, siret) {
 
 }
 
+#' Get CCSV
+#'
+#' Get information in the CCSV table for a siret number
+#'
+#' @param db name of the database
+#' @param .siret a siret number
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_ccsv(db = database_signauxfaibles, .siret = '40094678600011')
+#' }
+get_ccsv <- function(db, .siret) {
+  .compte <- get_accountnumber(db = db, .siret = .siret)
+  dplyr::tbl(src = db, from = "table_ccsv") %>%
+    dplyr::filter_(.dots = list(~ compte == .compte)) %>%
+    dplyr::collect()
+}
+
 
 #' Get raison sociale
 #'
