@@ -196,3 +196,25 @@ plot_effectif <- function(db, .siret) {
     ) +
     zoo::scale_x_yearmon()
 }
+
+#' Get meancotisation
+#'
+#' @param db database connexion
+#' @param siret a valid siret number
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+get_meancotisation <- function(db, siret) {
+
+  account_number <- get_accountnumber(db = db, .siret = siret)
+  dplyr::tbl(database_signauxfaibles, "wholesample_meancotisation") %>%
+    dplyr::filter_(
+      .dots = list(~ numero_compte ==  account_number)
+    ) %>%
+    dplyr::collect()
+
+}
+get_meancotisation(db = database_signauxfaibles, siret = "34322975300037")
