@@ -100,3 +100,51 @@ is_ccsf <- function(db, siret) {
 }
 
 
+#' Get raison sociale
+#'
+#' @param db a database connexion
+#' @param .siret a siret number
+#'
+#' @return a string
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' get_raisonsociale(db = database_signauxfaibles, .siret = "03578024600027")
+#' }
+#'
+get_raisonsociale <- function(db, .siret) {
+
+  dplyr::tbl(src = db, from = "table_effectif") %>%
+    dplyr::filter_(.dots = ~ siret == .siret) %>%
+    dplyr::distinct_(.dots = ~ raison_sociale) %>%
+    dplyr::collect() %>%
+    magrittr::extract2("raison_sociale")
+
+}
+
+
+
+#' Get effecitf
+#'
+#' Get the effectif table for a siret number
+#'
+#' @param db a database connexion
+#' @param .siret a siret number
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_effectif(db = database_signauxfaibles, .siret = "40094678600011")
+#' }
+#'
+get_effectif <- function(db, .siret) {
+  dplyr::tbl(src = db, from = "table_effectif") %>%
+    dplyr::filter_(.dots = ~ siret == .siret) %>%
+    dplyr::select_(.dots = list(~ siret, ~ period, ~ effectif)) %>%
+    dplyr::collect()
+}
+
