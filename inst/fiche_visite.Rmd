@@ -1,0 +1,31 @@
+---
+title: "Fiche visite"
+params:
+  siret: '34322975300037'
+output:
+  html_notebook: default
+---
+
+
+```{r setup, echo=FALSE, message=FALSE}
+library("opensignauxfaibles")
+library("lubridate")
+database_signauxfaibles <- database_connect()
+sirene <- get_sirene(db = database_signauxfaibles, .siret = params$siret)
+```
+
+- Raison sociale : `r get_raisonsociale(db = database_signauxfaibles, .siret = params$siret)`
+- SIRET : `r params$siret`
+- SIREN : `r sirene$siren`
+- Numero URSSAF : `r get_accountnumber(db = database_signauxfaibles, .siret = params$siret)`
+- Date de création : `r format(ymd(paste0(sirene$date_creation_etablissement, "-01")), "%m-%Y")` (source SIRENE)
+- Secteur d'activité : `r sirene$libelle_naf_niveau1`
+
+```{r}
+get_effectif(db = database_signauxfaibles, .siret = params$siret)
+```
+
+```{r}
+plot_effectif(db = database_signauxfaibles, .siret = params$siret)
+```
+
