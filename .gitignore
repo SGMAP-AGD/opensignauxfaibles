@@ -11,3 +11,4 @@ data/
 packrat/lib*/
 packrat/src/*
 inst/fiches/*
+inst/*.html
