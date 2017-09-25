@@ -244,3 +244,33 @@ get_ratio_cotisation_effectif <- function(db, siret) {
     )
 
 }
+
+#' PLot ratio cotisation effectif
+#'
+#' @param db a database connexion
+#' @param siret a siret number
+#'
+#' @return a ggplot
+#' @export
+#'
+#' @examples
+#'
+plot_ratio_cotisation_effectif <- function(db, siret) {
+
+  get_ratio_cotisation_effectif(db = db, siret = siret) %>%
+    dplyr::mutate_(.dots = list("yearmon" = ~ zoo::as.yearmon(periode))) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes_string(
+        x = "yearmon",
+        y = "cotisation_effectif"
+      ),
+      color = "white"
+    ) +
+    zoo::scale_x_yearmon() +
+    ggplot2::scale_y_continuous(
+      labels = tricky::french_formatting
+    )
+}
+
+

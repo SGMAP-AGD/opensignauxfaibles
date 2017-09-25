@@ -49,4 +49,7 @@ get_meancotisation(db = database_signauxfaibles, siret = params$siret)
 plot_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
+```{r}
+plot_ratio_cotisation_effectif(db = database_signauxfaibles, siret = params$siret)
+```
 
