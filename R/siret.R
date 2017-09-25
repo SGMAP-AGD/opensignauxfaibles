@@ -140,7 +140,7 @@ get_raisonsociale <- function(db, .siret) {
 get_effectif <- function(db, .siret) {
   dplyr::tbl(src = db, from = "table_effectif") %>%
     dplyr::filter_(.dots = ~ siret == .siret) %>%
-    dplyr::select_(.dots = list(~ siret, ~ period, ~ effectif)) %>%
+    dplyr::select_(.dots = list(~ siret, ~ compte, ~ period, ~ effectif)) %>%
     dplyr::collect()
 }
 
@@ -212,4 +212,35 @@ plot_meancotisation <- function(db, siret) {
         y = mean_cotisation_due)
     ) +
     ggplot2::scale_x_date()
+}
+
+
+#' Get ratio cotisation effectif
+#'
+#' @param db database connexion
+#' @param siret siret number
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+get_ratio_cotisation_effectif <- function(db, siret) {
+
+  get_effectif(db = db, .siret = siret) %>%
+    dplyr::mutate(
+      periode = paste0(period, "-01")
+    ) %>%
+    dplyr::inner_join(
+      y = get_meancotisation(db = db, siret = siret) %>%
+        dplyr::mutate(periode = as.character(periode)),
+      by = c("compte" = "numero_compte", "periode")
+    ) %>%
+    dplyr::mutate_(
+      .dots = list("cotisation_effectif" = ~ mean_cotisation_due / effectif)
+    ) %>%
+    dplyr::select_(
+      .dots = list(~ siret, ~ periode, ~ cotisation_effectif)
+    )
+
 }
