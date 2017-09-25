@@ -3,6 +3,7 @@ title: "Fiche visite"
 params:
   siret: '34322975300037'
 output:
+  html_document: default
   html_notebook: default
 ---
 
@@ -45,11 +46,33 @@ is_ccsf(db = database_signauxfaibles, siret = params$siret)
 get_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
+## Evolution des cotisations moyennes
+
 ```{r}
 plot_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
+## Evolution des cotisations moyennes par salarié
+
 ```{r}
 plot_ratio_cotisation_effectif(db = database_signauxfaibles, siret = params$siret)
+```
+
+## Evolution de la part ouvriere cumulée
+
+```{r}
+plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "montant_part_ouvriere")
+```
+
+## Evolution de la dette patronale cumulée
+
+```{r}
+plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "montant_part_patronale")
+```
+
+## Evolution de la dette cumulée
+
+```{r}
+plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "dettecumulee")
 ```
 

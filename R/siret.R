@@ -273,4 +273,35 @@ plot_ratio_cotisation_effectif <- function(db, siret) {
     )
 }
 
+#' Plot dettecumulee
+#'
+#' @param db a database connexion
+#' @param siret a siret number
+#' @param variable a variable name ("montant_part_patronale", "dettecumulee", "montant_part_patronale")
+#'
+#' @return a ggplot
+#' @export
+#'
+#' @examples
+#'
+plot_dettecumulee <- function(db, siret, variable) {
+
+  account_number <- get_accountnumber(db = database_signauxfaibles, .siret = siret)
+  dplyr::tbl(src = db, "wholesample_dettecumulee") %>%
+    dplyr::filter(numero_compte == account_number) %>%
+    dplyr::collect() %>%
+    dplyr::mutate(
+      "yearmon" = zoo::as.yearmon(periode),
+      "dettecumulee" = montant_part_ouvriere + montant_part_patronale
+    ) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes_string(
+        x = "yearmon",
+        y = variable)
+    ) +
+    zoo::scale_x_yearmon()
+
+}
+
 
