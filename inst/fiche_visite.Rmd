@@ -76,3 +76,9 @@ plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable =
 plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "dettecumulee")
 ```
 
+## Evolution du ratio de dette cumulée sur les cotisations
+
+```{r}
+plot_ratio_dettecumulee_cotisation(db = database_signauxfaibles, siret = "34322975300037")
+```
+

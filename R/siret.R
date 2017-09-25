@@ -304,4 +304,60 @@ plot_dettecumulee <- function(db, siret, variable) {
 
 }
 
+#' Get ratio dettecumulee cotisation
+#'
+#' @param db a database connexion
+#' @param siret a siret number
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+get_ratio_dettecumulee_cotisation <- function(db, siret) {
 
+  account_number <- get_accountnumber(db = db, .siret = siret)
+
+  get_meancotisation(db = db, siret = siret) %>%
+    dplyr::mutate(periode = as.character(periode)) %>%
+    dplyr::inner_join(
+      y = dplyr::tbl(src = db, "wholesample_dettecumulee") %>%
+        dplyr::filter(numero_compte == account_number) %>%
+        dplyr::collect() %>%
+        dplyr::mutate(
+          "dettecumulee" = montant_part_ouvriere + montant_part_patronale
+        ),
+      by = c("numero_compte", "periode")
+    ) %>%
+    dplyr::mutate("ratio_dettecumulee_cotisation" = dettecumulee / mean_cotisation_due) %>%
+    dplyr::select(numero_compte, periode, ratio_dettecumulee_cotisation)
+
+}
+
+
+#' plot ratio dettecumulee cotisation
+#'
+#' @param db database connexion
+#' @param siret siret number
+#'
+#' @return a ggplot
+#' @export
+#'
+#' @examples
+#'
+plot_ratio_dettecumulee_cotisation <- function(db, siret) {
+  get_ratio_dettecumulee_cotisation(
+    db = db,
+    siret = siret) %>%
+    dplyr::mutate(
+      "yearmon" = zoo::as.yearmon(lubridate::ymd(periode))
+    ) %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes_string(
+        x = "yearmon",
+        y = "ratio_dettecumulee_cotisation"
+      )
+    ) +
+    zoo::scale_x_yearmon()
+}
