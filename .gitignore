@@ -10,3 +10,4 @@ keys.json
 data/
 packrat/lib*/
 packrat/src/*
+inst/fiches/*
