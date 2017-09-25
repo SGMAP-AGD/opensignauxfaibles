@@ -1,0 +1,33 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("readr")
+library("rmarkdown")
+df_liste <- read_csv("data/list_siret.csv")
+```
+
+```{r}
+for (k in df_liste$siret) {
+  print(k)
+}
+```
+
+
+```{r}
+for (k in df_liste$siret) {
+  
+  rmarkdown::render(
+    input = "inst/fiche_visite.Rmd",
+    output_format = "pdf_document", 
+    params = list(
+      siret = k
+    ), 
+    output_file = paste0("fiches/fiche_", k, ".pdf")
+  )
+  
+}
+```
+

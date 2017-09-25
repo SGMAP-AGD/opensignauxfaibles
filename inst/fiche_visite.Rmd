@@ -29,13 +29,13 @@ sirene <- get_sirene(db = database_signauxfaibles, .siret = params$siret)
 get_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
-```{r}
+```{r plot-effectif}
 plot_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
 ## Plan CCSF
 
-```{r}
+```{r plan-ccsf}
 is_ccsf(db = database_signauxfaibles, siret = params$siret)
 ```
 
