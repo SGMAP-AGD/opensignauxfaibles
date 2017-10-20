@@ -70,3 +70,31 @@ database_connect <- function(file = "keys.json") {
   )
 
 }
+
+
+#' Map variables
+#'
+#' @param db database connexion
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map_variables(db = database_signauxfaibles)
+#' }
+map_variables <- function(db) {
+  purrr::map(
+    .x = dplyr::src_tbls(db),
+    .f = function(x) {
+      tibble::tibble(
+        table = x,
+        variables = dplyr::tbl(src = db, from = x) %>%
+          dplyr::collect(n = 1) %>%
+          names()
+      )
+    }
+  ) %>%
+  dplyr::bind_rows()
+
+}
