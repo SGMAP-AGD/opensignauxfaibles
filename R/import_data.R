@@ -565,7 +565,7 @@ import_apart_heuresconsommees <- function(path, sheet, skip, date, effectif_conc
 #'
 #' @examples
 #' \dontrun{
-#' import_table_sirene(path = "raw-data/direccte/bfc.sas7bdat")
+#' import_table_sirene(path = "data-raw/raw-data/direccte/bfc.sas7bdat")
 #' }
 #'
 import_table_sirene <- function(path) {

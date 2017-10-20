@@ -19,7 +19,7 @@ Import table SIREN
 }
 \examples{
 \dontrun{
-import_table_sirene(path = "raw-data/direccte/bfc.sas7bdat")
+import_table_sirene(path = "data-raw/raw-data/direccte/bfc.sas7bdat")
 }
 
 }
