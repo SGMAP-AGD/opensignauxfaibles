@@ -98,3 +98,26 @@ map_variables <- function(db) {
   dplyr::bind_rows()
 
 }
+
+
+
+#' Has variable
+#'
+#' @param db database connexion
+#' @param table table in the database
+#' @param variable variable to be checked
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' has_variable(db = database_signauxfaibles, table = "table_altares", variable = "siret")
+#' }
+has_variable <- function(db, table, variable) {
+  dplyr::tbl(src = db, from = table) %>%
+    dplyr::collect(n = 1) %>%
+    names() %>%
+    any(. == variable)
+}
+
