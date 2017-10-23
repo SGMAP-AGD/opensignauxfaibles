@@ -361,3 +361,25 @@ plot_ratio_dettecumulee_cotisation <- function(db, siret) {
     ) +
     zoo::scale_x_yearmon()
 }
+
+
+#' Get delais
+#'
+#' @param db database connexion
+#' @param siret a valid siret number
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' get_delais(db = database_signauxfaibles, siret = "54200362900020")
+#' }
+get_delais <- function(db, siret) {
+  account_number <- get_accountnumber(db = db, .siret = siret)
+  dplyr::tbl(src = db, from = "table_delais") %>%
+    dplyr::filter(numero_compte == account_number) %>%
+    dplyr::collect()
+}
+
