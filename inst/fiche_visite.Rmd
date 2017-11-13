@@ -82,3 +82,9 @@ plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable =
 plot_ratio_dettecumulee_cotisation(db = database_signauxfaibles, siret = "34322975300037")
 ```
 
+## Délais
+
+```{r getdelais}
+get_delais(database_signauxfaibles, siret = params$siret)
+```
+

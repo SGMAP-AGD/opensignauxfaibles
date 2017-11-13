@@ -1,0 +1,64 @@
+---
+title: "R Notebook"
+params:
+  siret: "33890543300136"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r}
+library("opensignauxfaibles")
+database_signauxfaibles <- database_connect()
+src_tbls(x = database_signauxfaibles)
+table_variables <- map_variables(db = database_signauxfaibles)
+
+list_tables_siret <- table_variables %>%
+  filter(grepl(pattern = "^table\\_", x = table)) %>%
+  filter(variables == "siret") %>%
+  .$table
+
+list_tables_compte <- table_variables %>%
+  filter(grepl(pattern = "^table\\_", x = table)) %>%
+  filter(variables == "numero_compte") %>%
+  .$table
+```
+
+```{r}
+plyr::ldply(
+  .data = list_tables_siret,
+  .fun = function(x) {
+    tibble::tibble(
+      table = x,
+      has_siret =
+        dplyr::tbl(database_signauxfaibles, from = x) %>%
+        dplyr::filter(siret == params$siret) %>%
+        dplyr::collect() %>%
+        nrow() > 0
+        )
+      }
+  )
+```
+
+
+```{r}
+account <- get_accountnumber(db = database_signauxfaibles, .siret = params$siret)
+account
+```
+
+```{r}
+plyr::ldply(
+  .data = list_tables_compte,
+  .fun = function(x) {
+    tibble::tibble(
+      table = x,
+      has_siret =
+        dplyr::tbl(database_signauxfaibles, from = x) %>%
+        dplyr::filter(numero_compte == account) %>%
+        dplyr::collect() %>%
+        nrow() > 0
+    )
+  }
+)
+```
+
