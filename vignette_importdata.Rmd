@@ -1,0 +1,38 @@
+---
+title: "Import de données"
+output: html_notebook
+---
+
+Cette vignette a pour objectif de tester les fonctions permettant de lire et d'importer les données brutes
+
+```{r setup}
+library("opensignauxfaibles")
+```
+
+
+## Données d'activité partielle
+
+```{r}
+import_table_activite_partielle(
+  path = "data-raw/activite_partielle/act_partielle_ddes_2012_mai2017.xlsx"
+  )
+```
+
+```{r}
+import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_juin2017.xlsx",
+    hta = "hta",
+    mta = "mta",
+    effectif_autorise = "eff_auto"
+    )
+```
+
+```{r}
+import_table_activite_partielle(
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_sept2017.xlsx",
+    hta = "hta",
+    mta = "mta",
+    effectif_autorise = "eff_auto"
+    )
+```
+
