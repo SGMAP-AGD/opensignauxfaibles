@@ -218,7 +218,7 @@ db_drop_table_ifexist(
   )
 
 import_table_effectif2(
-  path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201705.csv"
+  path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201707.csv"
   ) %>% 
   dplyr::copy_to(
     dest = database_signauxfaibles,
@@ -231,11 +231,11 @@ import_table_effectif2(
 ## NAF
 
 ```{r}
-import_table_naf(path = "data-raw/insee/naf/naf2008_5_niveaux.xls") %>% 
+import_table_naf(path = "data-raw/naf/naf2008_5_niveaux.xls") %>% 
   glimpse()
 ```
 
-## Données CCSV
+## Données CCSF
 
 ```{r import-ccsv}
 db_drop_table_ifexist(db = database_signauxfaibles, "table_ccsv")
@@ -275,6 +275,8 @@ purrr::map(
 ```
 
 ## SIRENE
+
+-> On n'importe plus SIRENE
 
 ```{r}
 import_table_sirene(path = "data-raw/direccte/sirene/bfc.sas7bdat")

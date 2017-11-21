@@ -66,3 +66,7 @@ import_apart_heuresconsommees(
 import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_cotis_dues_08_2017_10_2017.csv")
 ```
 
+```{r}
+import_table_effectif2(path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201707.csv")
+```
+
