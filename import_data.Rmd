@@ -127,6 +127,24 @@ dplyr::bind_rows(
     effectif_concerne = "effectifs",
     heures_consommees = "heures",
     montants = "montants"
+    ), 
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_conso_sept2017.xlsx",
+    sheet = "INDEMNITE",
+    skip = 0,
+    date = "mois",
+    effectif_concerne = "effectifs",
+    heures_consommees = "heures",
+    montants = "montants"
+    ), 
+  import_apart_heuresconsommees(
+    path = "data-raw/activite_partielle/act_partielle_conso_oct2017.xlsx",
+    sheet = "INDEMNITE",
+    skip = 0,
+    date = "mois",
+    effectif_concerne = "effectifs",
+    heures_consommees = "heures",
+    montants = "montants"
     )
   ) %>%
   dplyr::distinct() %>%

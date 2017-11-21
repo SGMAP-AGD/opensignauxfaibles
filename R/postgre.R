@@ -23,7 +23,7 @@ db_drop_table_ifexist <- function(db, table) {
 
     base::message(base::paste0("Dropping ", table))
 
-    dplyr::db_drop_table(db$con, table)
+    dplyr::db_drop_table(db$obj, table)
 
   } else {
 
