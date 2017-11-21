@@ -170,9 +170,11 @@ dplyr::bind_rows(
   import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_Cotis_dues_09_2016_01_2017.csv"),
   import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_cotis_dues_02_2017_03_2017.csv"),
   import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_cotis_dues_04_2017_07_2017.csv"),
+  import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_cotis_dues_08_2017_10_2017.csv"), 
   import_table_cotisation(path = "data-raw/cotisations/Cotis_dues.txt"),
   import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_frc_cotis_dues_02_2017_03_2017.csv"),
-  import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_frc_cotis_dues_04_2017_07_2017.csv")
+  import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_frc_cotis_dues_04_2017_07_2017.csv"), 
+  import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_frc_cotis_dues_08_2017_10_2017.csv")
   ) %>% 
   dplyr::distinct() %>%
   dplyr::copy_to(

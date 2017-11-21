@@ -60,3 +60,9 @@ import_apart_heuresconsommees(
     )
 ```
 
+## Données de cotisation
+
+```{r}
+import_table_cotisation_csv(path = "data-raw/cotisations/Urssaf_bourgogne_cotis_dues_08_2017_10_2017.csv")
+```
+
