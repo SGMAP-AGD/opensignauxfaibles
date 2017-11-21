@@ -18,7 +18,7 @@
 db_drop_table_ifexist <- function(db, table) {
 
   if (dplyr::db_has_table(
-    con = db$con,
+    con = db$obj,
     table = table) == TRUE) {
 
     base::message(base::paste0("Dropping ", table))

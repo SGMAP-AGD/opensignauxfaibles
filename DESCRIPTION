@@ -16,10 +16,10 @@ Imports: readr,
     lubridate,
     dplyr,
     readxl,
-    pkgdown,
     tricky,
     haven,
     zoo,
     tibble,
     pROC,
-    ggplot2
+    ggplot2,
+    rprojroot

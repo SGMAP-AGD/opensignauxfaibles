@@ -7,13 +7,14 @@ output: html_notebook
 library("opensignauxfaibles")
 library("dplyr")
 library("purrr")
-database_signauxfaibles <- database_connect() 
+library("RPostgreSQL")
+database_signauxfaibles <- database_connect()
 ```
 
 ## Import table altares
 
 ```{bash}
-in2csv data-raw/altares/RECAP_ALTARES.xls > data-raw/altares/RECAP_ALTARES.csv
+in2csv data-raw/altares/RECAP_ALTARES.xlsx > data-raw/altares/RECAP_ALTARES.csv
 ```
 
 ```{r}
