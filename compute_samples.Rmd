@@ -123,7 +123,7 @@ compute_wholesample_delais(
   )
 ```
 
-## Plan CCSV
+## Plan CCSF
 
 ```{r}
 compute_wholesample_ccsv(
@@ -134,7 +134,7 @@ compute_wholesample_ccsv(
   )
 ```
 
-## Whole sample
+## Wholesample
 
 ```{r}
 compute_wholesample(
