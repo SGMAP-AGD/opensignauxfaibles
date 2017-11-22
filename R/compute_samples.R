@@ -1140,10 +1140,6 @@ compute_wholesample <- function(db, name) {
       by = c("siret", "periode")
     ) %>%
     dplyr::inner_join(
-      y = compute_sample_sirene(db = db),
-      by = "siret"
-    ) %>%
-    dplyr::inner_join(
       y = dplyr::tbl(src = db, from = "wholesample_meancotisation"),
       by = c("numero_compte", "periode")
     ) %>%
