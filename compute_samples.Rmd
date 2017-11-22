@@ -144,7 +144,10 @@ compute_wholesample(
 ```
 
 ```{r}
-wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+wholesample <- collect_wholesample(
+  db = database_signauxfaibles, 
+  table = "wholesample"
+  )
 ```
 
 ```{r}

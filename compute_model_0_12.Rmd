@@ -1,11 +1,15 @@
 ---
 title: "R Notebook"
 params:
-  actual_date: '2017-07-01'
+  actual_date: '2017-10-01'
 output:
   html_document: default
   html_notebook: default
 ---
+
+```{r}
+params$actual_date
+```
 
 ```{r setup}
 library("opensignauxfaibles")
@@ -99,14 +103,14 @@ output_prediction_0_12 %>%
   dplyr::anti_join(
     y = compute_filter_proccollectives(
       db = database_signauxfaibles,
-      .date = "2017-08-01"),
+      .date = "2017-10-01"),
     by = "numero_compte",
     copy = TRUE
   ) %>%
   dplyr::anti_join(
     y = compute_filter_ccsv(
       db = database_signauxfaibles,
-      .date = "2017-08-01"),
+      .date = "2017-10-01"),
     by = c("numero_compte"),
     copy = TRUE
   ) %>%
@@ -116,15 +120,16 @@ output_prediction_0_12 %>%
     )
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
-  dplyr::select(raison_sociale, siren, siret,
-         libelle_naf_niveau1, code_departement, siege,
-         prediction_0_12,
-         effectif,
-         apart_last12_months, apart_consommee, apart_share_heuresconsommees,
-         nb_debits, delai, delai_sup_6mois
+  dplyr::select(
+        raison_sociale, siret,
+        code_departement, 
+        prediction_0_12,
+        effectif,
+        apart_last12_months, apart_consommee, apart_share_heuresconsommees,
+        nb_debits, delai, delai_sup_6mois, everything()
   ) %>%
   dplyr::slice(1:100) %>%
-  readr::write_csv(path = "data/table_predictions_2017_09_18.csv")
+  readr::write_csv(path = "data/table_predictions_2017_11_22.csv")
 ```
 
 ```{r}
@@ -132,14 +137,14 @@ output_prediction_0_12 %>%
   dplyr::anti_join(
     y = compute_filter_proccollectives(
       db = database_signauxfaibles,
-      .date = "2017-08-01"),
+      .date = "2017-10-01"),
     by = "numero_compte",
     copy = TRUE
   ) %>%
   dplyr::anti_join(
     y = compute_filter_ccsv(
       db = database_signauxfaibles,
-      .date = "2017-08-01"),
+      .date = "2017-10-01"),
     by = c("numero_compte"),
     copy = TRUE
   ) %>%
@@ -149,6 +154,6 @@ output_prediction_0_12 %>%
     )
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
-  readr::write_csv(path = "data/table_predictions_2017_09_18_all.csv")
+  readr::write_csv(path = "data/table_predictions_2017_11_22_all.csv")
 ```
 
