@@ -55,7 +55,7 @@ compute_sample_effectif <- function(db, .date, .periode) {
     ) %>%
     dplyr::rename(numero_compte = compte) %>%
     dplyr::select(siret, numero_compte, raison_sociale, periode,
-                  code_departement, effectif, lag_effectif, lag_effectif_missing, growthrate_effectif
+                  code_departement, effectif, lag_effectif, lag_effectif_missing, growthrate_effectif, code_ape
                   )
 
 }
@@ -97,9 +97,7 @@ collect_sample_effectif <- function(db, .date, .periode) {
            code_departement, region,
            effectif, log_effectif,
            growthrate_effectif, log_growthrate_effectif,
-           lag_effectif_missing) %>%
-    dplyr::filter_(.dots = list( ~ effectif >= 10))
-
+           lag_effectif_missing, code_ape)
 }
 
 #' Compute whole sample effectif
@@ -134,6 +132,7 @@ compute_wholesample_effectif <- function(db, name, start, end, last) {
       }
     ) %>%
     dplyr::bind_rows() %>%
+    dplyr::filter(effectif >= 1) %>%
     dplyr::copy_to(
       dest = db,
       name = name,
