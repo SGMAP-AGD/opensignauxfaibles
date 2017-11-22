@@ -307,18 +307,20 @@ import_table_effectif2 <- function(path) {
     col_types = readr::cols(
       compte = readr::col_character(),
       SIRET = readr::col_character(),
-      dep = readr::col_character()
+      dep = readr::col_character(),
+      ape_ins = readr::col_character()
     )
   ) %>%
     tidyr::gather(
       key = yyyyqm,
       value = effectif,
-      - c(rais_soc,UR_EMET, SIRET, dep, compte)
+      - c(rais_soc,UR_EMET, SIRET, dep, compte, ape_ins)
     ) %>%
     dplyr::rename(
       raison_sociale = rais_soc,
       siret = SIRET,
-      code_departement = dep
+      code_departement = dep,
+      code_ape = ape_ins
     ) %>%
     dplyr::mutate(
       yyyyqm = stringr::str_replace(
@@ -331,9 +333,9 @@ import_table_effectif2 <- function(path) {
       .variable = ~ yyyyqm,
       format = "yyyyqm"
     ) %>%
-    dplyr::select(siret, compte, raison_sociale, code_departement, period, effectif) %>%
+    dplyr::select(siret, compte, raison_sociale, code_departement, period, effectif, code_ape) %>%
     dplyr::filter(is.na(effectif) == FALSE) %>%
-    dplyr::group_by(siret, compte, period, raison_sociale, code_departement) %>%
+    dplyr::group_by(siret, compte, period, raison_sociale, code_departement, code_ape) %>%
     dplyr::mutate(effectif = as.numeric(effectif)) %>%
     dplyr::summarise(effectif = sum(effectif))
   return(table_effectif)
