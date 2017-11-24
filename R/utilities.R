@@ -28,8 +28,8 @@ get_table_last_n_months <- function(.date, .n_months) {
   tibble::tibble(
     period = format(
       x = seq(
-        from = lubridate::ymd(.date) %m-% months(.n_months - 1),
-        to = lubridate::ymd(.date),
+        from = lubridate::ymd(.date) %m-% months(.n_months),
+        to = lubridate::ymd(.date) %m-% months(1),
         by = "month"
       ),
       format = "%Y-%m"

@@ -611,6 +611,51 @@ compute_wholesample_dettecumulee <- function(db, name, start, end) {
     )
 }
 
+
+#' Calcul de la dette cumulée à 12 mois
+#'
+#' @param db a database
+#' @param .date a date
+#'
+#' @return a table in the database
+#' @export
+#'
+#' @examples
+#'
+#'  \dontrun{
+#'  compute_sample_dettecumulee12M(db = database_signauxfaibles, .date = "2017-01-01")
+#'  }
+compute_sample_dettecumulee_12m <- function(db, .date) {
+
+  periode <- .date
+  .date <- lubridate::ymd(.date)
+
+  dplyr::tbl(db, from = "table_debit") %>%
+    dplyr::filter_(.dots = list(
+      ~ periodicity == "monthly",
+      ~ date_traitement_ecart_negatif <= .date)
+    ) %>%
+    dplyr::semi_join(
+      y = get_table_last_n_months(.date = .date, .n_months = 12),
+      by = "period",
+      copy = TRUE
+    ) %>%
+    dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~numero_historique_ecart_negatif == max(numero_historique_ecart_negatif)
+      )
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by_(~ numero_compte) %>%
+    dplyr::summarise(
+      montant_part_ouvriere = sum(montant_part_ouvriere),
+      montant_part_patronale = sum(montant_part_patronale)
+    ) %>%
+    mutate(periode = as.character(periode))
+
+}
+
 #' DEPRECATED Compute sample growth dette cumulee
 #'
 #' @param db name of the database

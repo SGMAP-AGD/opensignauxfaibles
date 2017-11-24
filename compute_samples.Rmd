@@ -27,7 +27,8 @@ compute_wholesample_effectif(
   name = "wholesample_effectif",
   start = params$start,
   end = params$end, 
-  last = params$last)
+  last = params$last
+  )
 ```
 
 ## Altares
