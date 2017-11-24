@@ -143,6 +143,7 @@ compute_wholesample(
   )
 ```
 
+
 ```{r}
 wholesample <- collect_wholesample(
   db = database_signauxfaibles, 

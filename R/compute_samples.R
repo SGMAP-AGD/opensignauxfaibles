@@ -1167,6 +1167,10 @@ compute_wholesample <- function(db, name) {
       y = dplyr::tbl(src = db, "wholesample_apart"),
       by = c("siret", "periode")
       ) %>%
+    dplyr::left_join(
+      y = import_table_naf(path = "data-raw/naf/naf2008_5_niveaux.xls"),
+      by = c("code_ape" = "code_naf_niveau5"),
+      copy = TRUE) %>%
     dplyr::compute(name = name, temporary = FALSE)
 
 }

@@ -369,7 +369,7 @@ import_table_naf <- function(path) {
     ) %>%
     dplyr::left_join(
       y = readxl::read_excel(
-        path = "data-raw/insee/naf/naf2008_liste_n1.xls",
+        path = "data-raw/naf/naf2008_liste_n1.xls",
         sheet = "Feuil1",
       skip = 3,
       col_names = c("code_naf_niveau1", "libelle_naf_niveau1")

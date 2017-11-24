@@ -17,11 +17,14 @@ library("dplyr")
 database_signauxfaibles <- database_connect()
 table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 sample_train <- table_wholesample %>%
-  filter(periode == "2014-01-01")
+  filter(periode == "2015-01-01") %>%
+  filter(effectif >= 10)
 sample_test <- table_wholesample %>%
-  filter(periode == "2015-01-01")
+  filter(periode == "2016-01-01") %>%
+  filter(effectif >= 10)
 sample_actual <- table_wholesample %>%
-  filter(periode == params$actual_date)
+  filter(periode == params$actual_date) %>%
+  filter(effectif >= 10)
 ```
 
 ```{r check-na}
@@ -121,7 +124,8 @@ output_prediction_0_12 %>%
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
   dplyr::select(
-        raison_sociale, siret,
+        raison_sociale, siret, 
+        libelle_naf_niveau1, 
         code_departement, 
         prediction_0_12,
         effectif,
