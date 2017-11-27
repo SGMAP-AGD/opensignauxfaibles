@@ -107,7 +107,7 @@ map_variables <- function(db) {
 #' @param table table in the database
 #' @param variable variable to be checked
 #'
-#' @return
+#' @return a boolean
 #' @export
 #'
 #' @examples
