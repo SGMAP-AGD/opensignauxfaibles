@@ -20,3 +20,4 @@ Map variables
 map_variables(db = database_signauxfaibles)
 }
 }
+

@@ -23,3 +23,4 @@ collect_sample_effectif(db = database_signauxfaibles, .date = "2017-01-01")
 }
 
 }
+

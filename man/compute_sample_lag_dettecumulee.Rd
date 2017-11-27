@@ -26,3 +26,4 @@ compute_sample_lag_dettecumulee(db = database_signauxfaibles, lag = 12, .date = 
 }
 
 }
+

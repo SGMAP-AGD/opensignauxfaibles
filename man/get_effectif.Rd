@@ -20,3 +20,4 @@ Get the effectif table for a siret number
 \examples{
 
 }
+

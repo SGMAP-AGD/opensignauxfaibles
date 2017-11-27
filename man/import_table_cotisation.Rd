@@ -21,3 +21,4 @@ import_table_cotisation(path = "raw-data/urssaf/Urssaf_bourgogne_Cotis_dues_hist
 }
 
 }
+

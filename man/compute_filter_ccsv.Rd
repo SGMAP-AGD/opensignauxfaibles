@@ -26,3 +26,4 @@ compute_filter_ccsv(db = database_signauxfaibles, .date = "2015-01-01")
 }
 
 }
+

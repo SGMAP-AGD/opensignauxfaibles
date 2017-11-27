@@ -20,3 +20,4 @@ Plot mean cotisation
 \examples{
 
 }
+

@@ -6,7 +6,7 @@
 \usage{
 import_table_activite_partielle(path, hta = "hta_heures_totales_autorisees",
   mta = "mta_montant_total_autorise",
-  effectif_autorise = "eff_auto_:_effectif_autorise_a_chomer")
+  effectif_autorise = "eff_auto_effectif_autorise_a_chomer")
 }
 \arguments{
 \item{path}{path}
@@ -35,3 +35,4 @@ Import de la table d'activité partielle augmentée
 }
 
 }
+

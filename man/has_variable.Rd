@@ -13,6 +13,9 @@ has_variable(db, table, variable)
 
 \item{variable}{variable to be checked}
 }
+\value{
+a boolean
+}
 \description{
 Has variable
 }
@@ -21,3 +24,4 @@ Has variable
 has_variable(db = database_signauxfaibles, table = "table_altares", variable = "siret")
 }
 }
+

@@ -20,3 +20,4 @@ Get ratio cotisation effectif
 \examples{
 
 }
+

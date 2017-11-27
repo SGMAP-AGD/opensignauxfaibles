@@ -23,3 +23,4 @@ compute_sample_meancotisation(db = database_signauxfaibles, .date = "2017-01-01"
 }
 
 }
+

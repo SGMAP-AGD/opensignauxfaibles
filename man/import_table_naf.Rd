@@ -18,3 +18,4 @@ import_table_naf(path = "data-raw/insee/naf/naf2008_5_niveaux.xls")
 }
 
 }
+

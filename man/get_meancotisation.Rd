@@ -20,3 +20,4 @@ Get meancotisation
 \examples{
 
 }
+

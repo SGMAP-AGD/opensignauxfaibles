@@ -23,3 +23,4 @@ compute_filter_proccollectives(db = database_signauxfaibles, .date = "2017-01-01
 }
 
 }
+

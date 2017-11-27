@@ -22,3 +22,4 @@ Plot dettecumulee
 \examples{
 
 }
+

@@ -20,3 +20,4 @@ PLot ratio cotisation effectif
 \examples{
 
 }
+

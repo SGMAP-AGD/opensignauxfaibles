@@ -20,3 +20,4 @@ Count infinite
 count_infinite(x = c(Inf, 1, 2, 3, 0, -Inf))
 
 }
+

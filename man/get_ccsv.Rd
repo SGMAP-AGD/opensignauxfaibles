@@ -20,3 +20,4 @@ Get information in the CCSV table for a siret number
 \examples{
 
 }
+

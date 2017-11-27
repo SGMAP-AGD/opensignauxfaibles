@@ -2,18 +2,13 @@
 % Please edit documentation in R/imports.R
 \docType{import}
 \name{reexports}
-\alias{reexports}
 \alias{\%>\%}
-\alias{reexports}
-\alias{uq}
+\alias{\%m+\%}
+\alias{\%m-\%}
 \alias{reexports}
 \alias{sql}
-\alias{reexports}
-\alias{\%m+\%}
-\alias{reexports}
-\alias{\%m-\%}
+\alias{uq}
 \title{Objects exported from other packages}
-\keyword{internal}
 \description{
 These objects are imported from other packages. Follow the links
 below to see their documentation.
@@ -27,4 +22,5 @@ below to see their documentation.
 
   \item{magrittr}{\code{\link[magrittr]{\%>\%}}}
 }}
+\keyword{internal}
 
