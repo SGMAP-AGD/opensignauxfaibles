@@ -649,8 +649,8 @@ compute_sample_dettecumulee_12m <- function(db, .date) {
     dplyr::ungroup() %>%
     dplyr::group_by_(~ numero_compte) %>%
     dplyr::summarise(
-      montant_part_ouvriere = sum(montant_part_ouvriere),
-      montant_part_patronale = sum(montant_part_patronale)
+      montant_part_ouvriere_12m = sum(montant_part_ouvriere),
+      montant_part_patronale_12m = sum(montant_part_patronale)
     ) %>%
     mutate(periode = as.character(periode))
 
