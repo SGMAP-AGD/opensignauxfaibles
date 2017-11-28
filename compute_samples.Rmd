@@ -94,6 +94,16 @@ compute_wholesample_dettecumulee(
   )
 ```
 
+
+```{r}
+compute_wholesample_dettecumulee_12m(
+  db = database_signauxfaibles,
+  name = "wholesample_dettecumulee_12m",
+  start = params$start,
+  end = params$end
+  )
+```
+
 ```{r}
 compute_wholesample_lagdettecumulee(
   db = database_signauxfaibles,
