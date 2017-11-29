@@ -1286,6 +1286,8 @@ collect_wholesample <- function(db, table) {
       replace = list(
         "montant_part_ouvriere" = 0,
         "montant_part_patronale" = 0,
+        "montant_part_ouvriere_12m" = 0,
+        "montant_part_patronale_12m" = 0,
         "lag_montant_part_ouvriere" = 0,
         "lag_montant_part_patronale" = 0,
         "nb_debits" = 0,
@@ -1331,7 +1333,13 @@ collect_wholesample <- function(db, table) {
         true = log(ratio_dettecumulee_cotisation),
         false = 0
       ),
-      indicatrice_lag_dettecumulee = (lag_montant_part_ouvriere + lag_montant_part_patronale > 0),
+      ratio_dettecumulee_cotisation_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m) / mean_cotisation_due,
+      indicatrice_dettecumulee_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m > 0),
+      log_ratio_dettecumulee_cotisation_12m = dplyr::if_else(
+        condition = indicatrice_dettecumulee_12m == TRUE,
+        true = log(ratio_dettecumulee_cotisation_12m),
+        false = 0
+      ),
       indicatrice_croissance_dettecumulee = (
         montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
       )
