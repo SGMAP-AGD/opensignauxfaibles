@@ -44,7 +44,7 @@ formulas_0_12 <- list(
   "dettecumulee" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
     apart_last12_months + apart_consommee + apart_share_heuresconsommees +
     log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee,
+    log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m,
   "croissancedettecumulee" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
     apart_last12_months + apart_consommee + apart_share_heuresconsommees +
     log_cotisationdue_effectif +
@@ -133,7 +133,7 @@ output_prediction_0_12 %>%
         nb_debits, delai, delai_sup_6mois, everything()
   ) %>%
   dplyr::slice(1:100) %>%
-  readr::write_csv(path = "data/table_predictions_2017_11_22.csv")
+  readr::write_csv(path = "output/table_predictions_2017_11_29.csv")
 ```
 
 ```{r}
@@ -158,6 +158,6 @@ output_prediction_0_12 %>%
     )
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
-  readr::write_csv(path = "data/table_predictions_2017_11_22_all.csv")
+  readr::write_csv(path = "output/table_predictions_2017_11_29_all.csv")
 ```
 
