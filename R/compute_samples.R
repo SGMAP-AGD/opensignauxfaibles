@@ -1234,7 +1234,10 @@ compute_wholesample <- function(db, name) {
       y = dplyr::tbl(src = db, from = "wholesample_lagdettecumulee"),
       by = c("numero_compte", "periode")
     ) %>%
-    dplyr::left_join(src = db, from = "wholesa")
+    dplyr::left_join(
+      y = dplyr::tbl(src = db, from = "wholesample_dettecumulee_12m"),
+      by = c("numero_compte", "periode")
+      ) %>%
     dplyr::left_join(
       y = dplyr::tbl(src = db, "wholesample_nbdebits"),
       by = c("numero_compte", "periode")

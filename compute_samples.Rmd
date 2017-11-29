@@ -163,7 +163,7 @@ wholesample <- collect_wholesample(
 ```
 
 ```{r}
-readr::write_csv(wholesample, path = "data/wholesample.csv")
-save(wholesample, file = "data/wholesample.Rda")
+readr::write_csv(wholesample, path = "output/wholesample.csv")
+save(wholesample, file = "output/wholesample.Rda")
 ```
 
