@@ -47,5 +47,5 @@ Le fichier keys.json à la racine du dossier contient les paramètres de connexi
 
 ### Calcul des prédictions
 
-* Le programme [compute_model_0_12.Rmd]compute_model_0_12.Rmd) permet de calculer les prédictions à 12 mois.
+* Le programme [compute_model_0_12.Rmd](compute_model_0_12.Rmd) permet de calculer les prédictions à 12 mois.
 
