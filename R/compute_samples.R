@@ -904,7 +904,10 @@ compute_wholesample_ccsv <- function(db, name, start, end) {
 compute_sample_nbdebits <- function(db, .date, n_months) {
 
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter_(.dots = list(~ periodicity == "monthly")) %>%
+    dplyr::filter_(.dots = list(
+      ~ periodicity == "monthly",
+      ~ code_operation_ecart_negatif == "1")
+      ) %>%
     dplyr::select_(
       ~ numero_compte, ~ period, ~ numero_ecart_negatif,
       ~ numero_historique_ecart_negatif, ~ date_traitement_ecart_negatif,
