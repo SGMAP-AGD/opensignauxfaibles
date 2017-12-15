@@ -903,16 +903,15 @@ compute_wholesample_ccsv <- function(db, name, start, end) {
 #'
 compute_sample_nbdebits <- function(db, .date, n_months) {
 
+  .date2 <- lubridate::ymd(.date)
+
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter_(.dots = list(
-      ~ periodicity == "monthly",
-      ~ code_operation_ecart_negatif == "1")
-      ) %>%
-    dplyr::select_(
-      ~ numero_compte, ~ period, ~ numero_ecart_negatif,
-      ~ numero_historique_ecart_negatif, ~ date_traitement_ecart_negatif,
-      ~ montant_part_ouvriere, ~montant_part_patronale
-    ) %>%
+    dplyr::filter_(
+      .dots = list(
+        ~ periodicity == "monthly",
+        ~ code_operation_ecart_negatif == "1"),
+        ~  date_traitement_ecart_negatif < .date2
+        ) %>%
     dplyr::semi_join(
       y =  get_table_last_n_months(.date = .date, .n_months = n_months),
       by = "period",
