@@ -6,7 +6,7 @@ output: html_notebook
 ```{r}
 library("readr")
 library("rmarkdown")
-df_liste <- read_csv("data/list_siret.csv")
+df_liste <- read_csv("data-raw/list_siret/list_2017_12.csv", col_types = list(siret = col_character()))
 ```
 
 ```{r}
@@ -25,7 +25,7 @@ for (k in df_liste$siret) {
     params = list(
       siret = k
     ), 
-    output_file = paste0("fiches/fiche_", k, ".pdf")
+    output_file = paste0("../output/fiches/fiche_", k, ".pdf")
   )
   
 }

@@ -1,10 +1,9 @@
 ---
 title: "Fiche visite"
 params:
-  siret: '34322975300037'
+  siret: '82190497600015'
 output:
-  html_document: default
-  html_notebook: default
+  pdf_document: default
 ---
 
 
@@ -79,7 +78,7 @@ plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable =
 ## Evolution du ratio de dette cumulée sur les cotisations
 
 ```{r}
-plot_ratio_dettecumulee_cotisation(db = database_signauxfaibles, siret = "34322975300037")
+plot_ratio_dettecumulee_cotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
 ## Délais
