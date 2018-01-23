@@ -10,6 +10,8 @@ output:
 ```{r setup, echo=FALSE, message=FALSE}
 library("opensignauxfaibles")
 library("lubridate")
+#library("knitr")
+#opts_knit$set(progress = TRUE, verbose = FALSE, echo = FALSE, message = FALSE)
 database_signauxfaibles <- database_connect()
 sirene <- get_sirene(db = database_signauxfaibles, .siret = params$siret)
 ```
@@ -25,29 +27,29 @@ sirene <- get_sirene(db = database_signauxfaibles, .siret = params$siret)
 
 ## Effectif
 
-```{r}
+```{r echo=FALSE}
 get_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
-```{r plot-effectif}
+```{r plot-effectif, echo=FALSE}
 plot_effectif(db = database_signauxfaibles, .siret = params$siret)
 ```
 
 ## Plan CCSF
 
-```{r plan-ccsf}
+```{r plan-ccsf, echo=FALSE}
 is_ccsf(db = database_signauxfaibles, siret = params$siret)
 ```
 
 ## Cotisations
 
-```{r}
+```{r, echo=FALSE}
 get_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
 ## Evolution des cotisations moyennes
 
-```{r}
+```{r, echo=FALSE}
 plot_meancotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
@@ -59,31 +61,31 @@ plot_ratio_cotisation_effectif(db = database_signauxfaibles, siret = params$sire
 
 ## Evolution de la part ouvriere cumulée
 
-```{r}
+```{r, echo=FALSE}
 plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "montant_part_ouvriere")
 ```
 
 ## Evolution de la dette patronale cumulée
 
-```{r}
+```{r, echo=FALSE}
 plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "montant_part_patronale")
 ```
 
 ## Evolution de la dette cumulée
 
-```{r}
+```{r, echo=FALSE}
 plot_dettecumulee(db = database_signauxfaibles, siret = params$siret, variable = "dettecumulee")
 ```
 
 ## Evolution du ratio de dette cumulée sur les cotisations
 
-```{r}
+```{r, echo=FALSE}
 plot_ratio_dettecumulee_cotisation(db = database_signauxfaibles, siret = params$siret)
 ```
 
 ## Délais
 
-```{r getdelais}
+```{r getdelais, echo=FALSE}
 get_delais(database_signauxfaibles, siret = params$siret)
 ```
 
