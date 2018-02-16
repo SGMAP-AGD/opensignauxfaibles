@@ -121,3 +121,31 @@ has_variable <- function(db, table, variable) {
     any(. == variable)
 }
 
+#' Insert a dataframe given a number of slices
+#'
+#' Alone, copy_to kills memory.
+#'
+#' @param db name of the database
+#' @param table name of the table
+#' @param df dataframe to insert
+#' @param slices number of slices
+#'
+#' @export
+#'
+insert_multi <- function(db, table, df,slices) {
+  split(df, factor(sort(rank(row.names(df))%%slices))) %>% {
+  first <- TRUE
+  for (df_part in .) {
+    if (first) {
+      dplyr::copy_to(
+        dest = db,
+        df = df_part,
+        name = table,
+        temporary = FALSE)
+      first <- FALSE
+    } else {
+      dbWriteTable(db$con, table, df_part, row.names = F, append=T  )
+    }
+  }
+  }
+}
