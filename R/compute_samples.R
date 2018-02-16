@@ -1347,6 +1347,3 @@ collect_wholesample <- function(db, table) {
       )
     )
 }
-
-
-

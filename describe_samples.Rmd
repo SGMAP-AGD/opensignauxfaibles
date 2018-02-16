@@ -14,5 +14,3 @@ table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "
 ```{r}
 tbl(src = database_signauxfaibles, from = "wholesample")
 ```
-
-
