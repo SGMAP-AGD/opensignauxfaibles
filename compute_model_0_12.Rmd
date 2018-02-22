@@ -99,7 +99,7 @@ output_prediction_0_12 <- formulas_0_12$dettecumulee %>%
     newdata = sample_actual,
     type.predict = "response"
   ) %>%
-  dplyr::rename(prediction_0_12 = .fitted) 
+  dplyr::rename(prediction_0_12 = .fitted) %>% dplyr::distinct()
 ```
 
 ```{r export-top100}
