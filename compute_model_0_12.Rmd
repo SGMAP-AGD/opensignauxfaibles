@@ -9,6 +9,7 @@ output:
 
 ```{r}
 params$actual_date
+params = list(actual_date = "2018-02-01")
 ```
 
 ```{r setup}
@@ -106,14 +107,14 @@ output_prediction_0_12 %>%
   dplyr::anti_join(
     y = compute_filter_proccollectives(
       db = database_signauxfaibles,
-      .date = "2017-10-01"),
+      .date = "2018-02-01"),
     by = "numero_compte",
     copy = TRUE
   ) %>%
   dplyr::anti_join(
     y = compute_filter_ccsv(
       db = database_signauxfaibles,
-      .date = "2017-10-01"),
+      .date = "2018-02-01"),
     by = c("numero_compte"),
     copy = TRUE
   ) %>%
@@ -133,7 +134,7 @@ output_prediction_0_12 %>%
         nb_debits, delai, delai_sup_6mois, everything()
   ) %>%
   dplyr::slice(1:100) %>%
-  readr::write_csv(path = "output/table_predictions_2017_11_29.csv")
+  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22.csv", quote=T, append=F)
 ```
 
 ```{r}
@@ -141,14 +142,14 @@ output_prediction_0_12 %>%
   dplyr::anti_join(
     y = compute_filter_proccollectives(
       db = database_signauxfaibles,
-      .date = "2017-10-01"),
+      .date = "2018-02-01"),
     by = "numero_compte",
     copy = TRUE
   ) %>%
   dplyr::anti_join(
     y = compute_filter_ccsv(
       db = database_signauxfaibles,
-      .date = "2017-10-01"),
+      .date = "2018-02-01"),
     by = c("numero_compte"),
     copy = TRUE
   ) %>%
@@ -158,6 +159,6 @@ output_prediction_0_12 %>%
     )
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
-  readr::write_csv(path = "output/table_predictions_2017_11_29_all.csv")
+  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22_all.csv", quote=T, append=F)
 ```
 

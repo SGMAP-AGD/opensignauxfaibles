@@ -133,10 +133,10 @@ compute_wholesample_effectif <- function(db, name, start, end, last) {
     ) %>%
     dplyr::bind_rows() %>%
     dplyr::filter(effectif >= 1) %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      slices = 30,
       indexes = list("siret", "numero_compte", "periode")
     )
 
@@ -242,10 +242,11 @@ compute_wholesample_altares <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      df = .,
+      slices = 50,
       indexes = list("siret", "periode")
     )
 }
@@ -333,10 +334,10 @@ compute_wholesample_prefilter_altares <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      slices = 50,
       indexes = list("siret", "periode")
     )
 }
@@ -391,7 +392,7 @@ compute_sample_apart <- function(db, .date, n_months = 12) {
   start_date <- lubridate::ymd(.date) %m-% months(n_months)
   end_date <- lubridate::ymd(.date)
 
-  dplyr::tbl(db, "table_apart") %>%
+  dplyr::tbl(db, "table_activitepartielle") %>%
     dplyr::filter(
       date_debut_periode_autorisee >= start_date,
       date_debut_periode_autorisee < end_date
@@ -519,10 +520,13 @@ compute_wholesample_meancotisation <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    copy_to(
-      dest = db, name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE)
+    insert_multi(
+      df = .,
+      dest = db,
+      name = name,
+      slices = 50,
+      indexes = list("numero_compte", "periode")
+      )
 
 }
 
@@ -603,11 +607,12 @@ compute_wholesample_dettecumulee <- function(db, name, start, end) {
     }
   ) %>%
   dplyr::bind_rows() %>%
-  dplyr::copy_to(
+  insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -685,11 +690,12 @@ compute_wholesample_dettecumulee_12m <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -801,11 +807,12 @@ compute_wholesample_lagdettecumulee <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -964,11 +971,12 @@ compute_wholesample_nbdebits <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -1075,10 +1083,9 @@ compute_wholesample_delais <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    copy_to(
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
       temporary = FALSE
     )
 }
@@ -1189,11 +1196,12 @@ compute_wholesample_apartconsommee <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
       indexes = list("siret", "periode"),
-      temporary = FALSE
+      slices = 50
     )
 }
 

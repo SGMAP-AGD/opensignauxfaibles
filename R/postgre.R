@@ -132,19 +132,20 @@ has_variable <- function(db, table, variable) {
 #'
 #' @export
 #'
-insert_multi <- function(db, table, df,slices) {
+insert_multi <- function(dest, name, df, slices, ...) {
   split(df, factor(sort(rank(row.names(df))%%slices))) %>% {
   first <- TRUE
   for (df_part in .) {
     if (first) {
       dplyr::copy_to(
-        dest = db,
+        dest = dest,
         df = df_part,
-        name = table,
-        temporary = FALSE)
+        name = name,
+        temporary = FALSE,
+        ...)
       first <- FALSE
     } else {
-      dbWriteTable(db$con, table, df_part, row.names = F, append=T  )
+      RPostgreSQL::dbWriteTable(dest$con, name, df_part, row.names = F, append=T  )
     }
   }
   }
