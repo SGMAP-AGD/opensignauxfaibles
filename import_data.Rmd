@@ -67,7 +67,6 @@ dplyr::bind_rows(
 ```{r import-apart-heuresconsommees}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consommee")
 
-dplyr::bind_rows(
   import_apart_heuresconsommees(
     path = "data-raw/activite_partielle/act_partielle_conso_janv2018.xlsx",
     sheet = "INDEMNITE",
@@ -76,8 +75,10 @@ dplyr::bind_rows(
     effectif_concerne = "effectifs",
     heures_consommees = "heures",
     montants = "montants"
-    )
-  ) %>%
+    ) %>% 
+  dplyr::filter(id_da != "") %>%
+  dplyr::rename(id_da_long = id_da) %>%
+  dplyr::mutate("id_da" = substring(id_da_long, 0, 10)) %>%
   dplyr::distinct() %>%
   insert_multi(
     dest = database_signauxfaibles,

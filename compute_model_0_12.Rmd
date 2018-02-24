@@ -8,11 +8,12 @@ output:
 ---
 
 ```{r}
-params$actual_date
-params = list(actual_date = "2018-02-01")
+
 ```
 
 ```{r setup}
+params = list(actual_date = "2018-02-01")
+
 library("opensignauxfaibles")
 library("dplyr")
 database_signauxfaibles <- database_connect()
@@ -99,7 +100,7 @@ output_prediction_0_12 <- formulas_0_12$dettecumulee %>%
     newdata = sample_actual,
     type.predict = "response"
   ) %>%
-  dplyr::rename(prediction_0_12 = .fitted) %>% dplyr::distinct()
+  dplyr::rename(prediction_0_12 = .fitted) 
 ```
 
 ```{r export-top100}
@@ -134,7 +135,7 @@ output_prediction_0_12 %>%
         nb_debits, delai, delai_sup_6mois, everything()
   ) %>%
   dplyr::slice(1:100) %>%
-  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22.csv", quote=T, append=F)
+  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22v2.csv", quote=T, append=F)
 ```
 
 ```{r}
@@ -159,6 +160,6 @@ output_prediction_0_12 %>%
     )
   ) %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
-  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22_all.csv", quote=T, append=F)
+  write.table(row.names=F, dec=',', sep=';', file = "output/table_predictions_2018_02_22v2_all.csv", quote=T, append=F)
 ```
 

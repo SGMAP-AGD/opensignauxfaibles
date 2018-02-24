@@ -200,8 +200,7 @@ compute_sample_altares <- function(db, .date) {
       outcome_0_12 = ifelse((date_effet <= .dateplus12), "default", "non-default"),
       outcome_12_24 = ifelse((date_effet > .dateplus12 & date_effet <= .dateplus24), "default", "non-default"),
       outcome_6_18 = ifelse((date_effet > .dateplus6 & date_effet <= .dateplus18), "default", "non-default")
-      )
-
+      ) %>% dplyr::distinct()
 }
 
 #' Compute whole sample altares
@@ -1039,7 +1038,9 @@ compute_sample_delais <- function(db, .date) {
       periode = as.character(periode),
       delai = 1,
       delai_sup_6mois = ifelse(delai_sup_6mois == "SUP", 1, 0)
-      )
+    ) %>%
+    group_by(numero_compte, periode) %>%
+    summarise(delai_sup_6mois = max(delai_sup_6mois), delai = max(delai))
 
 }
 
@@ -1122,8 +1123,7 @@ compute_sample_apart_consommee <- function(db, .date) {
     dplyr::filter(effectif > 0) %>%
     dplyr::select(siret, period, effectif)
 
-  tbl_consommee <- dplyr::tbl(
-    src = db, from = "table_apart_consommee") %>%
+  tbl_consommee <- dplyr::tbl(src = db, from = "table_apart_consommee") %>%
     dplyr::semi_join(
       y = dplyr::tbl(
         src = db, from = "table_activitepartielle") %>%

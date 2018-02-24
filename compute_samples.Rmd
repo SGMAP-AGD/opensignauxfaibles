@@ -79,6 +79,7 @@ compute_wholesample_apartconsommee(
   name = "wholesample_apartconsommee",
   start = params$start,
   end = params$end
+  
   )
 ```
 
@@ -172,6 +173,6 @@ wholesample <- collect_wholesample(
 ```
 
 ```{r}
-readr::write_csv(wholesample, path = "output/wholesample.csv")
+write.table(wholesample, row.names=F, dec=',', sep=';', file = "output/wholesample.csv", quote=T, append=F)
 save(wholesample, file = "output/wholesample.Rda")
 ```
