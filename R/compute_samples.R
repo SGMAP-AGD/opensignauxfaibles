@@ -1140,21 +1140,27 @@ compute_sample_apart_consommee <- function(db, .date) {
     dplyr::group_by(siret, period) %>%
     dplyr::summarise(heures_consommees = sum(heures_consommees))
 
-  tbl_effectif %>%
-    dplyr::left_join(
-      y = tbl_consommee,
-      by = c("siret", "period")
-    ) %>%
+
+  tbl_mean_effectif <- tbl_effectif %>% dplyr::group_by(siret) %>% summarise(apart_effectif_moyen = mean(effectif))
+
+  tbl_consommee_periode <- tbl_consommee %>%
+    dplyr::filter(period <= .date, period > .lag_date) %>%
+    dplyr::group_by(siret) %>%
+    dplyr::summarise(
+      heures_consommees = sum(heures_consommees)
+      )
+
+  tbl_mean_effectif %>%
+    left_join(y=tbl_consommee_periode, by='siret') %>%
     dplyr::mutate(
       heures_consommees = ifelse(is.na(heures_consommees), 0, heures_consommees)
     ) %>%
-    dplyr::group_by(siret) %>%
-    dplyr::summarise(
-      apart_consommee = ifelse(sum(heures_consommees) > 0, 1, 0),
-      apart_share_heuresconsommees = 100 * sum(heures_consommees) / sum(effectif * 1607/12)
-    ) %>%
-    mutate(periode = as.character(periode))
-
+    dplyr::mutate(
+      apart_consommee = ifelse(heures_consommees > 0, 1, 0),
+      apart_share_heuresconsommees = 100 * heures_consommees / (apart_effectif_moyen*1607),
+      apart_heures_consommees = heures_consommees,
+      apart_potentiel_effectif = apart_effectif_moyen * 1607
+    ) %>% mutate(periode = as.character(periode))
 }
 
 #' Compute wholesample activite partielle consommmee
@@ -1303,7 +1309,10 @@ collect_wholesample <- function(db, table) {
         "nb_debits" = 0,
         "delai" = 0,
         "delai_sup_6mois" = 0,
-        "apart_last12_months" = 0
+        "apart_last12_months" = 0,
+        "apart_consommee" = 0,
+        "apart_share_heuresconsommees" = 0,
+        "apart_heures_consommees" = 0
       )
     ) %>%
     dplyr::mutate(
