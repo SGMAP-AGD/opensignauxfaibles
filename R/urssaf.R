@@ -84,7 +84,7 @@ convert_urssaf_date <- function(weird_date) {
   year <- weird_date %>%
     stringr::str_pad(string = .,
                      width = "7",
-                     pad = "9",
+                     pad = "0",
                      side = "left") %>%
     substr(., 1, 3) %>%
     as.numeric() %>%
