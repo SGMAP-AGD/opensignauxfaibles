@@ -463,13 +463,30 @@ compute_wholesample_apart <- function(db, name, start, end) {
 #'
 compute_sample_meancotisation <- function(db, .date) {
 
-  dplyr::tbl(db, "table_cotisation") %>%
-    dplyr::filter(periodicity == "monthly") %>%
+  cotisations <- dplyr::tbl(db, "table_cotisation")
+  q1 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>% dplyr::mutate(
+    cotisation_due = cotisation_due / 3
+  )
+  q2 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>%
+    dplyr::mutate(
+      period = to_char(to_date(period, "YYYY-MM") - '1 month'::interval, "YYYY-MM"),
+      cotisation_due = cotisation_due / 3
+    )
+  q3 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>%
+    dplyr::mutate(
+      period = to_char(to_date(period, "YYYY-MM") - '2 month'::interval, "YYYY-MM"),
+      cotisation_due = cotisation_due / 3
+    )
+  m <- cotisations %>% dplyr::filter(periodicity == "monthly")
+
+  total <- dplyr::union_all(union_all(union_all(q1, q2), q3), m)
+
+  dplyr::left_join(
+    x = get_table_last_n_months(.date = .date, .n_months = 12),
+    y = total,
+    by = c("period"),
+    copy = TRUE)  %>% tidyr::replace_na(list("cotisation_due"=0)) %>%
     dplyr::select(numero_compte, period, numero_ecart_negatif, cotisation_due) %>%
-    dplyr::semi_join(
-      y = get_table_last_n_months(.date = .date, .n_months = 12),
-      by = "period",
-      copy = TRUE)  %>%
     dplyr::group_by(numero_compte, period) %>%
     dplyr::summarise(cotisation_due = sum(cotisation_due)) %>%
     dplyr::ungroup() %>%
@@ -479,7 +496,6 @@ compute_sample_meancotisation <- function(db, .date) {
     ) %>%
     dplyr::mutate(periode = as.character(.date)) %>%
     dplyr::select(numero_compte, periode, mean_cotisation_due)
-
 }
 
 #' Compute wholesample meancotisation
