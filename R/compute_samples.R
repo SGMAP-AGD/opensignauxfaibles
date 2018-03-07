@@ -559,15 +559,11 @@ compute_wholesample_meancotisation <- function(db, name, start, end) {
 #' }
 #'
 compute_sample_dettecumulee <- function(db, .date) {
-
   periode <- .date
   .date <- lubridate::ymd(.date)
 
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter_(.dots = list(
-      ~ periodicity == "monthly",
-      ~ date_traitement_ecart_negatif <= .date)
-    ) %>%
+    dplyr::filter(periodicity %in% c("monthly", "quarterly") && date_traitement_ecart_negatif <= .date) %>%
     dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
     dplyr::filter_(
       .dots = list(
@@ -581,7 +577,6 @@ compute_sample_dettecumulee <- function(db, .date) {
       montant_part_patronale = sum(montant_part_patronale)
     ) %>%
     mutate(periode = as.character(periode))
-
 }
 
 #' Compute wholesample dettecumulee
@@ -652,7 +647,7 @@ compute_sample_dettecumulee_12m <- function(db, .date) {
 
   dplyr::tbl(db, from = "table_debit") %>%
     dplyr::filter_(.dots = list(
-      ~ periodicity == "monthly",
+      ~ periodicity %in% c("monthly", "quarterly"),
       ~ date_traitement_ecart_negatif <= .date)
     ) %>%
     dplyr::semi_join(

@@ -55,7 +55,10 @@ convert_urssaf_periods_ <- function(.data, .variable, format = "yyqm") {
     as.character(year_),
     ifelse(
       periodicity_ == "quarterly",
-      paste0(year_, "-Q", quarter_),
+      paste0(year_, "-", stringr::str_pad(string = 3*as.integer(quarter_),
+                                          width = "2",
+                                          pad = "0",
+                                          side = "left")),
       paste0(year_, "-",
              stringr::str_pad(
                string = (as.numeric(quarter_) - 1) * 3 + as.numeric(month_),
@@ -93,7 +96,7 @@ convert_urssaf_date <- function(weird_date) {
   month_day <- weird_date %>%
     stringr::str_pad(string = .,
                      width = "7",
-                     pad = "9",
+                     pad = "0",
                      side = "left") %>%
     substr(., 4, 7)
   date <- lubridate::ymd(paste0(year, month_day))
