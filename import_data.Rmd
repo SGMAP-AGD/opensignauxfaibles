@@ -88,6 +88,32 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consomm
     )
 ```
 
+## Banque de France
+
+```{r import-apart-heuresconsommees}
+db_drop_table_ifexist(db = database_signauxfaibles, table = "table_banquedefrance")
+
+  table_temp <- readxl::read_excel(path = "data-raw/banque_de_france/201712.xlsx")
+  table_temp %>% rename("siren"="d1",
+                        "annee"="Annee",
+                        "bilan"="ARRETE_BILAN",
+                        "raison_sociale"="DENOM",
+                        "secteur"="SECTEUR",
+                        "poids_frng"="POIDS_FRNG",
+                        "taux_marge"="TX_MARGE",
+                        "delai_fournisseur"="DELAI_FRS",
+                        "dette_fiscale"="POIDS_DFISC_SOC",
+                        "financier_ct"="POIDS_FIN_CT",
+                        "financier"="POIDS_FRAIS_FIN") %>%
+    mutate(siren = stringr::str_replace_all(.$siren, " ", ""))  %>%
+  insert_multi(
+    dest = database_signauxfaibles,
+    df = .,
+    slices=3,
+    name = "table_banquedefrance"
+    )
+  
+```
 
 ## Cotisations URSSAF
 
