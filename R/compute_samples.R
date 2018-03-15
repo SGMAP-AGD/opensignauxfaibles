@@ -133,10 +133,10 @@ compute_wholesample_effectif <- function(db, name, start, end, last) {
     ) %>%
     dplyr::bind_rows() %>%
     dplyr::filter(effectif >= 1) %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      slices = 30,
       indexes = list("siret", "numero_compte", "periode")
     )
 
@@ -200,8 +200,7 @@ compute_sample_altares <- function(db, .date) {
       outcome_0_12 = ifelse((date_effet <= .dateplus12), "default", "non-default"),
       outcome_12_24 = ifelse((date_effet > .dateplus12 & date_effet <= .dateplus24), "default", "non-default"),
       outcome_6_18 = ifelse((date_effet > .dateplus6 & date_effet <= .dateplus18), "default", "non-default")
-      )
-
+      ) %>% dplyr::distinct()
 }
 
 #' Compute whole sample altares
@@ -242,10 +241,11 @@ compute_wholesample_altares <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      df = .,
+      slices = 50,
       indexes = list("siret", "periode")
     )
 }
@@ -333,10 +333,10 @@ compute_wholesample_prefilter_altares <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
       dest = db,
       name = name,
-      temporary = FALSE,
+      slices = 50,
       indexes = list("siret", "periode")
     )
 }
@@ -391,7 +391,7 @@ compute_sample_apart <- function(db, .date, n_months = 12) {
   start_date <- lubridate::ymd(.date) %m-% months(n_months)
   end_date <- lubridate::ymd(.date)
 
-  dplyr::tbl(db, "table_apart") %>%
+  dplyr::tbl(db, "table_activitepartielle") %>%
     dplyr::filter(
       date_debut_periode_autorisee >= start_date,
       date_debut_periode_autorisee < end_date
@@ -463,13 +463,30 @@ compute_wholesample_apart <- function(db, name, start, end) {
 #'
 compute_sample_meancotisation <- function(db, .date) {
 
-  dplyr::tbl(db, "table_cotisation") %>%
-    dplyr::filter(periodicity == "monthly") %>%
+  cotisations <- dplyr::tbl(db, "table_cotisation")
+  q1 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>% dplyr::mutate(
+    cotisation_due = cotisation_due / 3
+  )
+  q2 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>%
+    dplyr::mutate(
+      period = to_char(to_date(period, "YYYY-MM") - '1 month'::interval, "YYYY-MM"),
+      cotisation_due = cotisation_due / 3
+    )
+  q3 <- cotisations %>% dplyr::filter(periodicity == "quarterly") %>%
+    dplyr::mutate(
+      period = to_char(to_date(period, "YYYY-MM") - '2 month'::interval, "YYYY-MM"),
+      cotisation_due = cotisation_due / 3
+    )
+  m <- cotisations %>% dplyr::filter(periodicity == "monthly")
+
+  total <- dplyr::union_all(union_all(union_all(q1, q2), q3), m)
+
+  dplyr::left_join(
+    x = get_table_last_n_months(.date = .date, .n_months = 12),
+    y = total,
+    by = c("period"),
+    copy = TRUE)  %>% tidyr::replace_na(list("cotisation_due"=0)) %>%
     dplyr::select(numero_compte, period, numero_ecart_negatif, cotisation_due) %>%
-    dplyr::semi_join(
-      y = get_table_last_n_months(.date = .date, .n_months = 12),
-      by = "period",
-      copy = TRUE)  %>%
     dplyr::group_by(numero_compte, period) %>%
     dplyr::summarise(cotisation_due = sum(cotisation_due)) %>%
     dplyr::ungroup() %>%
@@ -479,7 +496,6 @@ compute_sample_meancotisation <- function(db, .date) {
     ) %>%
     dplyr::mutate(periode = as.character(.date)) %>%
     dplyr::select(numero_compte, periode, mean_cotisation_due)
-
 }
 
 #' Compute wholesample meancotisation
@@ -519,10 +535,13 @@ compute_wholesample_meancotisation <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    copy_to(
-      dest = db, name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE)
+    insert_multi(
+      df = .,
+      dest = db,
+      name = name,
+      slices = 50,
+      indexes = list("numero_compte", "periode")
+      )
 
 }
 
@@ -540,15 +559,11 @@ compute_wholesample_meancotisation <- function(db, name, start, end) {
 #' }
 #'
 compute_sample_dettecumulee <- function(db, .date) {
-
   periode <- .date
   .date <- lubridate::ymd(.date)
 
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter_(.dots = list(
-      ~ periodicity == "monthly",
-      ~ date_traitement_ecart_negatif <= .date)
-    ) %>%
+    dplyr::filter(periodicity %in% c("monthly", "quarterly") && date_traitement_ecart_negatif <= .date) %>%
     dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
     dplyr::filter_(
       .dots = list(
@@ -562,7 +577,6 @@ compute_sample_dettecumulee <- function(db, .date) {
       montant_part_patronale = sum(montant_part_patronale)
     ) %>%
     mutate(periode = as.character(periode))
-
 }
 
 #' Compute wholesample dettecumulee
@@ -603,11 +617,12 @@ compute_wholesample_dettecumulee <- function(db, name, start, end) {
     }
   ) %>%
   dplyr::bind_rows() %>%
-  dplyr::copy_to(
+  insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -632,7 +647,7 @@ compute_sample_dettecumulee_12m <- function(db, .date) {
 
   dplyr::tbl(db, from = "table_debit") %>%
     dplyr::filter_(.dots = list(
-      ~ periodicity == "monthly",
+      ~ periodicity %in% c("monthly", "quarterly"),
       ~ date_traitement_ecart_negatif <= .date)
     ) %>%
     dplyr::semi_join(
@@ -685,11 +700,12 @@ compute_wholesample_dettecumulee_12m <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -801,11 +817,12 @@ compute_wholesample_lagdettecumulee <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -910,7 +927,9 @@ compute_sample_nbdebits <- function(db, .date, n_months) {
       .dots = list(
         ~ periodicity == "monthly",
         ~ code_operation_ecart_negatif == "1"),
-        ~  date_traitement_ecart_negatif < .date2
+        ~ period < .date2,
+        ~ montant_part_ouvriere > 0,
+        ~ montant_part_patronale > 0
         ) %>%
     dplyr::semi_join(
       y =  get_table_last_n_months(.date = .date, .n_months = n_months),
@@ -964,11 +983,12 @@ compute_wholesample_nbdebits <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
-      temporary = FALSE
+      slices = 50,
+      indexes = list("numero_compte", "periode")
     )
 }
 
@@ -1031,7 +1051,9 @@ compute_sample_delais <- function(db, .date) {
       periode = as.character(periode),
       delai = 1,
       delai_sup_6mois = ifelse(delai_sup_6mois == "SUP", 1, 0)
-      )
+    ) %>%
+    group_by(numero_compte, periode) %>%
+    summarise(delai_sup_6mois = max(delai_sup_6mois), delai = max(delai))
 
 }
 
@@ -1075,10 +1097,9 @@ compute_wholesample_delais <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    copy_to(
       dest = db,
       name = name,
-      indexes = list("numero_compte", "periode"),
       temporary = FALSE
     )
 }
@@ -1115,8 +1136,7 @@ compute_sample_apart_consommee <- function(db, .date) {
     dplyr::filter(effectif > 0) %>%
     dplyr::select(siret, period, effectif)
 
-  tbl_consommee <- dplyr::tbl(
-    src = db, from = "table_apart_consommee") %>%
+  tbl_consommee <- dplyr::tbl(src = db, from = "table_apart_consommee") %>%
     dplyr::semi_join(
       y = dplyr::tbl(
         src = db, from = "table_activitepartielle") %>%
@@ -1133,21 +1153,27 @@ compute_sample_apart_consommee <- function(db, .date) {
     dplyr::group_by(siret, period) %>%
     dplyr::summarise(heures_consommees = sum(heures_consommees))
 
-  tbl_effectif %>%
-    dplyr::left_join(
-      y = tbl_consommee,
-      by = c("siret", "period")
-    ) %>%
+
+  tbl_mean_effectif <- tbl_effectif %>% dplyr::group_by(siret) %>% summarise(apart_effectif_moyen = mean(effectif))
+
+  tbl_consommee_periode <- tbl_consommee %>%
+    dplyr::filter(period <= .date, period > .lag_date) %>%
+    dplyr::group_by(siret) %>%
+    dplyr::summarise(
+      heures_consommees = sum(heures_consommees)
+      )
+
+  tbl_mean_effectif %>%
+    left_join(y=tbl_consommee_periode, by='siret') %>%
     dplyr::mutate(
       heures_consommees = ifelse(is.na(heures_consommees), 0, heures_consommees)
     ) %>%
-    dplyr::group_by(siret) %>%
-    dplyr::summarise(
-      apart_consommee = ifelse(sum(heures_consommees) > 0, 1, 0),
-      apart_share_heuresconsommees = 100 * sum(heures_consommees) / sum(effectif * 1607/12)
-    ) %>%
-    mutate(periode = as.character(periode))
-
+    dplyr::mutate(
+      apart_consommee = ifelse(heures_consommees > 0, 1, 0),
+      apart_share_heuresconsommees = 100 * heures_consommees / (apart_effectif_moyen*1607),
+      apart_heures_consommees = heures_consommees,
+      apart_potentiel_effectif = apart_effectif_moyen * 1607
+    ) %>% mutate(periode = as.character(periode))
 }
 
 #' Compute wholesample activite partielle consommmee
@@ -1189,11 +1215,12 @@ compute_wholesample_apartconsommee <- function(db, name, start, end) {
     }
   ) %>%
     dplyr::bind_rows() %>%
-    dplyr::copy_to(
+    insert_multi(
+      df = .,
       dest = db,
       name = name,
       indexes = list("siret", "periode"),
-      temporary = FALSE
+      slices = 50
     )
 }
 
@@ -1295,7 +1322,10 @@ collect_wholesample <- function(db, table) {
         "nb_debits" = 0,
         "delai" = 0,
         "delai_sup_6mois" = 0,
-        "apart_last12_months" = 0
+        "apart_last12_months" = 0,
+        "apart_consommee" = 0,
+        "apart_share_heuresconsommees" = 0,
+        "apart_heures_consommees" = 0
       )
     ) %>%
     dplyr::mutate(

@@ -487,10 +487,10 @@ import_table_activite_partielle <- function(
   table_temp <- readxl::read_excel(path = path) %>%
     tricky::set_standard_names()
 
-  table_temp <- table_temp[, c("id_da", "etab_siret", "eff_etab", hta, mta, "motif_recours_se", effectif_autorise)] %>%
+  table_temp <- table_temp[, c("id_da", "etab_siret", "eff_etab", hta, mta, "motif_recours_se", effectif_autorise, "date_deb")] %>%
     magrittr::set_colnames(
-      value = c("id_da", "siret", "effectif", "hta", "mta", "motif_recours_se", "effectif_autorise")
-    ) %>%
+      value = c("id_da", "siret", "effectif", "hta", "mta", "motif_recours_se", "effectif_autorise", "date_debut_periode_autorisee")
+    ) %>% dplyr::filter(id_da != '') %>%
     dplyr::mutate(
       motif_label = factor(
         motif_recours_se,

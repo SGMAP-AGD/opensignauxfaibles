@@ -5,14 +5,24 @@ output:
   html_notebook: default
 params:
   start: "2013-01-01"
-  end: "2017-10-01"
-  last: "2017-07-01"
+  end: "2017-02-01"
+  last: "2017-09-01"
 ---
-
+<!-- 
+params = list(
+  start= "2013-01-01",
+  end= "2017-10-01",
+  last= "2018-02-01")
+-->
 ```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
 database_signauxfaibles <- database_connect()
+
+params = list(
+  start= "2013-01-01",
+  end= "2018-02-01",
+  last= "2017-09-01")
 ```
 
 ```{r list-tables}
@@ -69,6 +79,7 @@ compute_wholesample_apartconsommee(
   name = "wholesample_apartconsommee",
   start = params$start,
   end = params$end
+  
   )
 ```
 
@@ -162,6 +173,6 @@ wholesample <- collect_wholesample(
 ```
 
 ```{r}
-readr::write_csv(wholesample, path = "output/wholesample.csv")
+write.table(wholesample, row.names=F, dec=',', sep=';', file = "output/wholesample.csv", quote=T, append=F)
 save(wholesample, file = "output/wholesample.Rda")
 ```
