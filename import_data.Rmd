@@ -14,13 +14,13 @@ database_signauxfaibles <- database_connect()
 ## Import table altares
 
 ```{bash}
-in2csv data-raw/altares/RECAP_ALTARES.xlsx > data-raw/altares/RECAP_ALTARES.csv
+in2csv data-raw/altares/RECAP_ALTARES_201803.xlsx > data-raw/altares/RECAP_ALTARES_201803.csv
 ```
 
 ```{r}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_altares")
 import_table_altares(
-  path = "data-raw/altares/RECAP_ALTARES.csv"
+  path = "data-raw/altares/RECAP_ALTARES_201803.csv"
   ) %>% 
   insert_multi(
     dest = database_signauxfaibles,
@@ -47,7 +47,7 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_activiteparti
 
 dplyr::bind_rows(
   import_table_activite_partielle(
-    path = "data-raw/activite_partielle/act_partielle_ddes_2012_janv2018.xlsx",
+    path = "data-raw/activite_partielle/act_partielle_ddes_2012_fév2018.xlsx",
     hta = "hta",
     mta = "mta",
     effectif_autorise = "eff_auto"
@@ -68,7 +68,7 @@ dplyr::bind_rows(
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consommee")
 
   import_apart_heuresconsommees(
-    path = "data-raw/activite_partielle/act_partielle_conso_janv2018.xlsx",
+    path = "data-raw/activite_partielle/act_partielle_conso_fév2018.xlsx",
     sheet = "INDEMNITE",
     skip = 0,
     date = "mois",
@@ -90,7 +90,7 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consomm
 
 ## Banque de France
 
-```{r import-apart-heuresconsommees}
+```{r banque_de_france}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_banquedefrance")
 
   table_temp <- readxl::read_excel(path = "data-raw/banque_de_france/201712.xlsx")
@@ -132,13 +132,15 @@ dplyr::bind_rows(
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201711.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201712.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201801.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201802.csv"),
     import_table_cotisation(    path = "data-raw/cotisations/cotisations_frc_0_201701.txt"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201702_201703.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201704_201707.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201708_201710.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201711.csv"),
     import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201712.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201801.csv")
+    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201801.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201802.csv")
   ) %>%
   dplyr::distinct() %>%
   insert_multi(
@@ -169,7 +171,7 @@ purrr::map(
     dest = database_signauxfaibles,
     df = .,
     name = "table_debit",
-    slices = 50
+    slices = 100
   )
 ```
 
@@ -182,7 +184,7 @@ db_drop_table_ifexist(
   )
 
 import_table_effectif2(
-  path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201709.csv"
+  path = "data-raw/effectif/Urssaf_emploi_BFC_201001_201801.csv"
   ) %>%
   insert_multi(
     dest = database_signauxfaibles,
@@ -205,8 +207,8 @@ import_table_effectif2(
 db_drop_table_ifexist(db = database_signauxfaibles, "table_ccsv")
 
 dplyr::bind_rows(
-  import_table_ccsv(path = "data-raw/ccsv/Bourgogne_ccsf.csv"),
-  import_table_ccsv(path = "data-raw/ccsv/FRC_ccsf.csv")
+  import_table_ccsv(path = "data-raw/ccsv/Bourgogne_ccsf_201803.csv"),
+  import_table_ccsv(path = "data-raw/ccsv/FRC_ccsf_201803.csv")
   ) %>%
   dplyr::distinct() %>%
   insert_multi(

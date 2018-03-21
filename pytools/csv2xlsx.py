@@ -52,5 +52,5 @@ f.close()
 ws.auto_filter.ref = "A1:" + excel_style(height, width)
 for i, column_width in enumerate(column_widths):
     ws.column_dimensions[excel_column(i+1)].width = column_width
-ws.freeze_panes = ws['B2']
+ws.freeze_panes = ws['C2']
 wb.save(sys.argv[2])
