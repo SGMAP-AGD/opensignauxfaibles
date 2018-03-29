@@ -5,8 +5,8 @@ output:
   html_notebook: default
 params:
   start: "2013-01-01"
-  end: "2017-02-01"
-  last: "2017-09-01"
+  end: "2017-03-01"
+  last: "2018-01-01"
 ---
 <!-- 
 params = list(
@@ -20,9 +20,9 @@ library("dplyr")
 database_signauxfaibles <- database_connect()
 
 params = list(
-  start= "2013-01-01",
-  end= "2018-02-01",
-  last= "2017-09-01")
+  start= "2014-01-01",
+  end= "2018-03-01",
+  last= "2018-01-01")
 ```
 
 ```{r list-tables}
