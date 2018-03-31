@@ -25,6 +25,11 @@ func DB() gin.HandlerFunc {
 	}
 }
 
+func insertValue(db *mgo.Database, value Value) {
+	value.ID = bson.NewObjectId()
+	db.C("Etablissement").Insert(value)
+}
+
 func main() {
 	r := gin.Default()
 	r.Use(DB())
@@ -84,7 +89,7 @@ func reduceAll(c *gin.Context) {
 		Map:      string(mapFct),
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
-		Out:      bson.M{"replace": "testcollection2"},
+		Out:      bson.M{"replace": "algo1"},
 	}
 
 	var etablissement []struct {
@@ -92,7 +97,7 @@ func reduceAll(c *gin.Context) {
 		Value interface{} `json:"value" bson:"value"`
 	}
 
-	db.C("testcollection").Find(nil).MapReduce(job, &etablissement)
+	db.C("Etablissement").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -154,25 +159,27 @@ func importDebit(c *gin.Context) {
 	}
 
 	ancienSiret := ""
-	D := Etablissement{}
+	D := Value{}
 
 	for i := range debits {
 		for debit := range parseDebit(debits[i], Mapping) {
-			if debit.Siret != ancienSiret {
-				db.C("Etablissement").Insert(D)
-				D = Etablissement{
-					Compte: Compte{
-						Debit: map[string]Debit{},
+			if debit.Value.Siret != ancienSiret {
+				insertValue(db, D)
+				D = Value{
+					Value: Etablissement{
+						Siret: debit.Value.Siret,
+						Compte: Compte{
+							Debit: map[string]Debit{},
+						},
 					},
 				}
-				D.Siret = debit.Siret
 			}
-			ancienSiret = debit.Siret
-			for k, v := range debit.Compte.Debit {
-				D.Compte.Debit[k] = v
+			ancienSiret = debit.Value.Siret
+			for k, v := range debit.Value.Compte.Debit {
+				D.Value.Compte.Debit[k] = v
 			}
 		}
-		db.C("Etablissement").Insert(D)
+		insertValue(db, D)
 	}
 }
 
@@ -180,7 +187,7 @@ func importAltares(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
 	for altares := range parseAltares("data-raw/altares/RECAP_ALTARES_201803.csv") {
-		db.C("Etablissement").Insert(altares)
+		insertValue(db, altares)
 	}
 }
 
@@ -188,7 +195,7 @@ func importEffectif(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
 	for effectif := range parseEffectif("data-raw/effectif/Urssaf_emploi_BFC_201001_201709.csv") {
-		db.C("Etablissement").Insert(effectif)
+		insertValue(db, effectif)
 	}
 }
 
@@ -197,22 +204,22 @@ func importData(c *gin.Context) {
 
 	go func() {
 		for activitePartielleDemande := range parseActivitePartielleDemande("data-raw/activite_partielle/act_partielle_ddes_2012_janv2018.xlsx") {
-			db.C("Etablissement").Insert(activitePartielleDemande)
+			insertValue(db, activitePartielleDemande)
 		}
 	}()
 
 	go func() {
 		for activitePartielleConsommation := range parseActivitePartielleConsommation("data-raw/activite_partielle/act_partielle_conso_janv2018.xlsx") {
-			db.C("Etablissement").Insert(activitePartielleConsommation)
+			insertValue(db, activitePartielleConsommation)
 		}
 	}()
 
 	for effectif := range parseEffectif("data-raw/effectif/Urssaf_emploi_BFC_201001_201709.csv") {
-		db.C("Etablissement").Insert(effectif)
+		insertValue(db, effectif)
 	}
 
 	for altares := range parseAltares("data-raw/altares/RECAP_ALTARES_201803.csv") {
-		db.C("Etablissement").Insert(altares)
+		insertValue(db, altares)
 	}
 
 	go importDebit(c)
@@ -226,7 +233,7 @@ func importData(c *gin.Context) {
 
 	for i := range ccsfs {
 		for ccsf := range parseCCSF(ccsfs[i], Mapping) {
-			db.C("Etablissement").Insert(ccsf)
+			insertValue(db, ccsf)
 		}
 	}
 	delaiss := []string{
@@ -245,7 +252,7 @@ func importData(c *gin.Context) {
 	}
 	for i := range delaiss {
 		for delais := range parseDelais(delaiss[i], Mapping) {
-			db.C("Etablissement").Insert(delais)
+			insertValue(db, delais)
 		}
 	}
 
@@ -275,25 +282,27 @@ func importCotisation(c *gin.Context) {
 	}
 
 	ancienSiret := ""
-	D := Etablissement{}
+	D := Value{}
 
 	for i := range cotisations {
 		for cotisation := range parseCotisation(cotisations[i], Mapping) {
-			if cotisation.Siret != ancienSiret {
-				db.C("Etablissement").Insert(D)
-				D = Etablissement{
-					Compte: Compte{
-						Cotisation: map[string]Cotisation{},
+			if cotisation.Value.Siret != ancienSiret {
+				insertValue(db, D)
+				D = Value{
+					Value: Etablissement{
+						Siret: cotisation.Value.Siret,
+						Compte: Compte{
+							Cotisation: map[string]Cotisation{},
+						},
 					},
 				}
-				D.Siret = cotisation.Siret
 			}
-			ancienSiret = cotisation.Siret
-			for k, v := range cotisation.Compte.Cotisation {
-				D.Compte.Cotisation[k] = v
+			ancienSiret = cotisation.Value.Siret
+			for k, v := range cotisation.Value.Compte.Cotisation {
+				D.Value.Compte.Cotisation[k] = v
 			}
 		}
-		db.C("Etablissement").Insert(D)
+		insertValue(db, D)
 	}
 }
 
@@ -302,13 +311,13 @@ func importAP(c *gin.Context) {
 
 	go func() {
 		for activitePartielleDemande := range parseActivitePartielleDemande("data-raw/activite_partielle/act_partielle_ddes_2012_janv2018.xlsx") {
-			db.C("Etablissement").Insert(activitePartielleDemande)
+			insertValue(db, activitePartielleDemande)
 		}
 	}()
 
 	go func() {
 		for activitePartielleConsommation := range parseActivitePartielleConsommation("data-raw/activite_partielle/act_partielle_conso_janv2018.xlsx") {
-			db.C("Etablissement").Insert(activitePartielleConsommation)
+			insertValue(db, activitePartielleConsommation)
 		}
 	}()
 
@@ -334,22 +343,19 @@ func browseOrig(c *gin.Context) {
 func reduceEtablissement(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
+	mapFct, _ := ioutil.ReadFile("map.js")
 	reduceFct, _ := ioutil.ReadFile("reduce.js")
 	finalizeFct, _ := ioutil.ReadFile("finalize.js")
 
 	job := &mgo.MapReduce{
-		Map:      "function() { emit(this.siret, this) }",
+		Map:      string(mapFct),
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
-		// Out:    bson.M{"replace": "testcollection"},
 	}
 
-	var etablissement []struct {
-		ID    Siret         `json:"id" bson:"_id"`
-		Value Etablissement `json:"value" bson:"value"`
-	}
+	var etablissement []interface{}
 
-	db.C("Etablissement").Find(bson.M{"siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -357,12 +363,15 @@ func reduceEtablissement(c *gin.Context) {
 func reduceEtablissements(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
+	mapFct, _ := ioutil.ReadFile("map.js")
 	reduceFct, _ := ioutil.ReadFile("reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("finalize.js")
 
 	job := &mgo.MapReduce{
-		Map:    "function() { emit(this.siret, this) }",
-		Reduce: string(reduceFct),
-		Out:    bson.M{"replace": "testcollection"},
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+		Out:      bson.M{"replace": "Etablissement"},
 	}
 
 	var etablissement []struct {

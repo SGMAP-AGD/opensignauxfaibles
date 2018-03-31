@@ -2,6 +2,8 @@ package main
 
 import (
 	"time"
+
+	"github.com/globalsign/mgo/bson"
 )
 
 // Siret Système Informatique pour le Répertoire des Entreprises sur le Territoire
@@ -10,6 +12,12 @@ type Siret string
 // Siret instancie une variable de type Siret
 func (s *Siret) Siret() Siret {
 	return "test"
+}
+
+// Value mongodb mapReduce object like
+type Value struct {
+	ID    bson.ObjectId `json:"id" bson:"_id"`
+	Value Etablissement `json:"value" bson:"value"`
 }
 
 // Etablissement objet établissement (/entreprise/)

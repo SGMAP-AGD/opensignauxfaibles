@@ -13,8 +13,8 @@ import (
 	"github.com/cnf/structhash"
 )
 
-func parseDelais(path string, CompteSiretMapping map[string]string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseDelais(path string, CompteSiretMapping map[string]string) chan Value {
+	outputChannel := make(chan Value)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -66,11 +66,13 @@ func parseDelais(path string, CompteSiretMapping map[string]string) chan Etablis
 			hash := fmt.Sprintf("%x", structhash.Md5(delais, 1))
 
 			if siret, ok := CompteSiretMapping[row[field["NumeroCompte"]]]; ok {
-				outputChannel <- Etablissement{
-					Siret: siret,
-					Compte: Compte{
-						Delais: map[string]Delais{
-							hash: delais,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: siret,
+						Compte: Compte{
+							Delais: map[string]Delais{
+								hash: delais,
+							},
 						},
 					},
 				}

@@ -51,7 +51,7 @@ func getCompteSiretMapping(path string) map[string]string {
 	return compteSiretMapping
 }
 
-func parseEffectif(path string) chan Etablissement {
+func parseEffectif(path string) chan Value {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Error", err)
@@ -74,7 +74,7 @@ func parseEffectif(path string) chan Etablissement {
 	if err != nil {
 		log.Panic("Aborting: could not read a period:", err)
 	}
-	outputChannel := make(chan Etablissement)
+	outputChannel := make(chan Value)
 
 	go func() {
 		for {
@@ -102,10 +102,12 @@ func parseEffectif(path string) chan Etablissement {
 			}
 
 			if len(row[siretIndex]) == 14 {
-				outputChannel <- Etablissement{
-					Siret: row[siretIndex],
-					Compte: Compte{
-						Effectif: effectif,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: row[siretIndex],
+						Compte: Compte{
+							Effectif: effectif,
+						},
 					},
 				}
 

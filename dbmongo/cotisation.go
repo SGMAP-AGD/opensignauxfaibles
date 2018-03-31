@@ -13,8 +13,8 @@ import (
 	"github.com/cnf/structhash"
 )
 
-func parseCotisation(path string, CompteSiretMapping map[string]string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseCotisation(path string, CompteSiretMapping map[string]string) chan Value {
+	outputChannel := make(chan Value)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -59,11 +59,13 @@ func parseCotisation(path string, CompteSiretMapping map[string]string) chan Eta
 				cotisation.Ecriture = row[field["Ecriture"]]
 
 				hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
-				outputChannel <- Etablissement{
-					Siret: siret,
-					Compte: Compte{
-						Cotisation: map[string]Cotisation{
-							hash: cotisation,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: siret,
+						Compte: Compte{
+							Cotisation: map[string]Cotisation{
+								hash: cotisation,
+							},
 						},
 					},
 				}

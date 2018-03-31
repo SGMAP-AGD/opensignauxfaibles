@@ -12,8 +12,8 @@ import (
 	"github.com/cnf/structhash"
 )
 
-func parseAltares(path string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseAltares(path string) chan Value {
+	outputChannel := make(chan Value)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -51,10 +51,12 @@ func parseAltares(path string) chan Etablissement {
 			}
 			hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 			if err == nil {
-				outputChannel <- Etablissement{
-					Siret: row[siretIndex],
-					Altares: map[string]Altares{
-						hash: altares,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: row[siretIndex],
+						Altares: map[string]Altares{
+							hash: altares,
+						},
 					},
 				}
 			}

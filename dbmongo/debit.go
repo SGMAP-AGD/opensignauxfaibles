@@ -12,8 +12,8 @@ import (
 	"github.com/cnf/structhash"
 )
 
-func parseDebit(path string, CompteSiretMapping map[string]string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseDebit(path string, CompteSiretMapping map[string]string) chan Value {
+	outputChannel := make(chan Value)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -62,11 +62,13 @@ func parseDebit(path string, CompteSiretMapping map[string]string) chan Etabliss
 				debit.CodeMotifEcartNegatif = row[codeMotifEcartNegatifIndex]
 
 				hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
-				outputChannel <- Etablissement{
-					Siret: siret,
-					Compte: Compte{
-						Debit: map[string]Debit{
-							hash: debit,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: siret,
+						Compte: Compte{
+							Debit: map[string]Debit{
+								hash: debit,
+							},
 						},
 					},
 				}

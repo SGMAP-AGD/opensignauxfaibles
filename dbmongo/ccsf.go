@@ -11,8 +11,8 @@ import (
 	"github.com/cnf/structhash"
 )
 
-func parseCCSF(path string, CompteSiretMapping map[string]string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseCCSF(path string, CompteSiretMapping map[string]string) chan Value {
+	outputChannel := make(chan Value)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -46,11 +46,13 @@ func parseCCSF(path string, CompteSiretMapping map[string]string) chan Etablisse
 
 			hash := fmt.Sprintf("%x", structhash.Md5(ccsf, 1))
 
-			outputChannel <- Etablissement{
-				Siret: CompteSiretMapping[r[f["NumeroCompte"]]],
-				Compte: Compte{
-					CCSF: map[string]CCSF{
-						hash: ccsf,
+			outputChannel <- Value{
+				Value: Etablissement{
+					Siret: CompteSiretMapping[r[f["NumeroCompte"]]],
+					Compte: Compte{
+						CCSF: map[string]CCSF{
+							hash: ccsf,
+						},
 					},
 				},
 			}

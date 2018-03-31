@@ -129,9 +129,9 @@ function finalize(key, value) {
         periode_past.setMonth(periode_past.getMonth() + 1)
     }
 
-    var mean_cotisation_due = cotisation_due.du / nb_month
+    var mean_cotisation_due = (nb_month == 0 ? 0 : cotisation_due.du / nb_month)
 
-    var log_cotisationdue_effectif = ( mean_cotisation_due * effectif == 0 ? 0 : Math.log(mean_cotisation_due / effectif))
+    var log_cotisationdue_effectif = ( mean_cotisation_due * effectif == 0 ? 0 : Math.log(1+mean_cotisation_due/effectif))
 
     var dette = Object.keys(v.compte.debit).reduce(function(m,h) {
         var debit = v.compte.debit[h]
@@ -161,8 +161,8 @@ function finalize(key, value) {
     )
 
     var indicatrice_dettecumulee_12m = (dette.part_patronale12m + dette.part_ouvriere12m > 0)
-    var ratio_dettecumulee_cotisation_12m = (dette_cumulee.part_ouvriere12m + dette_cumulee.part_patronale12m) / mean_cotisation_due
-    var log_ratio_dettecumulee_cotisation_12m = (ratio_dettecumulee_cotisation_12m == 0 ? 0 : Math.log(ratio_dettecumulee_cotisation_12m))
+    var ratio_dettecumulee_cotisation_12m = (mean_cotisation_due == 0 ? 0 : (dette_cumulee.part_ouvriere12m+dette_cumulee.part_patronale12m)/mean_cotisation_due)
+    var log_ratio_dettecumulee_cotisation_12m = (ratio_dettecumulee_cotisation_12m == 0 ? 0 : Math.log(1 + ratio_dettecumulee_cotisation_12m))
     
     emit_value = {
         "siret": v.siret,
@@ -173,7 +173,10 @@ function finalize(key, value) {
         "apart_last12months": apart_last12_months,
         "apart_consommee": apart_consommee,
         "apart_share_heuresconsommees": apart_share_heures_consommees,
+        "ratio_dette_cumulee_cotisation_12m": ratio_dettecumulee_cotisation_12m,
+        "mean_cotisation_due": mean_cotisation_due,
         "log_cotisationdue_effectif": log_cotisationdue_effectif,
+        "montant_part_ouvriere_12m": dette_cumulee.part_ouvriere12m,
         "log_ratio_dettecumulee_cotisation_12m": log_ratio_dettecumulee_cotisation_12m,
         "indicatrice_dettecumulee_12m": indicatrice_dettecumulee_12m
     }

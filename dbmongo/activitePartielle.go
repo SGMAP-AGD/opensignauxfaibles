@@ -17,8 +17,8 @@ func excelToTime(excel string) (time.Time, error) {
 	}
 	return time.Unix((excelInt-25569)*3600*24, 0), nil
 }
-func parseActivitePartielleDemande(path string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseActivitePartielleDemande(path string) chan Value {
+	outputChannel := make(chan Value)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -27,7 +27,7 @@ func parseActivitePartielleDemande(path string) chan Etablissement {
 
 	go func() {
 		for _, sheet := range xlFile.Sheets {
-			for _, row := range sheet.Rows[2:] {
+			for _, row := range sheet.Rows[3:] {
 				apdemande := APDemande{}
 				apdemande.ID = row.Cells[2].Value
 				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[14].Value)
@@ -56,11 +56,13 @@ func parseActivitePartielleDemande(path string) chan Etablissement {
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
-				outputChannel <- Etablissement{
-					Siret: row.Cells[3].Value,
-					ActivitePartielle: ActivitePartielle{
-						Demande: map[string]APDemande{
-							hash: apdemande,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: row.Cells[3].Value,
+						ActivitePartielle: ActivitePartielle{
+							Demande: map[string]APDemande{
+								hash: apdemande,
+							},
 						},
 					},
 				}
@@ -72,8 +74,8 @@ func parseActivitePartielleDemande(path string) chan Etablissement {
 	return outputChannel
 }
 
-func parseActivitePartielleConsommation(path string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseActivitePartielleConsommation(path string) chan Value {
+	outputChannel := make(chan Value)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -95,11 +97,13 @@ func parseActivitePartielleConsommation(path string) chan Etablissement {
 				}
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apconsommation, 1))
-				outputChannel <- Etablissement{
-					Siret: row.Cells[2].Value,
-					ActivitePartielle: ActivitePartielle{
-						Consommation: map[string]APConsommation{
-							hash: apconsommation,
+				outputChannel <- Value{
+					Value: Etablissement{
+						Siret: row.Cells[2].Value,
+						ActivitePartielle: ActivitePartielle{
+							Consommation: map[string]APConsommation{
+								hash: apconsommation,
+							},
 						},
 					},
 				}

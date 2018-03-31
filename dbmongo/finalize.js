@@ -50,7 +50,6 @@ function finalize(key, r) {
             r.activite_partielle.consommation[apart[k].consommation[j]].hash_demande = apart[k].demande;
         }
     }
-    print( Object.keys(r.compte.effectif).some(function() {return true}))
     r.index = {"algo1": Object.keys(r.compte.effectif).some(function() {return true})}
     
     return r;
