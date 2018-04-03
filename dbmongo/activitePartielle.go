@@ -87,7 +87,7 @@ func parseActivitePartielleConsommation(path string) chan Value {
 			for _, row := range sheet.Rows[3:] {
 				apconsommation := APConsommation{}
 				apconsommation.ID = row.Cells[1].Value
-				apconsommation.Date, err = excelToTime(row.Cells[15].Value)
+				apconsommation.Periode, err = excelToTime(row.Cells[15].Value)
 				apconsommation.HeureConsommee, err = strconv.ParseFloat(row.Cells[16].Value, 64)
 				apconsommation.Montant, err = strconv.ParseFloat(row.Cells[17].Value, 64)
 				apconsommation.Effectif, err = strconv.Atoi(row.Cells[18].Value)

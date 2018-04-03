@@ -2,7 +2,7 @@ function map() {
 
     emit(
         this.value.siret,
-        this
+        this.value
     )
 
 

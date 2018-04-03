@@ -13,3 +13,4 @@ packrat/src/*
 inst/fiches/*
 inst/*.html
 output/*
+dbmongo/data-raw

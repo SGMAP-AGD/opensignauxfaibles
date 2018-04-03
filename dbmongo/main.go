@@ -73,7 +73,7 @@ func reduce(c *gin.Context) {
 		Value interface{} `json:"value" bson:"value"`
 	}
 
-	db.C("testcollection").Find(bson.M{"_id": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	db.C("Etablissement").Find(bson.M{"_id": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }

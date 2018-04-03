@@ -64,7 +64,7 @@ type APConsommation struct {
 	HeureConsommee float64   `json:"heure_consomme" bson:"heure_consomme"`
 	Montant        float64   `json:"montant" bson:"montant"`
 	Effectif       int       `json:"effectif" bson:"effectif"`
-	Date           time.Time `json:"date" bson:"date"`
+	Periode        time.Time `json:"periode" bson:"periode"`
 }
 
 // Compte informations ursaff
