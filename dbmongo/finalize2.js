@@ -1,19 +1,23 @@
 function finalize(k, v) {
 
     var date_debut = new Date("2014-01-01");
-    var date_fin = new Date("2018-04-01");
+    var date_fin = new Date("2018-03-01");
+    var date_fin_effectif = new Date("2018-01-01")
+
+    var offset_effectif = (date_fin_effectif.getUTCFullYear()-date_fin.getUTCFullYear())*12 + date_fin_effectif.getUTCMonth()-date_fin.getUTCMonth()
     liste_periodes = generatePeriodSerie(date_debut, date_fin)
 
+    liste_periodes = [new Date('2015-01-01'),new Date('2016-01-01'),new Date('2018-02-01')]
     // liste_periodes = [new Date("2015-01-01"), new Date("2016-01-01"), new Date("2018-04-01")]
 
     var value_array = liste_periodes.map(function(e) {
         return {"siret": v.siret,
                 "periode": e, 
                 "lag_effectif_missing": true,
-                "apart_last12months": false,
+                "apart_last12_months": false,
                 "apart_heures_consommees_array": [],
-                "past_year_effectif": {},
-                "outcome_0_12": "non_default",
+                "effectif_history": {},
+                "outcome_0_12": "non-default",
                 "date_defaillance": null,
                 "cotisation_due_periode": {},
                 "debit_array": []
@@ -26,39 +30,36 @@ function finalize(k, v) {
     }, {});
 
 
+    map_effectif = Object.keys(v.compte.effectif).reduce(function(map_effectif, hash) {
+        var effectif = v.compte.effectif[hash];
+        var effectifTime = effectif.periode.getTime()
+        map_effectif[effectifTime] = (map_effectif[effectifTime] || 0) + effectif.effectif
+        return map_effectif
+    }, {})
+    
 
-    Object.keys(v.compte.effectif).map(function(hash) {
-        var e = v.compte.effectif[hash];
-        var currentTime = e.periode.getTime()
-        var olderTime = (new Date(currentTime)).setUTCMonth(e.periode.getUTCMonth() + 1)
-        var beforeTime = (new Date(currentTime)).setFullYear(e.periode.getFullYear() + 1, e.periode.getUTCMonth() + 1)
-        var pastYearTimes = generatePeriodSerie(new Date(olderTime), new Date(beforeTime)).map(function(date) {return date.getTime()})
+    function DateAddMonth(date, nbMonth) {
+        var result = new Date(date.getTime()) 
+        result.setUTCMonth(result.getUTCMonth() + nbMonth)
+        return result
+    }
 
-        pastYearTimes.map(function (time) {
-            print(new Date(currentTime), pastYearTimes.map(e => new Date(e)))
-            if (time in value) {
-                value[time].past_year_effectif[currentTime] = (value[time].past_year_effectif[currentTime] || 0) + e.effectif 
-            }
+    // inscription des effectifs dans les périodes
+    value_array.map(function(val) {
+        var currentTime = val.periode.getTime()
+        var effectifDate = DateAddMonth(val.periode, offset_effectif)
+        var historyDate = DateAddMonth(val.periode, offset_effectif - 12)
+        var historyPeriods = generatePeriodSerie(historyDate, effectifDate)
+        val.effectif_date = effectifDate
+        val.effectif = map_effectif[effectifDate.getTime()]
+
+        val.lag_effectif = map_effectif[historyDate.getTime()]
+        historyPeriods.map(function(p) {
+            val.effectif_history[p.getTime()] = map_effectif[p.getTime()]
         })
-        
-        if (currentTime in value) {
-            val = value[currentTime]
-            val.effectif = (val.effectif || 0) + e.effectif;
-        }
-
-        if (beforeTime in value) {
-            val = value[beforeTime]
-            val.lag_effectif = (val.lag_effectif || 0) + e.effectif;
-            val.lag_effectif_missing = false;
-        }
     })
 
-    value_array.map(function(val,index) {
-        if (!(val.effectif)) {
-            delete value[val.periode.getTime()]
-            delete value_array[index]
-        }
-    })
+
 
     // activite partielle
 
@@ -72,7 +73,7 @@ function finalize(k, v) {
                 var pastYearTimes = generatePeriodSerie(new Date(currentTime), new Date(beforeTime)).map(function(date) {return date.getTime()})
                 pastYearTimes.map(function(time) {
                     if (time in value) {
-                        value[time].apart_last12months = true;
+                        value[time].apart_last12_months = true;
                         value[time].apart_heures_consommees_array.push(conso.heure_consomme);
                     }
                 })     
@@ -150,13 +151,19 @@ function finalize(k, v) {
         }
     })
 
-
-
     value_array.map(function(val,index) {
         if (!(val.effectif)) {
+            delete value[val.periode.getTime()]
             delete value_array[index]
-            return
         }
+    })
+
+    value_array.map(function(val,index) {
+
+        val.lag_effectif_missing = (val.lag_effectif ? false : true)
+
+        val.growthrate_effectif = (val.lag_effectif_missing ? 0 : val.effectif/val.lag_effectif)
+
 
         if (val.lag_effectif_missing) {
             val.cut_growthrate = "manquant"
@@ -180,9 +187,8 @@ function finalize(k, v) {
             val.cut_effectif = "Plus de 50"
         }
 
-        val.growthrate_effectif = (val.lag_effectif_missing ? 0 : val.effectif/val.lag_effectif)
-        var e = Object.keys(val.past_year_effectif).reduce(function (m,h) {
-            m.total += val.past_year_effectif[h];
+        var e = Object.keys(val.effectif_history).reduce(function (m,h) {
+            m.total += val.effectif_history[h];
             m.length += 1;
             return m
         },{"length": 0, "total": 0})
@@ -190,7 +196,7 @@ function finalize(k, v) {
         val.effectif_average = e.total / e.length;
 
         val.apart_heures_consommees = val.apart_heures_consommees_array.reduce(function(m,h) {return m + h}, 0)
-        val.apart_share_heures_consommees = (val.effectif_average == 0 ? 0 : val.apart_heures_consommees / (val.effectif_average * 1607) * 100)
+        val.apart_share_heuresconsommees = ((val.effectif_average||0) == 0 ? 0 : val.apart_heures_consommees / (val.effectif_average * 1607) * 100)
 
         c = val.cotisation_array.reduce(function(m,cot) {
             m.nb_month += 1
@@ -209,32 +215,31 @@ function finalize(k, v) {
 
         val.montant_part_ouvriere = val.montant_dette.part_ouvriere
         val.montant_part_patronale = val.montant_dette.part_patronale
+        
+        val.indicatrice_dettecumulee_12m = (val.montant_part_ouvriere + val.montant_part_patronale) > 0
+        
+        val.ratio_dettecumulee_cotisation_12m = (val.mean_cotisation_due > 0 ? (val.montant_part_ouvriere + val.montant_part_patronale) / val.mean_cotisation_due : 0)
+        val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1||1))
+        val.apart_last12_months = (val.apart_last12_months?1:0)
+        val.lag_effectif_missing = val.lag_effectif_missing
+        val.apart_consommee = (val.apart_heures_consommees>0?1:0)
 
-        val.indicatrice_dettecumulee_12m = ((val.montant_part_ouvriere + val.montant_part_patronale) > 0 ? 1 : 0)
-
-        val.ratio_dettecumulee_cotisation = (val.mean_cotisation_due > 0 ? (val.montant_part_ouvriere + val.montant_part_patronale) / val.mean_cotisation_due : 0)
-        val.log_ratio_dettecumulee_cotisation = Math.log((val.ratio_dettecumulee_cotisation + 1||1))
-
-        val.apart_last12months = (val.apart_last12months?1:0)
-        val.lag_effectif_missing = (val.lag_effectif_missing?1:0)
-
-        // delete val.past_year_effectif
-        //delete val.cotisation_array
+        delete val.effectif_history
+        delete val.cotisation_array
         delete val.debit_array
-        // delete val.montant_dette
+        delete val.montant_dette
         delete val.apart_heures_consommees_array
         delete val.cotisation_due_periode
-        // delete val.date_defaillance
-        // delete val.montant_part_ouvriere
-        // delete val.montant_part_patronale
-        // delete val.ratio_dettecumulee_cotisation
-        // delete val.mean_cotisation_due
-        // delete val.effectif
-        // delete val.effectif_average
-        // delete val.lag_effectif
-
+        delete val.date_defaillance
+        delete val.montant_part_ouvriere
+        delete val.montant_part_patronale
+        delete val.ratio_dettecumulee_cotisation_12m
+        delete val.mean_cotisation_due
+        delete val.effectif_date
+        delete val.effectif_average
+        delete val.lag_effectif
     })
-    
+
     return value_array
     
 }
