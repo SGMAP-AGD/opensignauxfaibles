@@ -60,7 +60,7 @@ func main() {
 		v1.GET("/importAltares", importAltares)
 		v1.GET("/mapDebit", mapDebit)
 		v1.GET("/importEffectif", importEffectif)
-		v1.GET("/R/algo1", algo1)
+		v1.POST("/R/algo1", algo1)
 	}
 
 	r.Run(":8080")
