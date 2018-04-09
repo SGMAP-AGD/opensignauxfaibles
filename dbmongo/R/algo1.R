@@ -15,7 +15,7 @@ data <- db$aggregate('[{"$unwind":{"path": "$value"}}]')$value %>%
                           levels = c("non-default", "default")
     )
   )
-
+ 
 
 sample_train <- data %>%
   filter(periode == periode_train) %>%

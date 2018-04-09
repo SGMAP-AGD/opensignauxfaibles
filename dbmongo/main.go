@@ -5,6 +5,7 @@ import (
 	"log"
 	"os/exec"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -28,6 +29,7 @@ func DB() gin.HandlerFunc {
 	}
 }
 
+// R démarre un processus R
 func R() {
 	cmd := exec.Command("Rscript", "R/rserve.R")
 	cmd.Run()
@@ -44,6 +46,10 @@ func main() {
 
 	r := gin.Default()
 	r.Use(DB())
+
+	// FIXME: configurer correctement CORS
+	r.Use(cors.Default())
+
 	v1 := r.Group("api/v1")
 	{
 		v1.GET("/purge", purge)
@@ -61,9 +67,10 @@ func main() {
 		v1.GET("/mapDebit", mapDebit)
 		v1.GET("/importEffectif", importEffectif)
 		v1.POST("/R/algo1", algo1)
+		v1.GET("/listFiles", listFiles)
 	}
 
-	r.Run(":8080")
+	r.Run(":3000")
 }
 
 func reduce(c *gin.Context) {
