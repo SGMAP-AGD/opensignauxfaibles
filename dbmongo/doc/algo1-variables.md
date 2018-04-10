@@ -16,7 +16,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
             "effectif": 12,
             "hash_demande": "714b5be1bbc7cb5b338911c715df358b",
             "heure_consomme": 966,
-            "id_conso": "02101280800",
+            "id_conso": "xxxxxxx",
             "montant": 7476.84,
             "periode": "2017-12-01T00:00:00Z"
         },
@@ -33,7 +33,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
             "hash_consommation": [],
             "heure_consommee": 0,
             "hta": 40000,
-            "id_demande": "0210128030",
+            "id_demande": "xxxx",
             "montant_consommee": 0,
             "motif_recours_se": 1,
             "mta": 289200,
@@ -58,7 +58,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
             "du": 196186,
             "ecriture": "100",
             "encaisse": 196186,
-            "numero_compte": "267000001620002812",
+            "numero_compte": "xxxxxxxxxxxxxxxxxxx",
             "periode": {
                 "end": "2015-12-01T00:00:00Z",
                 "start": "2015-11-01T00:00:00Z"
@@ -76,7 +76,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
             "date_traitement": "2012-02-08T00:00:00Z",
             "debit_suivant": "83ee6b542a88fb3f285e3873269c04be",
             "etat_compte": 1,
-            "numero_compte": "267000001620002812",
+            "numero_compte": "xxxxxxxxxxxxxxxxxxx",
             "numero_ecart_negatif": "101",
             "numero_historique": 3,
             "part_ouvriere": 0,
@@ -92,7 +92,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
     "effectif": {
         "001f36e097c86a7b0965d3ac3ebf1dd5": {
             "effectif": 122,
-            "numero_compte": "267000001620002812",
+            "numero_compte": "xxxxxxxxxxxxxxxxxxx",
             "periode": "2013-05-01T00:00:00Z"
             },
     [...]
@@ -101,7 +101,7 @@ Les calculs sont effectués entreprise par entreprise. Voici un exemple abrégé
 "index": {
     "algo1": true
     },
-"siret": "01545141200025"
+"siret": "xxxxxxxxxxxxx"
 }
 ```
 
@@ -378,7 +378,7 @@ Le calcul est effectué pour les périodes `2015-01-01`, `2016-01-01` et `2018-0
 ```js
 [
   {
-    "id": "01545141200025",
+    "id": "xxxxxxxxxxxx",
     "value": [
       {
         "apart_consommee": 0,
