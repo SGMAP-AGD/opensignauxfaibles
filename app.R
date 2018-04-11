@@ -16,6 +16,8 @@ library(opensignauxfaibles)
 # UI
 #################################################################################################
 
+shiny.port <- 4500
+
 database_signauxfaibles <- database_connect()
 
 table_wholesample <- collect_wholesample(
@@ -142,4 +144,6 @@ server <- function(input, output) {
 }
 
 # Run the application
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server, options = list(
+  port = 4500
+))
