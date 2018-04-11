@@ -16,6 +16,8 @@ library(opensignauxfaibles)
 # UI
 #################################################################################################
 
+database_signauxfaibles <- database_connect()
+
 table_wholesample <- collect_wholesample(
   db = database_signauxfaibles,
   table = "wholesample"
