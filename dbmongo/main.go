@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	mgo "github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -50,6 +51,8 @@ func main() {
 	// FIXME: configurer correctement CORS
 	r.Use(cors.Default())
 
+	r.Use(static.Serve("/", static.LocalFile("static/", true)))
+
 	v1 := r.Group("api/v1")
 	{
 		v1.GET("/purge", purge)
@@ -64,10 +67,10 @@ func main() {
 		v1.GET("/importAP", importAP)
 		v1.GET("/importDebit", importDebit)
 		v1.GET("/importAltares", importAltares)
-		v1.GET("/mapDebit", mapDebit)
 		v1.GET("/importEffectif", importEffectif)
 		v1.POST("/R/algo1", algo1)
 		v1.GET("/listFiles", listFiles)
+		v1.GET("/data/debit/:siret", dataDebit)
 	}
 
 	r.Run(":3000")
@@ -84,7 +87,6 @@ func reduce(c *gin.Context) {
 		Map:      string(mapFct),
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
-		//Out:    bson.M{"replace": "testcollection2"},
 	}
 
 	var etablissement []struct {
@@ -117,28 +119,6 @@ func reduceAll(c *gin.Context) {
 	}
 
 	db.C("Etablissement").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
-
-	c.JSON(200, etablissement)
-}
-
-func mapDebit(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	mapFct, _ := ioutil.ReadFile("map_debit.js")
-	reduceFct, _ := ioutil.ReadFile("reduce2.js")
-
-	job := &mgo.MapReduce{
-		Map:    string(mapFct),
-		Reduce: string(reduceFct),
-		//Out:    bson.M{"replace": "testcollection2"},
-	}
-
-	var etablissement []struct {
-		ID    Siret       `json:"id" bson:"_id"`
-		Value interface{} `json:"value" bson:"value"`
-	}
-
-	db.C("testcollection").Find(bson.M{"_id": "80969365800027"}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }

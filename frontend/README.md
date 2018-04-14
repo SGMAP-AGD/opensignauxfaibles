@@ -1,6 +1,6 @@
-# signauxfaibl.es
+# signauxfaibles
 
-> Interface de gestion Signaux-Faibles
+> Signaux-Faibles™
 
 ## Build Setup
 

@@ -7,8 +7,8 @@ function finalize(k, v) {
     var offset_effectif = (date_fin_effectif.getUTCFullYear()-date_fin.getUTCFullYear())*12 + date_fin_effectif.getUTCMonth()-date_fin.getUTCMonth()
     liste_periodes = generatePeriodSerie(date_debut, date_fin)
 
-    liste_periodes = [new Date('2015-01-01'),new Date('2016-01-01'),new Date('2018-02-01')]
-    // liste_periodes = [new Date("2015-01-01"), new Date("2016-01-01"), new Date("2018-04-01")]
+    //liste_periodes = [new Date('2015-01-01'),new Date('2016-01-01'),new Date('2018-02-01')]
+    //liste_periodes = [new Date("2015-01-01"), new Date("2016-01-01"), new Date("2018-04-01")]
 
     var value_array = liste_periodes.map(function(e) {
         return {"siret": v.siret,
@@ -109,9 +109,6 @@ function finalize(k, v) {
             value_cotisation[date_cotisation.getTime()] = (value_cotisation[date_cotisation.getTime()] || []).concat(cotisation.du / periode_cotisation.length)
         })
     })
-
-
-
 
     var value_dette = {}
 
@@ -221,7 +218,6 @@ function finalize(k, v) {
         val.ratio_dettecumulee_cotisation_12m = (val.mean_cotisation_due > 0 ? (val.montant_part_ouvriere + val.montant_part_patronale) / val.mean_cotisation_due : 0)
         val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1||1))
         val.apart_last12_months = (val.apart_last12_months?1:0)
-        val.lag_effectif_missing = val.lag_effectif_missing
         val.apart_consommee = (val.apart_heures_consommees>0?1:0)
 
         delete val.effectif_history
@@ -238,6 +234,7 @@ function finalize(k, v) {
         delete val.effectif_date
         delete val.effectif_average
         delete val.lag_effectif
+
     })
 
     return value_array
