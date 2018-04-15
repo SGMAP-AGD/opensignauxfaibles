@@ -13,6 +13,17 @@ import (
 	"github.com/cnf/structhash"
 )
 
+// Cotisation Cotisation – fichier Urssaf
+type Cotisation struct {
+	NumeroCompte string  `json:"numero_compte" bson:"numero_compte"`
+	PeriodeDebit string  `json:"periode_debit" bson:"periode_debit"`
+	Periode      Periode `json:"period" bson:"periode"`
+	Recouvrement float64 `json:"recouvrement" bson:"recouvrement"`
+	Encaisse     float64 `json:"encaisse" bson:"encaisse"`
+	Du           float64 `json:"du" bson:"du"`
+	Ecriture     string  `json:"ecriture" bson:"ecriture"`
+}
+
 func parseCotisation(path string, CompteSiretMapping map[string]string) chan Value {
 	outputChannel := make(chan Value)
 

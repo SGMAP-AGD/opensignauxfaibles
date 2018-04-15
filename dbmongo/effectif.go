@@ -13,6 +13,13 @@ import (
 	"github.com/cnf/structhash"
 )
 
+// Effectif Urssaf
+type Effectif struct {
+	NumeroCompte string    `json:"numero_compte" bson:"numero_compte"`
+	Periode      time.Time `json:"periode" bson:"periode"`
+	Effectif     int       `json:"effectif" bson:"effectif"`
+}
+
 // ParseEffectifPeriod Transforme un tableau de périodes telles qu'écrites dans l'entête du tableau d'effectif urssaf en date de début
 func parseEffectifPeriod(effectifPeriods []string) ([]time.Time, error) {
 	periods := []time.Time{}

@@ -7,9 +7,17 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/cnf/structhash"
 )
+
+// CCSF information urssaf ccsf
+type CCSF struct {
+	DateTraitement time.Time `json:"date_traitement" bson:"date_traitement"`
+	Stade          string    `json:"stade" bson:"stade"`
+	Action         string    `json:"action" json:"action"`
+}
 
 func parseCCSF(path string, CompteSiretMapping map[string]string) chan Value {
 	outputChannel := make(chan Value)

@@ -13,6 +13,22 @@ import (
 	"github.com/cnf/structhash"
 )
 
+// Delais tuple fichier ursaff
+type Delais struct {
+	NumeroCompte      string    `json:"numero_compte" bson:"numero_compte"`
+	NumeroContentieux string    `json:"numero_contentieux" bson:"numero_contentieux"`
+	DateCreation      time.Time `json:"date_creation" bson:"date_creation"`
+	DateEcheanche     time.Time `json:"date_echeance" bson:"date_echeance"`
+	DureeDelai        int       `json:"duree_delai" bson:"duree_delai"`
+	Denomination      string    `json:"denomination" bson:"denomination"`
+	Indic6m           string    `json:"indic_6m" bson:"indic_6m"`
+	AnneeCreation     int       `json:"annee_creation" bson:"annee_creation"`
+	MontantEcheancier float64   `json:"montant_echeancier" bson:"montant_echeancier"`
+	NumeroStructure   string    `json:"numero_structure" bson:"numero_structure"`
+	Stade             string    `json:"stade" bson:"stade"`
+	Action            string    `json:"action" bson:"action"`
+}
+
 func parseDelais(path string, CompteSiretMapping map[string]string) chan Value {
 	outputChannel := make(chan Value)
 

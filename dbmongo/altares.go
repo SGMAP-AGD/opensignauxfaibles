@@ -12,6 +12,14 @@ import (
 	"github.com/cnf/structhash"
 )
 
+// Altares Extrait du récapitulatif altarès
+type Altares struct {
+	DateEffet     time.Time `json:"date_effet" bson:"date_effet"`
+	DateParution  time.Time `json:"date_parution" bson:"date_parution"`
+	CodeJournal   string    `json:"code_journal" bson:"code_journal"`
+	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
+}
+
 func parseAltares(path string) chan Value {
 	outputChannel := make(chan Value)
 

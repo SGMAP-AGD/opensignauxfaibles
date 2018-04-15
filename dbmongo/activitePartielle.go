@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -10,13 +9,44 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-func excelToTime(excel string) (time.Time, error) {
-	excelInt, err := strconv.ParseInt(excel, 10, 64)
-	if err != nil {
-		return time.Time{}, errors.New("Valeur non autorisée")
-	}
-	return time.Unix((excelInt-25569)*3600*24, 0), nil
+// ActivitePartielle Informations d'activité partielle
+type ActivitePartielle struct {
+	Demande      map[string]APDemande      `json:"demande" bson:"demande"`
+	Consommation map[string]APConsommation `json:"consommation" bson:"consommation"`
 }
+
+// APDemande Demande d'activité partielle
+type APDemande struct {
+	ID                 string    `json:"id_demande" bson:"id_demande"`
+	EffectifEntreprise int       `json:"effectif_entreprise" bson:"effectif_entreprise"`
+	Effectif           int       `json:"effectif" bson:"effectif"`
+	DateStatut         time.Time `json:"date_statut" bson:"date_statut"`
+	TxPC               float64   `json:"tx_pc" bson:"tx_pc"`
+	TxPCUnedicDares    float64   `json:"tx_pc_unedic_dares" bson:"tx_pc_unedic_dares"`
+	TxPCEtatDares      float64   `json:"tx_pc_etat_dares" bson:"tx_pc_etat_dares"`
+	Periode            Periode   `json:"periode" bson:"periode"`
+	HTA                float64   `json:"hta" bson:"hta"`
+	MTA                float64   `json:"mta" bson:"mta"`
+	EffectifAutorise   int       `json:"effectif_autorise" bson:"effectif_autorise"`
+	ProdHTAEffectif    float64   `json:"prod_hta_effectif" bson:"prod_hta_effectif"`
+	MotifRecoursSE     int       `json:"motif_recours_se" bson:"motif_recours_se"`
+	Perimetre          int       `json:"perimetre" bson:"perimetre"`
+	RecoursAnterieur   int       `json:"recours_anterieur" bson:"recours_anterieur"`
+	AvisCE             int       `json:"avis_ce" bson:"avis_ce"`
+	HeureConsommee     float64   `json:"heure_consommee" bson:"heure_consommee"`
+	MontantConsomme    float64   `json:"montant_consommee" bson:"montant_consommee"`
+	EffectifConsomme   int       `json:"effectif_consomme" bson:"effectif_consomme"`
+}
+
+// APConsommation Consommation d'activité partielle
+type APConsommation struct {
+	ID             string    `json:"id_conso" bson:"id_conso"`
+	HeureConsommee float64   `json:"heure_consomme" bson:"heure_consomme"`
+	Montant        float64   `json:"montant" bson:"montant"`
+	Effectif       int       `json:"effectif" bson:"effectif"`
+	Periode        time.Time `json:"periode" bson:"periode"`
+}
+
 func parseActivitePartielleDemande(path string) chan Value {
 	outputChannel := make(chan Value)
 

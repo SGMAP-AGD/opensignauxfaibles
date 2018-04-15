@@ -8,9 +8,25 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/cnf/structhash"
 )
+
+// Debit Débit – fichier Urssaf
+type Debit struct {
+	NumeroCompte                 string    `json:"numero_compte" bson:"numero_compte"`
+	NumeroEcartNegatif           string    `json:"numero_ecart_negatif" bson:"numero_ecart_negatif"`
+	DateTraitement               time.Time `json:"date_traitement" bson:"date_traitement"`
+	PartOuvriere                 float64   `json:"part_ouvriere" bson:"part_ouvriere"`
+	PartPatronale                float64   `json:"part_patronale" bson:"part_patronale"`
+	NumeroHistoriqueEcartNegatif int       `json:"numero_historique" bson:"numero_historique"`
+	EtatCompte                   int       `json:"etat_compte" bson:"etat_compte"`
+	CodeProcedureCollective      string    `json:"code_procedure_collective" bson:"code_procedure_collective"`
+	Periode                      Periode   `json:"periode" bson:"periode"`
+	CodeOperationEcartNegatif    string    `json:"code_operation_ecart_negatif" bson:"code_operation_ecart_negatif"`
+	CodeMotifEcartNegatif        string    `json:"code_motif_ecart_negatif" bson:"code_motif_ecart_negatif"`
+}
 
 func parseDebit(path string, CompteSiretMapping map[string]string) chan Value {
 	outputChannel := make(chan Value)

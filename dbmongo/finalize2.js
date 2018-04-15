@@ -38,12 +38,6 @@ function finalize(k, v) {
     }, {})
     
 
-    function DateAddMonth(date, nbMonth) {
-        var result = new Date(date.getTime()) 
-        result.setUTCMonth(result.getUTCMonth() + nbMonth)
-        return result
-    }
-
     // inscription des effectifs dans les périodes
     value_array.map(function(val) {
         var currentTime = val.periode.getTime()

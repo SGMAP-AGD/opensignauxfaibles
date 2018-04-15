@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
 
@@ -43,4 +44,10 @@ func algo1(c *gin.Context) {
 	err = json.Unmarshal([]byte(value.(string)), &result)
 
 	c.JSON(200, result)
+}
+
+// R démarre un processus R
+func r() {
+	cmd := exec.Command("Rscript", "R/rserve.R")
+	cmd.Run()
 }
