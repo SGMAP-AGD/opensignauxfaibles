@@ -4,10 +4,14 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 func main() {
 	// Lancer Rserve en background
+
+	loadConfig()
+
 	go r()
 
 	r := gin.Default()
@@ -18,25 +22,43 @@ func main() {
 
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
-	v1 := r.Group("api/v1")
+	api := r.Group("api")
 	{
-		v1.GET("/purge", purge)
-		v1.GET("/import", importData)
-		v1.GET("/reduceEtablissement/:siret", reduceEtablissement)
-		v1.GET("/reduceEtablissement", reduceEtablissements)
-		v1.GET("/reduce/:siret", reduce)
-		v1.GET("/reduce", reduceAll)
-		v1.GET("/etablissement/:siret", browseEtablissement)
-		v1.GET("/orig/:siret", browseOrig)
-		v1.GET("/debug/:urssaf", debug)
-		v1.GET("/importAP", importAP)
-		v1.GET("/importDebit", importDebit)
-		v1.GET("/importAltares", importAltares)
-		v1.GET("/importEffectif", importEffectif)
-		v1.POST("/R/algo1", algo1)
-		v1.GET("/listFiles", listFiles)
-		v1.GET("/data/debit/:siret", dataDebit)
+		api.POST("/auth", auth)
+		api.POST("/read", readJWT)
+		api.GET("/purge", purge)
+		api.GET("/import", importData)
+		api.GET("/reduceEtablissement/:siret", reduceEtablissement)
+		api.GET("/reduceEtablissement", reduceEtablissements)
+		api.GET("/reduce/:siret", reduce)
+		api.GET("/reduce", reduceAll)
+		api.GET("/etablissement/:siret", browseEtablissement)
+		api.GET("/orig/:siret", browseOrig)
+		api.GET("/debug/:urssaf", debug)
+		api.GET("/importAP", importAP)
+		api.GET("/importDebit", importDebit)
+		api.GET("/importAltares", importAltares)
+		api.GET("/importEffectif", importEffectif)
+		api.POST("/R/algo1", algo1)
+		api.GET("/listFiles", listFiles)
+		api.GET("/data/debit/:siret", dataDebit)
 	}
+	bind := viper.GetString("APP_BIND")
+	r.Run(bind)
+}
 
-	r.Run(":3000")
+func loadConfig() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath("/etc/opensignauxfaibles")
+	viper.AddConfigPath("$HOME/.opensignauxfaibles")
+	viper.AddConfigPath(".")
+	viper.ReadInConfig()
+
+	viper.SetDefault("APP_BIND", ":3000")
+	viper.SetDefault("APP_DATA", "./data-raw/")
+	viper.SetDefault("DB_HOST", "127.0.0.1")
+	viper.SetDefault("DB_PORT", "27017")
+	viper.SetDefault("DB", "opensignauxfaibles")
+	viper.SetDefault("JWT_SECRET", "One might change this because one day it will not be sufficient")
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/spf13/viper"
+
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -11,11 +13,15 @@ import (
 // DB Initialisation de la connexion MongoDB
 func DB() gin.HandlerFunc {
 
-	mongodb, err := mgo.Dial("127.0.0.1")
-	db := mongodb.DB("jason")
+	dbDial := viper.GetString("DB_DIAL")
+	dbDatabase := viper.GetString("DB")
 
-	// pousse des fonctions partagées JS
+	mongodb, err := mgo.Dial(dbDial)
+	db := mongodb.DB(dbDatabase)
+
+	// pousse les fonctions partagées JS
 	declareServerFunctions(db)
+
 	if err != nil {
 		log.Panic(err)
 	}

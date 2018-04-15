@@ -1,6 +1,16 @@
 package main
 
 import (
+	"log"
+
+	"github.com/spf13/viper"
+
+	"github.com/davecgh/go-spew/spew"
+
+	"github.com/gin-gonic/gin"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -11,9 +21,14 @@ type User struct {
 	Nom        string        `json:"nom" bson:"nom"`
 	Prenom     string        `json:"prenom" bson:"prenom"`
 	Contact    string        `json:"telephone" bson:"telephone"`
-	Login      string        `json:"login" bson:"login"`
-	Pass       string        `json:"password" bson:"password"`
 	Region     bson.ObjectId `json:"region_id" bson:"region_id"`
+	jwt.StandardClaims
+}
+
+// Auth Informations de login
+type Auth struct {
+	Username string `json:"username" bson:"username"`
+	Password string `json:"password" bson:"password"`
 }
 
 // Region Détermine les propriétés d'une région
@@ -21,4 +36,49 @@ type Region struct {
 	ID    bson.ObjectId `json:"id" bson:"_id"`
 	Path  string        `json:"path" bson:"path"`
 	Label string        `json:"label" bson:"label"`
+}
+
+// JWTRequest Requête pour tester le token (mode POC)
+type JWTRequest struct {
+	JwtToken string `json:"token" bson:"token"`
+}
+
+func createTokenString(user User) string {
+	jwtSecret := viper.GetString("JWT_SECRET")
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), &user)
+	tokenstring, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return tokenstring
+}
+
+func auth(c *gin.Context) {
+	db := c.Keys["DB"].(*mgo.Database)
+
+	var auth Auth
+	var user User
+	c.BindJSON(&auth)
+
+	db.C("user").Find(bson.M{"_id": auth.Username, "password": auth.Password}).One(&user)
+	spew.Dump(user)
+	if user.ID != "" {
+		c.JSON(200, createTokenString(user))
+	} else {
+		c.JSON(401, "Not authenticated")
+	}
+
+}
+
+func readJWT(c *gin.Context) {
+	jwtSecret := viper.GetString("JWT_SECRET")
+
+	var request JWTRequest
+	c.BindJSON(&request)
+
+	clearToken, _ := jwt.Parse(request.JwtToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	c.JSON(200, clearToken)
 }
