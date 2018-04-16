@@ -40,7 +40,7 @@ type Region struct {
 
 // JWTRequest Requête pour tester le token (mode POC)
 type JWTRequest struct {
-	JwtToken string `json:"token" bson:"token"`
+	Token string `json:"token" bson:"token"`
 }
 
 func createTokenString(user User) string {
@@ -63,7 +63,10 @@ func auth(c *gin.Context) {
 	db.C("user").Find(bson.M{"_id": auth.Username, "password": auth.Password}).One(&user)
 	spew.Dump(user)
 	if user.ID != "" {
-		c.JSON(200, createTokenString(user))
+		token := JWTRequest{
+			Token: createTokenString(user),
+		}
+		c.JSON(200, token)
 	} else {
 		c.JSON(401, "Not authenticated")
 	}
@@ -76,7 +79,7 @@ func readJWT(c *gin.Context) {
 	var request JWTRequest
 	c.BindJSON(&request)
 
-	clearToken, _ := jwt.Parse(request.JwtToken, func(token *jwt.Token) (interface{}, error) {
+	clearToken, _ := jwt.Parse(request.Token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret), nil
 	})
 

@@ -4,7 +4,7 @@
       <md-card-header>
         <div class="md-title">Visualisation de débit</div>
         <div class="md-subhead">by Signaux-Faibles™</div>
-        
+
       </md-card-header>
       <md-card-content>
         <md-field>
@@ -13,13 +13,13 @@
         </md-field>
 
         <md-button class='md-raised md-primary' v-on:click='fillTable()'>Consulter</md-button>
-        
+
         <md-chips v-model="sirets" md-placeholder="Add siret..."></md-chips>
 
         <vue-plotly v-for='siret in sirets' v-bind:key='siret' :data='data' :layout='layout' :options='options'/>
       </md-card-content>
     </md-card>
-    
+
 </div>
 </template>
 
@@ -42,13 +42,12 @@ export default {
     }
   },
   methods: {
-    fillTable: function() {
+    fillTable: function () {
       axios.get(`http://localhost:3000/api/v1/data/debit/` + this.siret)
-        .then(response => {this.data = response.data[0].value})
+        .then(response => { this.data = response.data[0].value })
     }
   }
 }
-
 
 </script>
 
