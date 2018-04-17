@@ -21,4 +21,3 @@ tibble::tibble(col1 = c(1,NA,3,4), col2 = c(NA,NA,NA,NA)) \%>\%
 detect_na()
 
 }
-

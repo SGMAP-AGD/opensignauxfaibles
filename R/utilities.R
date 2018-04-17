@@ -211,3 +211,18 @@ return_lastperiod <- function(x, sequence1, sequence2) {
     dplyr::filter(sequence1 == x) %>%
     .$sequence2
 }
+
+#' neglog transfrormation
+#'
+#' @param d a vector
+#'
+#' @return transformed data
+#' @export
+#'
+#' @examples
+#'
+neglog <- function(d) {
+  return(sign(d) * log2(abs(d) + 1))
+}
+
+

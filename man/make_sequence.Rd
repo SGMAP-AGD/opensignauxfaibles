@@ -22,4 +22,3 @@ Make sequence
 make_sequence(start = "2013-01-01", end = "2017-03-01")
 
 }
-

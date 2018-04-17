@@ -20,4 +20,3 @@ Get accountnumber
 \examples{
 
 }
-

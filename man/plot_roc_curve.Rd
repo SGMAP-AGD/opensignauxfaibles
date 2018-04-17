@@ -23,4 +23,3 @@ plot_roc_curve(model = model_departements, table = table_test_preprocessed)
 }
 
 }
-

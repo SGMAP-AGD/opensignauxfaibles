@@ -23,4 +23,3 @@ import_table_sirene(path = "data-raw/raw-data/direccte/bfc.sas7bdat")
 }
 
 }
-

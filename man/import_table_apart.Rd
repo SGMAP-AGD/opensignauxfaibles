@@ -21,4 +21,3 @@ import_table_apart(path = "raw-data/direccte/201609_POP_Bourg Fr Comté de janv2
 }
 
 }
-

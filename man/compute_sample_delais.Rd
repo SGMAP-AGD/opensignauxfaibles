@@ -23,4 +23,3 @@ compute_sample_delais(db = database_signauxfaibles, .date = "2017-01-01")
 }
 
 }
-

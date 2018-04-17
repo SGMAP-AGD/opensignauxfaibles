@@ -20,4 +20,3 @@ Plot effectif
 \examples{
 
 }
-

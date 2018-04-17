@@ -35,4 +35,3 @@ Import de la table d'activité partielle augmentée
 }
 
 }
-

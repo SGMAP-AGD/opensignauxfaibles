@@ -20,4 +20,3 @@ Import the new version of table effectif
 table_effectif2 <- import_table_effectif2(path = "raw-data/urssaf/Urssaf_emploi_BFC_200401_201609.csv")
 }
 }
-

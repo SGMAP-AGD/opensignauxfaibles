@@ -26,4 +26,3 @@ db = database_signauxfaibles,
 }
 
 }
-

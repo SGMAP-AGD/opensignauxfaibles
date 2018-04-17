@@ -8,12 +8,7 @@ params:
   end: "2017-03-01"
   last: "2018-01-01"
 ---
-<!-- 
-params = list(
-  start= "2013-01-01",
-  end= "2017-10-01",
-  last= "2018-02-01")
--->
+
 ```{r setup}
 library("opensignauxfaibles")
 library("dplyr")
@@ -155,6 +150,15 @@ compute_wholesample_ccsv(
   )
 ```
 
+## Banque de France
+```{r}
+compute_wholesample_banquedefrance(
+  db = database_signauxfaibles,
+  name = "wholesample_banquedefrance"
+)
+
+```
+
 ## Wholesample
 
 ```{r}
@@ -176,3 +180,6 @@ wholesample <- collect_wholesample(
 write.table(wholesample, row.names=F, dec=',', sep=';', file = "output/wholesample.csv", quote=T, append=F)
 save(wholesample, file = "output/wholesample.Rda")
 ```
+
+
+

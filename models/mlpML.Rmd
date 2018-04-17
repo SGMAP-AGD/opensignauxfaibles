@@ -1,0 +1,130 @@
+---
+title: "MLP"
+author: "Pierre Camilleri"
+date: "10 avril 2018"
+output: html_document
+---
+
+```{r}
+library("opensignauxfaibles")
+library("dplyr")
+library("tidyverse")
+library("mice")
+library("R.utils")
+library("nnet")
+library("caret")
+library("lazyeval")
+sourceDirectory("../tools",recursive = TRUE, modifiedOnly = FALSE,verbose = FALSE)
+source('./data_pipes/data_prep_RJLJ_12m_OSbyMonths_Paul_Antoine.R')
+```
+
+```{r}
+formulas_0_12 <- list(
+  "effectif" = outcome ~ cut_effectif,
+  "cotisation_effectif" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif,
+  "dettecumulee" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee,
+  "croissancedettecumulee" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee,
+  "nb_debits" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits,
+  "delais" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois,
+  "codenaf" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois +
+  libelle_naf_niveau1,
+  "delais_bdf" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois + neglog(taux_marge) + log(financier_ct + 0.01) + financier + delai_fournisseur,
+  "delais_bdf2" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois + taux_marge + financier_ct,
+  "delais_bdf3" = outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +   delai + delai_sup_6mois +
+  taux_marge + financier_ct + financier + delai_fournisseur + poids_frng + dette_fiscale
+  )
+```
+
+```{r}
+
+# IMBALANCE
+
+ctrl <-
+  trainControl(
+  method = "cv",
+  classProbs = TRUE,
+  summaryFunction = prSummary,
+  savePredictions = "all",
+  index = cv_folds
+  ) 
+
+
+mlp_tune_grid <- expand.grid(layer1 = c(10, 20) , layer2 = c(10, 20), layer3 = c(0, 10, 20))
+
+formula <- formulas_0_12$dettecumulee
+mlpML1_raw <- train(formula, 
+                  data = sample_train, 
+                  method = 'mlpML',
+                  preProcess = c("center","scale"),
+                  metric = 'AUC',
+                  trControl = ctrl,
+                  tuneLength = 10,
+                  tuneGrid = mlp_tune_grid,
+                 na.action = "na.omit")
+
+formula2 <- formulas_0_12$delais_bdf2
+mlpML2_raw <- train(formula2, 
+                  data = sample_train, 
+                  method = 'mlpML',
+                  preProcess = c("center","scale"),
+                  metric = 'AUC',
+                  trControl = ctrl,
+                  tuneLength = 10,
+                  tuneGrid = mlp_tune_grid,
+                 na.action = "na.omit")
+
+formula3 <- formulas_0_12$delais_bdf3
+mlpML3_raw <- train(formula3, 
+                  data = sample_train, 
+                  method = 'mlpML',
+                  preProcess = c("center","scale"),
+                  metric = 'AUC',
+                  trControl = ctrl,
+                  tuneLength = 10,
+                  tuneGrid = mlp_tune_grid,
+                 na.action = "na.omit")
+
+```

@@ -30,4 +30,3 @@ The file keys.json should have the following format :
 database_signauxfaibles <- database_connect()
 
 }
-

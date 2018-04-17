@@ -24,4 +24,3 @@ compute_sample_apart_consommee(db = database_signauxfaibles, .date = "2017-03-01
 }
 
 }
-

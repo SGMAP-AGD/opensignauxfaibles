@@ -20,4 +20,3 @@ Get ratio dettecumulee cotisation
 \examples{
 
 }
-

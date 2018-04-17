@@ -23,4 +23,3 @@ import_table_delais(path = "raw-data/urssaf/delais_franchecomte_01_2013__01_2017
 }
 
 }
-

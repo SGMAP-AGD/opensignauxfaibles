@@ -1,0 +1,73 @@
+---
+title: "model_ensembles_v1"
+author: "Pierre Camilleri"
+date: "10 avril 2018"
+output: ''
+---
+
+```{r}
+
+library('caretEnsemble')
+library("caTools")
+
+ensemble.control <- trainControl(
+  method = "repeatedcv",
+  repeats = 5,
+  savePredictions = "final",
+  classProbs = TRUE,
+  index = cv_folds,
+  summaryFunction = prSummary
+  )
+
+formula3 <- formulas_0_12$delais_bdf3
+
+model_list <- caretList(
+  formula3,
+  data = sample_train,
+  trControl = ensemble.control,
+  tuneList = list(
+       glm = caretModelSpec(method = "glm", family = "binomial"),
+    gbm = caretModelSpec(method = "gbm", tuneGrid = expand.grid(n.trees = 200,interaction.depth = 1, shrinkage = 0.075, n.minobsinnode = 10)),
+    rf = caretModelSpec(method = "rf", tuneGrid = data.frame(.mtry = 3))
+  )
+)
+
+# gbm3_raw <- train(formula3, 
+#                   data = sample_train, 
+#                   method = 'gbm',
+#                   metric = 'AUC',
+#                   trControl = ctrl,
+#                   tuneLength = 10,
+#                  na.action = "na.omit")
+
+# model.ensemble1 <- caretEnsemble(model.list1)
+
+```
+```{r}
+xyplot(resamples(model_list))
+```
+```{r}
+modelCor(resamples(model_list))
+```
+```{r}
+greedy_ensemble <- caretEnsemble(
+  model_list, 
+  metric="AUC",
+  trControl=trainControl(
+    number=10,
+    summaryFunction=prSummary,
+    classProbs=TRUE
+    ))
+summary(greedy_ensemble)
+```
+
+```{r}
+
+model_preds <- lapply(model_list, predict, newdata=sample_test, type="prob")
+model_preds <- lapply(model_preds, function(x) x[,"default"])
+model_preds <- data.frame(model_preds)
+ens_preds <- predict(greedy_ensemble, newdata=sample_test, type="prob")
+model_preds$ensemble <- ens_preds
+caTools::colAUC(model_preds, sample_test$outcome)
+```
+

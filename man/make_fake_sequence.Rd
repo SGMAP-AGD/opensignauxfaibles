@@ -27,4 +27,3 @@ par rapport aux autres datasets.
 make_fake_sequence(start = "2013-01-01", end = "2017-03-01", last = "2017-01-01")
 
 }
-
