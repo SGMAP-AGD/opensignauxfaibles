@@ -6,6 +6,8 @@ library(opensignauxfaibles)
 library(mice)
 library(caret)
 library(broom)
+library(randomForest)
+library(MLmetrics)
 
 # Sources
 source("./tools/data_prep/impute_missing_data_BdF.R")
@@ -19,7 +21,7 @@ seed <- 10011
 set.seed(seed)
 
 # Actual date
-actual <- "2018-02-01"
+actual <- "2018-03-01"
 
 # Collecting data
 
@@ -64,7 +66,7 @@ table_wholesample_sel <- table_wholesample_prep %>%
 
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
 
-tw_complete <- complete(mids,1) # provisoire. Continuer avec l'objet mids: with(mids, ...)
+tw_complete <- mids::complete(mids,1) # provisoire. Continuer avec l'objet mids: with(mids, ...)
 
 # Check for NAs, infinites
 
@@ -93,7 +95,7 @@ sample_actual <- tw_complete %>% filter(periode == actual)
 
 # apply algorithm
 
-formula = (
+formula <-  (
   outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
     apart_last12_months + apart_consommee + apart_share_heuresconsommees +
     log_cotisationdue_effectif +
