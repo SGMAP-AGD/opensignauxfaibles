@@ -24,4 +24,3 @@ get_dettecumulee(db = database_signauxfaibles, siret = "37850713100027")
 }
 
 }
-

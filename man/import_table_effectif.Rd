@@ -23,4 +23,3 @@ path = "raw-data/urssaf/Urssaf_emploi_BFC_200401_201606.csv"
 }
 
 }
-

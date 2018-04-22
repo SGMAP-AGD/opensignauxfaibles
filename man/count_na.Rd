@@ -22,4 +22,3 @@ table_training$code_departement \%>\% count_na()
 plyr::ldply(.data = table_training, .fun = count_na)
 
 }
-

@@ -21,4 +21,3 @@ table_altares <- import_table_altares(path = "raw-data/direccte/RECAP_ALTARES.cs
 }
 
 }
-

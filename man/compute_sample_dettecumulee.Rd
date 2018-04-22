@@ -23,4 +23,3 @@ compute_sample_dettecumulee(db = database_signauxfaibles, .date = "2013-01-01")
 }
 
 }
-

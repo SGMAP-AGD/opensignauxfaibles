@@ -181,8 +181,7 @@ compute_sample_altares <- function(db, .date) {
     ) %>%
     dplyr::filter_(
       .dots = list(
-        ~ code_du_journal == "001",
-        ~ date_effet >= .date
+        ~ code_du_journal == "001"
       )
     ) %>%
     dplyr::group_by_(.dots = ~ siret) %>%
@@ -1224,6 +1223,33 @@ compute_wholesample_apartconsommee <- function(db, name, start, end) {
     )
 }
 
+
+#' Compute wholesample banque de France
+#'
+#' @param db database
+#' @param name name of the table
+#'
+#' @return a table
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#' compute_wholesample_banquedefrance(db = database_signauxfaibles, name = "table_banquedefrance")
+#' }
+#'
+compute_wholesample_banquedefrance <- function(db, name) {
+  db_drop_table_ifexist(db = db, table = name)
+  dplyr::tbl(src = db, from = "table_banquedefrance") %>%
+    collect() %>%
+insert_multi(
+      dest = db,
+      df = .,
+      slices = 3,
+      name = name
+    )
+}
+
 #' Compute whole sample
 #'
 #' @param db database
@@ -1286,10 +1312,12 @@ compute_wholesample <- function(db, name) {
     dplyr::left_join(
       y = import_table_naf(path = "data-raw/naf/naf2008_5_niveaux.xls"),
       by = c("code_ape" = "code_naf_niveau5"),
-      copy = TRUE) %>%
+      copy = TRUE)  %>%
     dplyr::compute(name = name, temporary = FALSE)
 
 }
+
+
 
 #' Collect wholesample
 #'
@@ -1306,11 +1334,33 @@ compute_wholesample <- function(db, name) {
 #' }
 #'
 collect_wholesample <- function(db, table) {
+
+  trimquantiles <-
+    function(v) {
+      return(pmin(pmax(v, quantile(v, 0.02, na.rm = TRUE)), quantile(v, 0.98, na.rm = TRUE)))
+    }
+
+  bdf <- dplyr::tbl(src = db, from = "wholesample_banquedefrance") %>%
+    select(-raison_sociale) %>%
+    collect() %>%
+    mutate(poids_frng = trimquantiles(poids_frng),
+           taux_marge = trimquantiles(taux_marge),
+           delai_fournisseur = trimquantiles(delai_fournisseur),
+           dette_fiscale = trimquantiles(dette_fiscale),
+           financier_ct = trimquantiles(financier_ct),
+           financier = trimquantiles(financier),
+           bilan_absent = is.na(taux_marge))
+
   dplyr::tbl(
     src = db,
     from = "wholesample"
   ) %>%
     dplyr::collect(n = Inf) %>%
+    dplyr::mutate(siren =  stringr::str_sub(siret,1,9) , annee = lubridate::year(periode)) %>%
+    dplyr::left_join(y = bdf, by = c("annee","siren")) %>%
+    group_by(siret) %>%
+    filter(any(effectif >= 10)) %>%
+    ungroup() %>%
     tidyr::replace_na(
       replace = list(
         "montant_part_ouvriere" = 0,
@@ -1358,7 +1408,7 @@ collect_wholesample <- function(db, table) {
         na_level = "non-default"),
       cotisationdue_effectif = (mean_cotisation_due) / effectif,
       log_cotisationdue_effectif = log(cotisationdue_effectif),
-      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
+      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / (mean_cotisation_due + 0.1),
       indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
       log_ratio_dettecumulee_cotisation = dplyr::if_else(
         condition = indicatrice_dettecumulee == TRUE,
@@ -1375,5 +1425,8 @@ collect_wholesample <- function(db, table) {
       indicatrice_croissance_dettecumulee = (
         montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
       )
-    )
+    ) %>%
+    select(-bilan,-secteur,-siren, -annee)
 }
+
+

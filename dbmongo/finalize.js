@@ -2,7 +2,7 @@ function finalize(key, r) {
     // relier les débits
     debit = r.compte.debit
     ecn = {};
-
+    
     for (i in debit) {
         start = debit[i].periode.start.toISOString().substring(2,7).replace("-","")
         end = debit[i].periode.end.toISOString().substring(2,7).replace("-","")

@@ -24,4 +24,3 @@ path = "raw-data/urssaf/Urssaf_bourgogne_Cotis_dues_09_2016_01_2017.csv"
 }
 
 }
-

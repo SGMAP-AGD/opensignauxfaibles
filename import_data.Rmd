@@ -26,6 +26,64 @@ import_table_altares(
     dest = database_signauxfaibles,
     df = .,
     slices = 10,
+        "apart_last12_months" = 0,
+        "apart_consommee" = 0,
+        "apart_share_heuresconsommees" = 0,
+        "apart_heures_consommees" = 0
+      )
+    ) %>%
+    dplyr::mutate(
+      cut_effectif = forcats::fct_relevel(
+        dplyr::case_when(
+          .$effectif < 20 ~ "10-20",
+          .$effectif < 50 ~ "21-50",
+          TRUE ~ "Plus de 50"
+        )
+      ),
+      cut_growthrate = forcats::fct_relevel(
+        dplyr::case_when(
+          .$lag_effectif_missing == TRUE ~ "manquant",
+          .$growthrate_effectif < .80 ~ "moins 20%",
+          .$growthrate_effectif < .95 ~ "moins 20 à 5%",
+          .$growthrate_effectif < 1.05 ~ "stable",
+          .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
+          TRUE ~ "plus 20%"
+        ),
+        c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
+      ),
+      outcome_0_12 = forcats::fct_explicit_na(
+        factor(outcome_0_12, levels = c("non-default", "default")),
+        na_level = "non-default"),
+      outcome_6_18 = forcats::fct_explicit_na(
+        factor(outcome_6_18, levels = c("non-default", "default")),
+        na_level = "non-default"),
+      outcome_12_24 = forcats::fct_explicit_na(
+        factor(outcome_6_18, levels = c("non-default", "default")),
+        na_level = "non-default"),
+      cotisationdue_effectif = (mean_cotisation_due) / effectif,
+      log_cotisationdue_effectif = log(cotisationdue_effectif),
+      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
+      indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
+      log_ratio_dettecumulee_cotisation = dplyr::if_else(
+        condition = indicatrice_dettecumulee == TRUE,
+        true = log(ratio_dettecumulee_cotisation),
+        false = 0
+      ),
+      ratio_dettecumulee_cotisation_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m) / mean_cotisation_due,
+      indicatrice_dettecumulee_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m > 0),
+      log_ratio_dettecumulee_cotisation_12m = dplyr::if_else(
+        condition = indicatrice_dettecumulee_12m == TRUE,
+        true = log(ratio_dettecumulee_cotisation_12m),
+        false = 0
+      ),
+      indicatrice_croissance_dettecumulee = (
+        montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
+      )
+    )
+}
+
+
+
     name = "table_altares"
     );
 ```
@@ -34,7 +92,93 @@ import_table_altares(
 
 ```{r import-code-rjlj}
 table_code_rj_lj <- tibble::tibble(
-  code = c("PCL010501","PCL010502","PCL030105","PCL05010102","PCL05010203","PCL05010402","PCL05010302","PCL05010502","PCL05010702","PCL05010802","PCL05010901","PCL05011003","PCL05011101","PCL05011203","PCL05011303","PCL05011403","PCL05011503","PCL05011603","PCL05011902","PCL05012003","PCL0108","PCL0109","PCL030107","PCL030108","PCL030307","PCL030308","PCL05010103","PCL05010104","PCL05010204","PCL05010205","PCL05010303","PCL05010304","PCL05010403","PCL05010404","PCL05010503","PCL05010504","PCL05010703","PCL05010803","PCL05011004","PCL05011005","PCL05011102","PCL05011103","PCL05011204","PCL05011205","PCL05011304","PCL05011305","PCL05011404","PCL05011405","PCL05011504","PCL05011505","PCL05011604","PCL05011605","PCL05011903","PCL05011904","PCL05012004","PCL05012005", "PCL040802"))
+  code = c(
+    "PCL010501",
+    "PCL010502",
+    "PCL030105",
+    "PCL05010102",
+    "PCL05010203",
+    "PCL05010402",
+    "PCL05010302",
+    "PCL05010502",
+    "PCL05010702",
+    "PCL05010802",
+    "PCL05010901",
+    "PCL05011003",
+    "PCL05011101",
+    "PCL05011203",
+    "PCL05011303",
+    "PCL05011403",
+    "PCL05011503",
+    "PCL05011603",
+    "PCL05011902",
+    "PCL05012003",
+    "PCL0108",
+    "PCL0109",
+    "PCL030107",
+    "PCL030108",
+    "PCL030307",
+    "PCL030308",
+    "PCL05010103",
+    "PCL05010104",
+    "PCL05010204",
+    "PCL05010205",
+    "PCL05010303",
+    "PCL05010304",
+    "PCL05010403",
+    "PCL05010404",
+    "PCL05010503",
+    "PCL05010504",
+    "PCL05010703",
+    "PCL05010803",
+    "PCL05011004",
+    "PCL05011005",
+    "PCL05011102",
+    "PCL05011103",
+    "PCL05011204",
+    "PCL05011205",
+    "PCL05011304",
+    "PCL05011305",
+    "PCL05011404",
+    "PCL05011405",
+    "PCL05011504",
+    "PCL05011505",
+    "PCL05011604",
+    "PCL05011605",
+    "PCL05011903",
+    "PCL05011904",
+    "PCL05012004",
+    "PCL05012005",
+    "PCL040802",
+    "PCL0106",
+    "PCL010601",
+    "PCL030103",
+    "PCL05010101",
+    "PCL05010202",
+    "PCL05010301",
+    "PCL05010401",
+    "PCL05010501",
+    "PCL05010506",
+    "PCL05010101",
+    "PCL05010202",
+    "PCL05010301",
+    "PCL05010401",
+    "PCL05010501",
+    "PCL05010506",
+    "PCL05010701",
+    "PCL05010705",
+    "PCL05010801",
+    "PCL05010805",
+    "PCL05011002",
+    "PCL05011202",
+    "PCL05011302",
+    "PCL05011402",
+    "PCL05011502",
+    "PCL05011602",
+    "PCL05011901",
+    "PCL0114",
+    "PCL030110"
+))
 
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_code_rj_lj")
 copy_to(dest = database_signauxfaibles, df = table_code_rj_lj, temporary = FALSE)
@@ -93,26 +237,28 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consomm
 ```{r banque_de_france}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_banquedefrance")
 
-  table_temp <- readxl::read_excel(path = "data-raw/banque_de_france/201712.xlsx")
-  table_temp %>% rename("siren"="d1",
-                        "annee"="Annee",
-                        "bilan"="ARRETE_BILAN",
-                        "raison_sociale"="DENOM",
-                        "secteur"="SECTEUR",
-                        "poids_frng"="POIDS_FRNG",
-                        "taux_marge"="TX_MARGE",
-                        "delai_fournisseur"="DELAI_FRS",
-                        "dette_fiscale"="POIDS_DFISC_SOC",
-                        "financier_ct"="POIDS_FIN_CT",
-                        "financier"="POIDS_FRAIS_FIN") %>%
-    mutate(siren = stringr::str_replace_all(.$siren, " ", ""))  %>%
-  insert_multi(
-    dest = database_signauxfaibles,
-    df = .,
-    slices=3,
-    name = "table_banquedefrance"
-    )
-  
+table_temp <-
+readxl::read_excel(path = "data-raw/banque_de_france/201712.xlsx")
+table_temp %>% rename(
+"siren" = "d1",
+"annee" = "Annee",
+"bilan" = "ARRETE_BILAN",
+"raison_sociale" = "DENOM",
+"secteur" = "SECTEUR",
+"poids_frng" = "POIDS_FRNG",
+"taux_marge" = "TX_MARGE",
+"delai_fournisseur" = "DELAI_FRS",
+"dette_fiscale" = "POIDS_DFISC_SOC",
+"financier_ct" = "POIDS_FIN_CT",
+"financier" = "POIDS_FRAIS_FIN"
+) %>%
+mutate(siren = stringr::str_replace_all(.$siren, " ", ""))  %>%
+insert_multi(
+dest = database_signauxfaibles,
+df = .,
+slices = 3,
+name = "table_banquedefrance"
+)
 ```
 
 ## Cotisations URSSAF

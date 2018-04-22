@@ -16,3 +16,7 @@ output/*
 dbmongo/data-raw
 .vscode/*
 dbmongo/static/*
+archive/*
+RData/*
+exploration/*
+RData/*

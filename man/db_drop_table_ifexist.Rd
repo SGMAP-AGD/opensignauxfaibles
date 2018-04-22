@@ -21,4 +21,3 @@ table = "table_periods"
 )
 
 }
-

@@ -24,4 +24,3 @@ Has variable
 has_variable(db = database_signauxfaibles, table = "table_altares", variable = "siret")
 }
 }
-

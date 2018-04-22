@@ -23,4 +23,3 @@ Calcul de la dette cumulée à 12 mois
  compute_sample_dettecumulee12M(db = database_signauxfaibles, .date = "2017-01-01")
  }
 }
-

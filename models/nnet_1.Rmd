@@ -1,0 +1,78 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r setup}
+library("opensignauxfaibles")
+library("dplyr")
+library("tidyverse")
+library("mice")
+library("R.utils")
+library("nnet")
+library("caret")
+library("lazyeval")
+sourceDirectory("../tools",recursive = TRUE, modifiedOnly = FALSE,verbose = FALSE)
+source('./data_pipes/data_prep_RJLJ_12m_OSbyMonths.R')
+
+```
+
+```{r neural_network}
+
+
+formula = 
+
+nnet_grid  <-  expand.grid(.size = 10, .decay = c(0.001,0.003,0.01,0.03))
+
+ctrl <-
+  trainControl(
+  method = "cv",
+  classProbs = TRUE,
+  summaryFunction = prSummary,
+  index = cv_folds
+  )
+
+nnetfit <-  train(outcome ~ ., 
+                  data = nn_train %>% select(-siret), 
+                  method = 'nnet',
+                  metric = 'F',
+                  tuneGrid = nnet_grid,
+                  trControl = ctrl,
+                  maxit = 1200) # Provisoire pour gagner du temps
+
+plot(nnetfit)
+nnet_final <-  nnetfit$finalModel
+```
+
+```{r}
+
+
+sample_test_pred <- sample_test %>%
+  bind_cols(pred_nnetfit = predict(nnetfit,new_data))
+
+test_prediction <- predict(nnetfit,newdata = nn_test)
+
+
+
+```
+
+
+```{r}
+
+cross_prediction <- predict(treefit,newdata = nn_cross %>% select(-siret))
+confusionMatrix(data = cross_prediction,nn_cross$outcome)
+
+test_prediction <- predict(treefit,newdata = nn_test %>% select(-siret))
+confusionMatrix(data = test_prediction,nn_test$outcome)
+
+
+```
+
+
+
+
+
+

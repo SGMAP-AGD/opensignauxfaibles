@@ -1,37 +1,217 @@
 ---
 title: "R Notebook"
-params:
-  actual_date: '2017-10-01'
 output:
   html_document: default
   html_notebook: default
 ---
 
-```{r}
-
-```
 
 ```{r setup}
 params = list(actual_date = "2018-03-01")
 
 library("opensignauxfaibles")
 library("dplyr")
+library("tidyverse")
+library("mice")
+library("R.utils")
+
+sourceDirectory("./tools",recursive = TRUE, modifiedOnly = FALSE,verbose = TRUE)
+
 database_signauxfaibles <- database_connect()
-table_wholesample <- collect_wholesample(db = database_signauxfaibles, table = "wholesample")
-sample_train <- table_wholesample %>%
-  filter(periode == "2015-01-01") %>%
-  filter(effectif >= 10)
-sample_test <- table_wholesample %>%
-  filter(periode == "2016-01-01") %>%
-  filter(effectif >= 10)
-sample_actual <- table_wholesample %>%
-  filter(periode == params$actual_date) %>%
-  filter(effectif >= 10)
+table_wholesample <-
+  collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+
+# TODO delete all unnecessary rows !! (pas sur place, sera fait en js)
+   
+```
+
+```{r objective}
+
+table_wholesample <- objective_ratio_dettecumulee_cotisation(table_wholesample,0.5)
+
+```
+
+```{r feature-scaling}
+  # nettoyage
+  clean_wholesample <- table_wholesample %>% select(-numero_compte,-code_departement,-region,-growthrate_effectif,-log_growthrate_effectif,-outcome_0_12,-outcome_12_24,-outcome_6_18,-montant_part_ouvriere,-montant_part_patronale,-lag_montant_part_ouvriere,-lag_montant_part_patronale,-montant_part_ouvriere_12m,-montant_part_patronale_12m,-apart_consommee, -apart_potentiel_effectif, -apart_last12_months,-cut_effectif,-cut_growthrate,-log_cotisationdue_effectif,-indicatrice_dettecumulee,-log_ratio_dettecumulee_cotisation,-log_ratio_dettecumulee_cotisation_12m,-indicatrice_dettecumulee_12m,apart_heures_consommees,-apart_effectif_moyen)
+
+# Scaling
+  
+scaled_wholesample <- clean_wholesample %>% 
+  mutate_at(vars(c('effectif','log_effectif','mean_cotisation_due','nb_debits','delai','apart_share_heuresconsommees','poids_frng','taux_marge','delai_fournisseur','dette_fiscale','financier_ct','financier','ratio_dettecumulee_cotisation')),funs((. - mean(.,na.rm = TRUE))/sd(.,na.rm = TRUE)))
+
+```
+
+```{r time_series}
+
+# MOCHE pour l'instant fait des calculs pour les dropper
+# Plus ne remplit pas les NA des lags -.-'
+    ts_wholesample <- scaled_wholesample %>%
+      spread_relative_periods("log_effectif",11) %>%
+      spread_relative_periods("ratio_dettecumulee_cotisation",11) %>%
+      spread_relative_periods("nb_debits",11) %>%
+      spread_relative_periods("apart_share_heuresconsommees",11) 
+```
+
+
+```{r split}
+samples <-
+  split_train_cross_test(
+    ts_wholesample,
+    date_inf = as.Date("2015-01-01"),
+    date_sup = as.Date("2016-12-01")
+  )
+sample_train <- samples$train
+sample_cross <- samples$cross
+sample_test <- samples$test
+```
+
+
+
+```{r filter of training set}
+sample_train <- sample_train %>%
+  filter(!(!outcome & outcome_any)) %>%
+  filter(!is.na(outcome))
+
+sample_cross <- sample_cross %>%
+  filter(!is.na(outcome))
+
+sample_test <- sample_test %>%
+  filter(!is.na(outcome))
+```
+
+
+```{r include=FALSE, cache=FALSE,results='hide', message=FALSE, warning=FALSE}
+
+sample_train <- sample_train %>%
+  select(-date_effet,-periode) %>%
+    impute_missing_data()
+
+sample_cross <- sample_cross %>%
+  select(-date_effet,-periode) %>%
+    impute_missing_data()
+
+sample_test <- sample_test %>% 
+  select(-date_effet,-periode) %>% 
+  impute_missing_data()
+
 ```
 
 ```{r check-na}
-table_wholesample %>% 
+sample_train %>% 
   detect_na()
+
+sample_cross %>% 
+  detect_na()
+```
+
+```{r neural_network}
+library(nnet)
+library(caret)
+
+selectNnData <- function(sample) {
+  sample <-
+  sample %>% select(
+  siret,
+  code_naf_niveau1,
+  poids_frng,
+  taux_marge,
+  delai_fournisseur,
+  dette_fiscale,
+  financier_ct,
+  financier,
+  bilan_absent,
+  starts_with("log_effectif"),
+  starts_with("ratio_dettecumulee"),
+  starts_with('nb_debits'),
+  starts_with('apart_share_heuresconsommees'),
+  outcome,
+  -ratio_dettecumulee_cotisation_12m
+  ) %>%
+  as_tibble()
+  
+  sample <- sample %>%
+  mutate(outcome = factor(outcome, levels = c(TRUE,FALSE), labels =  c("default", "non_default")))
+}
+
+nn_train <- sample_train %>% 
+  selectNnData()
+
+nn_cross <- sample_cross %>% 
+  selectNnData()
+
+nn_test <- sample_test %>%
+  selectNnData()
+
+nn_train_cross  <- nn_train %>%
+  mutate(for_training = TRUE) %>%
+  bind_rows(nn_cross %>% 
+              mutate(for_training = FALSE))
+  
+idx_train <-  list(which(nn_train_cross$for_training))
+
+nn_train_cross <- nn_train_cross %>% select(-for_training)
+
+nnet_grid  <-  expand.grid(.size = 12, .decay = c(0.0001,0.0003,0.0007,0.001,0.0015))
+
+ctrl <-
+  trainControl(
+  method = "cv",
+  classProbs = TRUE,
+  summaryFunction = prSummary,
+  index = idx_train
+  )
+
+nnetfit <-  train(outcome ~ ., 
+                  data = nn_train_cross %>% select(-siret), 
+                  method = 'nnet',
+                  metric = 'F',
+                  tuneGrid = nnet_grid,
+                  trControl = ctrl,
+                  maxit = 2000)
+#fit_nn <- nnet(outcome ~ .,data = nn_train, size = 10, linout = FALSE , maxit = 100000, MaxNWts = 2500)
+
+plot(nnetfit)
+nnet_final <-  nnetfit$finalModel
+```
+
+```{r}
+
+test_prediction <- predict(nnetfit,newdata = nn_test %>% select(-siret))
+confusionMatrix(data = test_prediction,nn_test$outcome)
+
+
+```
+```{r}
+ctrl <-
+  trainControl(
+  method = "cv",
+  classProbs = TRUE,
+  summaryFunction = prSummary,
+  index = idx_train
+  )
+
+treefit <-  train(outcome ~ ., 
+                  data = nn_train_cross %>% select(-siret), 
+                  method = 'rpart',
+                  metric = 'AUC',
+                  tuneLength = 100,
+                  trControl = ctrl)
+
+tree_final <- treefit$finalModel
+
+```
+
+```{r}
+
+cross_prediction <- predict(treefit,newdata = nn_cross %>% select(-siret))
+confusionMatrix(data = cross_prediction,nn_cross$outcome)
+
+test_prediction <- predict(treefit,newdata = nn_test %>% select(-siret))
+confusionMatrix(data = test_prediction,nn_test$outcome)
+
+require(rpart.plot)
+rpart.plot(tree_final)
 ```
 
 ```{r formulas}
@@ -39,48 +219,56 @@ formulas_0_12 <- list(
   "effectif" = outcome_0_12 ~ cut_effectif,
   "growth_effectif" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing,
   "apart" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees,
   "cotisation_effectif" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif,
   "dettecumulee" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m,
   "croissancedettecumulee" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
-    indicatrice_croissance_dettecumulee,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee,
   "nb_debits" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
-    indicatrice_croissance_dettecumulee +
-    nb_debits,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits,
   "delais" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
-    indicatrice_croissance_dettecumulee +
-    nb_debits +
-    delai + delai_sup_6mois,
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois,
   "codenaf" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
-    indicatrice_croissance_dettecumulee +
-    nb_debits +
-    delai + delai_sup_6mois +
-    libelle_naf_niveau1
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois +
+  libelle_naf_niveau1,
+    "delais_bdf" = outcome_0_12 ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
+  indicatrice_croissance_dettecumulee +
+  nb_debits +
+  delai + delai_sup_6mois + neglog(taux_marge) + log(financier_ct + 0.01) + financier + delai_fournisseur
 )
+
 ```
 
 ```{r compare-auc}
 plyr::ldply(
   .data = formulas_0_12,
   .fun = function(x) {
-    glm(formula = x, family = "binomial", data = sample_train) %>%
+    glm(formula = x, family = "binomial", data = table_wholesample) %>%
     broom::augment(newdata = sample_test,  type.predict = "response") %>%
     pROC::roc(outcome_0_12 ~ .fitted, data = . , smooth = FALSE) %>%
     .$auc %>%
@@ -89,19 +277,50 @@ plyr::ldply(
   )  
 ```
 
-```{r compute-prediction}
-output_prediction_0_12 <- formulas_0_12$dettecumulee %>%
+```{r best_threshold}
+output_test <- formulas_0_12$delais_bdf %>%
   glm(
     formula = .,
     data = sample_train,
     family = "binomial"
     ) %>%
   broom::augment(
-    newdata = sample_actual,
+    newdata = sample_test,
     type.predict = "response"
   ) %>%
-  dplyr::rename(prediction_0_12 = .fitted) 
+  dplyr::rename(prediction_0_12 = .fitted)
+
+# roccurve <- output_test %>%
+#   pROC::roc(outcome_0_12 ~ prediction_0_12, data = . , smooth = FA>LSE)
+# 
+#  threshold <- pROC::coords(roccurve,"best")[1]
+#  output_test <- output_test %>% 
+#   dplyr::mutate(binary_prediction_0_12 = ifelse(prediction_0_12 > thçreshold,"default","non-default"))
+
+
+library(ROCR)
+
+rocrobj <- ROCR::prediction(output_test$prediction_0_12,
+(output_test$outcome_0_12 == "default"))
+
+
+PR.perf <- performance(rocrobj, "prec", "rec")
+gmean <- sqrt(unlist(PR.perf@x.values) * unlist(PR.perf@y.values))
+
+gmean.perf =
+ROC.perf <- performance(rocrobj, "tpr", "fpr")
+acc.perf <- performance(rocrobj,"acc")
+
+auc.tmp <- performance(rocrobj, "auc")
+auc <- as.numeric(auc.tmp@y.values)
+
+fscore <- performance(rocrobj, "f")
+(optimal_f <- max(unlist(fscore@y.values), na.rm = TRUE))
+optimal_cutoff <-
+unlist(fscore@x.values)[[which.max(unlist(fscore@y.values))]] 
 ```
+
+```{r}
 
 ```{r export-top100}
 output_prediction_0_12 %>%
@@ -187,4 +406,3 @@ output_prediction_0_12 %>%
   dplyr::filter(is.na(prediction_0_12) == FALSE) %>%
   write.table(row.names=F, dec=',', sep=';', file = "output/algo1_1803.1_all.csv", quote=T, append=F)
 ```
-

@@ -21,4 +21,3 @@ Get table last n months
 get_table_last_n_months(.date = "2017-01-01", .n_months = 12)
 
 }
-

@@ -24,4 +24,3 @@ compute_wholesample_effectif(db = database_signauxfaibles, name = "wholesample_e
 }
 
 }
-

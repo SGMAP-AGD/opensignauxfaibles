@@ -24,4 +24,3 @@ compute wholesample dettecumulee 12m
 \examples{
 
 }
-

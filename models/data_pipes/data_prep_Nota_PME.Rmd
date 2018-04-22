@@ -1,0 +1,131 @@
+---
+title: "Nota_PME"
+author: "Pierre Camilleri"
+date: "9 avril 2018"
+output: html_document
+---
+
+```{r}
+# Collecting database
+set.seed(1409)
+
+database_signauxfaibles <- database_connect()
+table_wholesample <-
+    collect_wholesample(db = database_signauxfaibles, table = "wholesample")
+```
+
+```{r}
+# Objectif
+table_wholesample_prep <- objective_RJ_LJ_PS(table_wholesample)
+# outcome as default
+table_wholesample_prep <- table_wholesample_prep %>%
+  mutate(outcome = factor(outcome, levels = c(TRUE,FALSE), labels =  c("default", "non_default")))
+```
+
+```{r}
+# Corriger à la source
+table_wholesample_prep <- table_wholesample_prep %>%
+  mutate(cut_growthrate = fct_recode(cut_growthrate,
+                                     "moins_20pourcent" =  "moins 20%",
+                                     "moins_20_a_5_pourcent" = "moins 20 à 5%",
+                                     "plus_5_a_20_pourcent" = "plus 5 à 20%",
+                                     "plus_20_pourcent" = "plus 20%")) %>%
+  mutate(cut_effectif = fct_recode(cut_effectif,
+                                     "10_20" = "10-20",
+                                     "21_50" = "21-50",
+                                     "Plus_de_50" = "Plus de 50"
+                                    ))
+
+```
+
+```{r}
+# read Nota-PME
+notapme <- read_csv2('../../data-raw/NOTA_PME/Signaux_faibles_NOTA_PME_Benchmark_2016.csv')
+colnames(notapme) <- c("siren","raison_sociale","score_notapme","score_rentabilite","score_robustesse","score_solvabilite")
+```
+
+```{r}
+table_wholesample_sel <- table_wholesample_prep %>%
+  select(siret,periode,outcome,outcome_any,date_effet, cut_effectif,cut_growthrate, lag_effectif_missing,
+           apart_last12_months, apart_consommee, apart_share_heuresconsommees,
+           log_cotisationdue_effectif,
+           log_ratio_dettecumulee_cotisation, indicatrice_dettecumulee,
+           indicatrice_croissance_dettecumulee,
+           nb_debits,
+           delai, delai_sup_6mois, taux_marge, financier_ct,financier, delai_fournisseur,dette_fiscale,poids_frng)
+
+table_wholesample_sel <- table_wholesample_sel %>% 
+  mutate(siren = str_sub(siret,1,9))
+
+```
+
+```{r}
+# Statistics Nota-PME
+table_wholesample_sel %>% filter(as.Date(periode) >= "2015-01-01", as.Date(periode) < "2017-01-01") %>% summarize(n_distinct(siren))
+
+table_wholesample_join <- table_wholesample_sel %>% 
+  inner_join(notapme, by = "siren")
+  
+table_wholesample_join %>% summarize(n_distinct(siren))
+```
+
+```{r}
+#Explo 
+
+table_wholesample_full_join <-  table_wholesample_sel %>% 
+  full_join(notapme,by = "siren") %>%
+  mutate(absent = is.na(score_notapme))
+
+
+ggplot(table_wholesample_full_join,
+       aes(x = cut_effectif, fill = absent)) +
+       geom_bar(position = 'fill')
+ggplot(table_wholesample_full_join, 
+       aes(x = outcome_any, fill = absent)) + 
+       geom_bar(position = 'fill')
+ggplot(table_wholesample_full_join 
+       %>% mutate(outcome2017 = !is.na(date_effet) & as.Date(date_effet) >= "2017-01-01"),
+        aes(x = outcome2017, fill = absent)) + 
+       geom_bar(position = 'fill')
+
+ggplot(table_wholesample_join %>% 
+         gather(starts_with("score"),key = "key",value = "score"),
+       aes(x = interaction(key,outcome_any), y = score, dodge = outcome_any)) +
+    coord_flip() + 
+    geom_boxplot()
+
+default_notapme <- table_wholesample_join %>% 
+  filter(outcome_any, as.Date(periode) >= "2016-01-01") %>% 
+  arrange(score_notapme)
+```
+
+```{r}
+detect_na(table_wholesample_full_join)
+detect_infinite(table_wholesample_full_join)
+
+table_wholesample_join <- table_wholesample_full_join %>%
+  filter(!is.infinite(log_cotisationdue_effectif))
+```
+
+```{r}
+samples <-
+  split_snapshot_each_month_test_notapme(
+    table_wholesample_join,
+    date_inf = as.Date("2015-01-01"),
+    date_sup = as.Date("2016-12-01")
+  )
+
+sample_train <- samples$train
+cv_folds <- samples$cv_fold
+sample_test <- samples$test
+```
+
+```{r}
+sample_train <- sample_train %>%
+  impute_missing_data()
+
+sample_test <- sample_test %>%
+  impute_missing_data()
+
+```
+

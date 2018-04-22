@@ -20,4 +20,3 @@ plot ratio dettecumulee cotisation
 \examples{
 
 }
-

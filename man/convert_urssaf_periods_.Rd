@@ -29,4 +29,3 @@ convert_urssaf_periods_(.variable = ~ yyyyqm, format = "yyyyqm")
 }
 
 }
-

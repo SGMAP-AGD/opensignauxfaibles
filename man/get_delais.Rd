@@ -23,4 +23,3 @@ Get delais
 get_delais(db = database_signauxfaibles, siret = "54200362900020")
 }
 }
-

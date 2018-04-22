@@ -24,4 +24,3 @@ collect_wholesample(db = database_signauxfaibles, table = "wholesample")
 }
 
 }
-
