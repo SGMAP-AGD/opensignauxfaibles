@@ -21,9 +21,8 @@
         </md-card-content>
       </md-card>
     </md-dialog>
-    <md-button v-if="this.token==''" class="md-primary md-raised" @click="showDialog = true">Se connecter</md-button>
-    <div v-if="this.token!=''">
-      Bonjour {{token}}
+    <md-button v-if="$store.state.token==''" class="md-primary md-raised" @click="showDialog = true">Se connecter</md-button>
+    <div v-if="$store.state.token!=''">
       <md-button class="md-primary md-raised" @click="logout">Se déconnecter</md-button>
     </div>
   </div>
@@ -42,23 +41,25 @@ export default {
   }),
   methods: {
     login () {
-      axios.post(
+      axios.get(
         `http://localhost:3000/api/auth`,
         {
-          'username': this.username,
-          'password': this.password
+          auth: {
+            username: this.username,
+            password: this.password
+          }
         }
       ).then((response) => {
         if (response.status === 200) {
           this.showDialog = false
-          this.token = response.data.token
+          this.$store.commit('setToken', response.data.token)
         }
       })
     },
     logout () {
       this.username = ''
       this.password = ''
-      this.token = ''
+      this.$store.commit('setToken', '')
     }
   }
 }

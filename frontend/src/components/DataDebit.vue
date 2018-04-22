@@ -13,10 +13,9 @@
         </md-field>
 
         <md-button class='md-raised md-primary' v-on:click='fillTable()'>Consulter</md-button>
-
-        <md-chips v-model="sirets" md-placeholder="Add siret..."></md-chips>
-
-        <vue-plotly v-for='siret in sirets' v-bind:key='siret' :data='data' :layout='layout' :options='options'/>
+  <div id="app">
+    <chart-debit :siret="siret"></chart-debit>
+</div>
       </md-card-content>
     </md-card>
 
@@ -24,27 +23,14 @@
 </template>
 
 <script>
-import VuePlotly from '@statnett/vue-plotly'
-import axios from 'axios'
-
+import ChartDebit from '@/components/ChartDebit'
 export default {
   name: 'DataDebit',
-  components: {
-    VuePlotly
-  },
+  components: { ChartDebit },
   data () {
     return {
-      sirets: [],
-      data: [],
       siret: '',
-      layout: {barmode: 'stack'},
-      options: {}
-    }
-  },
-  methods: {
-    fillTable: function () {
-      axios.get(`http://localhost:3000/api/v1/data/debit/` + this.siret)
-        .then(response => { this.data = response.data[0].value })
+      data: []
     }
   }
 }

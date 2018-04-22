@@ -25,7 +25,7 @@ export default {
   },
   methods: {
     getAdminRegion: function () {
-      axios.get(`http://localhost:3000/api/v1/admin/region/` + this.siret)
+      axios.get(`http://localhost:3000/api/v1/admin/region/`)
         .then(response => { this.data = response.data[0].value })
     }
   },

@@ -5,8 +5,6 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gin-gonic/gin"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -29,13 +27,6 @@ type User struct {
 type Auth struct {
 	Username string `json:"username" bson:"username"`
 	Password string `json:"password" bson:"password"`
-}
-
-// Region Détermine les propriétés d'une région
-type Region struct {
-	ID    bson.ObjectId `json:"id" bson:"_id"`
-	Path  string        `json:"path" bson:"path"`
-	Label string        `json:"label" bson:"label"`
 }
 
 // JWTRequest Requête pour tester le token (mode POC)
@@ -61,7 +52,7 @@ func auth(c *gin.Context) {
 	c.BindJSON(&auth)
 
 	db.C("user").Find(bson.M{"_id": auth.Username, "password": auth.Password}).One(&user)
-	spew.Dump(user)
+
 	if user.ID != "" {
 		token := JWTRequest{
 			Token: createTokenString(user),

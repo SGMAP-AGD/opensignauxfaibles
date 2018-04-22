@@ -10,21 +10,20 @@ import (
 
 func dataDebit(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
-	var data interface{}
+	var data Value
 
-	mapFct, _ := ioutil.ReadFile("js/dataDebit_map.js")
-	reduceFct, _ := ioutil.ReadFile("js/dataDebit_reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("js/dataDebit_finalize.js")
+	// mapFct, _ := ioutil.ReadFile("js/dataDebit_map.js")
+	// reduceFct, _ := ioutil.ReadFile("js/dataDebit_reduce.js")
+	// finalizeFct, _ := ioutil.ReadFile("js/dataDebit_finalize.js")
 
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
-	}
+	// job := &mgo.MapReduce{
+	// 	Map:      string(mapFct),
+	// 	Reduce:   string(reduceFct),
+	// 	Finalize: string(finalizeFct),
+	// }
 
-	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &data)
-
-	c.JSON(200, data)
+	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).Select(bson.M{"value.compte.debit": 1, "value.compte.cotisation": 1}).One(&data)
+	c.JSON(200, data.Value.Compte)
 }
 
 func reduce(c *gin.Context) {
@@ -72,12 +71,6 @@ func reduceAll(c *gin.Context) {
 	db.C("Etablissement").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
-}
-
-func debug(c *gin.Context) {
-	ursaff := c.Params.ByName("urssaf")
-	date, _ := UrssafToPeriod(ursaff)
-	c.JSON(200, date)
 }
 
 func browseEtablissement(c *gin.Context) {

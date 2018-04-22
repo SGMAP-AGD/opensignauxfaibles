@@ -1,6 +1,7 @@
 <template>
 <div>
   Sample view of Landing Page
+
 </div>
 </template>
 

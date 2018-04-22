@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -24,8 +28,13 @@ func main() {
 
 	api := r.Group("api")
 	{
-		api.POST("/auth", auth)
-		api.POST("/read", readJWT)
+		api.OPTIONS("/auth", auth)
+
+		api.GET("/admin/region", AdminRegion)
+		api.POST("/admin/region", AdminRegionAdd)
+		api.DELETE("/admin/region", AdminRegionDelete)
+
+		api.GET("/repo/create/:region/:periode", createRepo)
 		api.GET("/purge", purge)
 		api.GET("/import", importData)
 		api.GET("/reduceEtablissement/:siret", reduceEtablissement)
@@ -34,7 +43,7 @@ func main() {
 		api.GET("/reduce", reduceAll)
 		api.GET("/etablissement/:siret", browseEtablissement)
 		api.GET("/orig/:siret", browseOrig)
-		api.GET("/debug/:urssaf", debug)
+		api.GET("/debug", debug)
 		api.GET("/importAP", importAP)
 		api.GET("/importDebit", importDebit)
 		api.GET("/importAltares", importAltares)
@@ -53,12 +62,21 @@ func loadConfig() {
 	viper.AddConfigPath("/etc/opensignauxfaibles")
 	viper.AddConfigPath("$HOME/.opensignauxfaibles")
 	viper.AddConfigPath(".")
-	viper.ReadInConfig()
-
 	viper.SetDefault("APP_BIND", ":3000")
-	viper.SetDefault("APP_DATA", "./data-raw/")
+	viper.SetDefault("APP_DATA", "$HOME/data-raw/")
 	viper.SetDefault("DB_HOST", "127.0.0.1")
 	viper.SetDefault("DB_PORT", "27017")
 	viper.SetDefault("DB", "opensignauxfaibles")
 	viper.SetDefault("JWT_SECRET", "One might change this because one day it will not be sufficient")
+	err := viper.ReadInConfig()
+	fmt.Println(err)
+
+}
+
+func debug(c *gin.Context) {
+	ret, err := GetFileList(viper.GetString("APP_DATA"), "BFC", "1804")
+	spew.Dump(ret)
+	spew.Dump(err)
+
+	c.JSON(200, ret)
 }

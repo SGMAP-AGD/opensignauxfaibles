@@ -15,13 +15,6 @@ type Value struct {
 	Value Etablissement `json:"value" bson:"value"`
 }
 
-// Batch Lot d'intégration d'établissement
-type Batch struct {
-	ID        bson.ObjectId     `json:"id" bson:"_id"`
-	Label     string            `json:"label" bson:"label"`
-	Ressource map[string]string `json:"ressource" bson:"ressource"`
-}
-
 // Etablissement objet établissement (/entreprise/)
 type Etablissement struct {
 	Siret             string             `json:"siret" bson:"siret"`
