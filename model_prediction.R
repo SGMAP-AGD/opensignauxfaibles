@@ -21,7 +21,7 @@ seed <- 10011
 set.seed(seed)
 
 # Actual date
-actual <- "2018-03-01"
+actual_period <- as.Date("2018-03-01")
 
 # Collecting data
 
@@ -91,8 +91,6 @@ samples <-
 sample_train <- samples$train
 cv_folds <- samples$cv_fold
 
-sample_actual <- tw_complete %>% filter(periode == actual)
-
 # apply algorithm
 
 formula <-  (
@@ -122,6 +120,15 @@ randomForest <- train(formula,
                  trControl = ctrl,
                  tuneLength = 10,
                  na.action = "na.omit")
+
+
+# Prediction
+
+
+sample_actual <- tw_complete %>% filter(periode == actual_period |
+                                        periode == actual_period %m-% months(1) |
+                                        periode == actual_period %m-% months(2) |
+                                        periode == actual_period %m-% months(3))
 
 prob <- predict(randomForest, newdata = sample_actual,type = "prob")
 
