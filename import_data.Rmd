@@ -26,64 +26,6 @@ import_table_altares(
     dest = database_signauxfaibles,
     df = .,
     slices = 10,
-        "apart_last12_months" = 0,
-        "apart_consommee" = 0,
-        "apart_share_heuresconsommees" = 0,
-        "apart_heures_consommees" = 0
-      )
-    ) %>%
-    dplyr::mutate(
-      cut_effectif = forcats::fct_relevel(
-        dplyr::case_when(
-          .$effectif < 20 ~ "10-20",
-          .$effectif < 50 ~ "21-50",
-          TRUE ~ "Plus de 50"
-        )
-      ),
-      cut_growthrate = forcats::fct_relevel(
-        dplyr::case_when(
-          .$lag_effectif_missing == TRUE ~ "manquant",
-          .$growthrate_effectif < .80 ~ "moins 20%",
-          .$growthrate_effectif < .95 ~ "moins 20 à 5%",
-          .$growthrate_effectif < 1.05 ~ "stable",
-          .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
-          TRUE ~ "plus 20%"
-        ),
-        c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
-      ),
-      outcome_0_12 = forcats::fct_explicit_na(
-        factor(outcome_0_12, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      outcome_6_18 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      outcome_12_24 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      cotisationdue_effectif = (mean_cotisation_due) / effectif,
-      log_cotisationdue_effectif = log(cotisationdue_effectif),
-      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
-      indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
-      log_ratio_dettecumulee_cotisation = dplyr::if_else(
-        condition = indicatrice_dettecumulee == TRUE,
-        true = log(ratio_dettecumulee_cotisation),
-        false = 0
-      ),
-      ratio_dettecumulee_cotisation_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m) / mean_cotisation_due,
-      indicatrice_dettecumulee_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m > 0),
-      log_ratio_dettecumulee_cotisation_12m = dplyr::if_else(
-        condition = indicatrice_dettecumulee_12m == TRUE,
-        true = log(ratio_dettecumulee_cotisation_12m),
-        false = 0
-      ),
-      indicatrice_croissance_dettecumulee = (
-        montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
-      )
-    )
-}
-
-
-
     name = "table_altares"
     );
 ```
