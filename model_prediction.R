@@ -66,7 +66,7 @@ table_wholesample_sel <- table_wholesample_prep %>%
 
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
 
-tw_complete <- mids::complete(mids,1) # provisoire. Continuer avec l'objet mids: with(mids, ...)
+tw_complete <- mice::complete(mids,1) # provisoire. Continuer avec l'objet mids: with(mids, ...)
 
 # Check for NAs, infinites
 
