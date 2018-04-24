@@ -10,27 +10,29 @@ import (
 // En insertion, ID est un ObjectId généré automatiquement, puis devient un siret après mapReduce
 // Value est une map des lots d'intégration à ordonner par ordre alphanumérique
 type Value struct {
-	ID bson.ObjectId `json:"id" bson:"_id"`
-	// Value map[string]Etablissement `json:"value" bson:"value"`
+	ID    bson.ObjectId `json:"id" bson:"_id"`
 	Value Etablissement `json:"value" bson:"value"`
 }
 
 // Etablissement objet établissement (/entreprise/)
 type Etablissement struct {
-	Siret             string             `json:"siret" bson:"siret"`
-	AncienSiret       []string           `json:"ancien_siret" bson:"ancien_siret"`
-	Compte            Compte             `json:"compte" bson:"compte"`
-	Altares           map[string]Altares `json:"altares" bson:"altares"`
-	ActivitePartielle ActivitePartielle  `json:"activite_partielle" bson:"activite_partielle"`
+	Siret       string           `json:"siret" bson:"siret"`
+	Region      string           `json:"region" bson:"region"`
+	Key         string           `json:"-" bson:"-"`
+	AncienSiret []string         `json:"ancien_siret,omitempty" bson:"ancien_siret,omitempty"`
+	Batch       map[string]Batch `json:"batch" bson:"batch"`
 }
 
-// Compte informations ursaff
-type Compte struct {
-	Effectif   map[string]Effectif   `json:"effectif" bson:"effectif"`
-	Delais     map[string]Delais     `json:"delais" bson:"delais"`
-	Debit      map[string]Debit      `json:"debit" bson:"debit"`
-	CCSF       map[string]CCSF       `json:"ccsf" bson:"ccsf"`
-	Cotisation map[string]Cotisation `json:"cotisation" bson:"cotisation"`
+// Batch lot de data
+type Batch struct {
+	Effectif       map[string]Effectif       `json:"effectif,omitempty" bson:"effectif,omitempty"`
+	Delais         map[string]Delais         `json:"delais,omitempty" bson:"delais,omitempty"`
+	Debit          map[string]Debit          `json:"debit,omitempty" bson:"debit,omitempty"`
+	CCSF           map[string]CCSF           `json:"ccsf,omitempty" bson:"ccsf,omitempty"`
+	Cotisation     map[string]Cotisation     `json:"cotisation,omitempty" bson:"cotisation,omitempty"`
+	Altares        map[string]Altares        `json:"altares,omitempty" bson:"altares,omitempty"`
+	APDemande      map[string]APDemande      `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
+	APConsommation map[string]APConsommation `json:"apconso,omitempty" bson:"apconso,omitempty"`
 }
 
 // Periode Période de temps avec un début et une fin

@@ -20,3 +20,4 @@ archive/*
 RData/*
 exploration/*
 RData/*
+dbmongo/config.toml

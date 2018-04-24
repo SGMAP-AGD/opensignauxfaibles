@@ -20,8 +20,8 @@ type Altares struct {
 	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
 }
 
-func parseAltares(path string) chan Value {
-	outputChannel := make(chan Value)
+func parseAltares(path string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -39,6 +39,7 @@ func parseAltares(path string) chan Value {
 	codeEvenementIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Code de la nature de l'événement" })
 	siretIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Siret" })
 
+	fmt.Println(fields)
 	go func() {
 		for {
 			row, error := reader.Read()
@@ -59,11 +60,13 @@ func parseAltares(path string) chan Value {
 			}
 			hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 			if err == nil {
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: row[siretIndex],
-						Altares: map[string]Altares{
-							hash: altares,
+				outputChannel <- Etablissement{
+					Key: row[siretIndex],
+					Batch: map[string]Batch{
+						batch: Batch{
+							Altares: map[string]Altares{
+								hash: altares,
+							},
 						},
 					},
 				}

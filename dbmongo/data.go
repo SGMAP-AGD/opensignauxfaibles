@@ -23,7 +23,7 @@ func dataDebit(c *gin.Context) {
 	// }
 
 	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).Select(bson.M{"value.compte.debit": 1, "value.compte.cotisation": 1}).One(&data)
-	c.JSON(200, data.Value.Compte)
+	//c.JSON(200, data.Value.Compte)
 }
 
 func reduce(c *gin.Context) {

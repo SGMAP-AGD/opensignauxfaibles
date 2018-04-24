@@ -33,6 +33,8 @@ func DB() gin.HandlerFunc {
 }
 
 func insertValue(db *mgo.Database, value Value) {
-	value.ID = bson.NewObjectId()
-	db.C("Etablissement").Insert(value)
+	if value.Value.Siret != "" {
+		value.ID = bson.NewObjectId()
+		db.C("Etablissement").Insert(value)
+	}
 }

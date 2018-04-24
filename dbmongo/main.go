@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -35,21 +33,24 @@ func main() {
 		api.DELETE("/admin/region", AdminRegionDelete)
 
 		api.GET("/repo/create/:region/:periode", createRepo)
+
 		api.GET("/purge", purge)
-		api.GET("/import", importData)
+		api.GET("/import/apdemande/:region/:batch", importAPDemande)
+		api.GET("/import/apconso/:region/:batch", importAPConso)
+		api.GET("/import/cotisation/:region/:batch", importCotisation)
+		api.GET("/import/debit/:region/:batch", importDebit)
+		api.GET("/import/effectif/:region/:batch", importEffectif)
+		api.GET("/import/altares/:region/:batch", importAltares)
+		api.GET("/import/delais/:region/:batch", importEffectif)
+
 		api.GET("/reduceEtablissement/:siret", reduceEtablissement)
 		api.GET("/reduceEtablissement", reduceEtablissements)
 		api.GET("/reduce/:siret", reduce)
 		api.GET("/reduce", reduceAll)
 		api.GET("/etablissement/:siret", browseEtablissement)
 		api.GET("/orig/:siret", browseOrig)
-		api.GET("/debug", debug)
-		api.GET("/importAP", importAP)
-		api.GET("/importDebit", importDebit)
-		api.GET("/importAltares", importAltares)
-		api.GET("/importEffectif", importEffectif)
+
 		api.POST("/R/algo1", algo1)
-		api.GET("/listFiles", listFiles)
 		api.GET("/data/debit/:siret", dataDebit)
 	}
 	bind := viper.GetString("APP_BIND")
@@ -71,12 +72,4 @@ func loadConfig() {
 	err := viper.ReadInConfig()
 	fmt.Println(err)
 
-}
-
-func debug(c *gin.Context) {
-	ret, err := GetFileList(viper.GetString("APP_DATA"), "BFC", "1804")
-	spew.Dump(ret)
-	spew.Dump(err)
-
-	c.JSON(200, ret)
 }

@@ -29,17 +29,8 @@ type Delais struct {
 	Action            string    `json:"action" bson:"action"`
 }
 
-func parseDelais(path string, CompteSiretMapping map[string]string) chan Value {
-	outputChannel := make(chan Value)
-
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println("Error", err)
-	}
-
-	reader := csv.NewReader(bufio.NewReader(file))
-	reader.Comma = ';'
-	reader.Read()
+func parseDelais(paths []string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	field := map[string]int{
 		"NumeroCompte":      0,
@@ -57,45 +48,55 @@ func parseDelais(path string, CompteSiretMapping map[string]string) chan Value {
 	}
 
 	go func() {
-		for {
-			row, error := reader.Read()
-			if error == io.EOF {
-				break
-			} else if error != nil {
-				log.Fatal(error)
+		for _, path := range paths {
+
+			file, err := os.Open(path)
+			if err != nil {
+				fmt.Println("Error", err)
 			}
 
-			delais := Delais{}
-			delais.NumeroCompte = row[field["NumeroCompte"]]
-			delais.NumeroContentieux = row[field["NumeroContentieux"]]
-			delais.DateCreation, err = time.Parse("2006-01-02", row[field["DateCreation"]])
-			delais.DateEcheanche, err = time.Parse("2006-01-02", row[field["DateEcheanche"]])
-			delais.DureeDelai, err = strconv.Atoi(row[field["DureeDelai"]])
-			delais.Denomination = row[field["Denomination"]]
-			delais.Indic6m = row[field["Indic6m"]]
-			delais.AnneeCreation, err = strconv.Atoi(row[field["AnneeCreation"]])
-			delais.MontantEcheancier, err = strconv.ParseFloat(row[field["MontantEcheancier"]], 64)
-			delais.NumeroStructure = row[field["NumeroStructure"]]
-			delais.Stade = row[field["Stade"]]
-			delais.Action = row[field["Action"]]
+			reader := csv.NewReader(bufio.NewReader(file))
+			reader.Comma = ';'
+			reader.Read()
 
-			hash := fmt.Sprintf("%x", structhash.Md5(delais, 1))
+			for {
+				row, error := reader.Read()
+				if error == io.EOF {
+					break
+				} else if error != nil {
+					log.Fatal(error)
+				}
 
-			if siret, ok := CompteSiretMapping[row[field["NumeroCompte"]]]; ok {
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: siret,
-						Compte: Compte{
+				delais := Delais{}
+				delais.NumeroCompte = row[field["NumeroCompte"]]
+				delais.NumeroContentieux = row[field["NumeroContentieux"]]
+				delais.DateCreation, err = time.Parse("2006-01-02", row[field["DateCreation"]])
+				delais.DateEcheanche, err = time.Parse("2006-01-02", row[field["DateEcheanche"]])
+				delais.DureeDelai, err = strconv.Atoi(row[field["DureeDelai"]])
+				delais.Denomination = row[field["Denomination"]]
+				delais.Indic6m = row[field["Indic6m"]]
+				delais.AnneeCreation, err = strconv.Atoi(row[field["AnneeCreation"]])
+				delais.MontantEcheancier, err = strconv.ParseFloat(row[field["MontantEcheancier"]], 64)
+				delais.NumeroStructure = row[field["NumeroStructure"]]
+				delais.Stade = row[field["Stade"]]
+				delais.Action = row[field["Action"]]
+
+				hash := fmt.Sprintf("%x", structhash.Md5(delais, 1))
+
+				outputChannel <- Etablissement{
+					Key: row[field["NumeroCompte"]],
+					Batch: map[string]Batch{
+						batch: Batch{
 							Delais: map[string]Delais{
 								hash: delais,
 							},
 						},
 					},
 				}
+
 			}
 		}
 		close(outputChannel)
-
 	}()
 
 	return outputChannel

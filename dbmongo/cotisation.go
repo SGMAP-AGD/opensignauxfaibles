@@ -24,17 +24,8 @@ type Cotisation struct {
 	Ecriture     string  `json:"ecriture" bson:"ecriture"`
 }
 
-func parseCotisation(path string, CompteSiretMapping map[string]string) chan Value {
-	outputChannel := make(chan Value)
-
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println("Error", err)
-	}
-
-	reader := csv.NewReader(bufio.NewReader(file))
-	reader.Comma = ';'
-	reader.Read()
+func parseCotisation(paths []string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	field := map[string]int{
 		"NumeroCompte": 0,
@@ -47,18 +38,26 @@ func parseCotisation(path string, CompteSiretMapping map[string]string) chan Val
 	}
 
 	go func() {
-		cotisation := Cotisation{}
-
-		for {
-
-			row, error := reader.Read()
-			if error == io.EOF {
-				break
-			} else if error != nil {
-				log.Fatal(error)
+		for _, path := range paths {
+			file, err := os.Open(path)
+			if err != nil {
+				fmt.Println("Error", err)
 			}
 
-			if siret, ok := CompteSiretMapping[row[field["NumeroCompte"]]]; ok {
+			reader := csv.NewReader(bufio.NewReader(file))
+			reader.Comma = ';'
+			reader.Read()
+
+			cotisation := Cotisation{}
+
+			for {
+
+				row, error := reader.Read()
+				if error == io.EOF {
+					break
+				} else if error != nil {
+					log.Fatal(error)
+				}
 
 				cotisation = Cotisation{}
 				cotisation.NumeroCompte = row[field["NumeroCompte"]]
@@ -70,10 +69,11 @@ func parseCotisation(path string, CompteSiretMapping map[string]string) chan Val
 				cotisation.Ecriture = row[field["Ecriture"]]
 
 				hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: siret,
-						Compte: Compte{
+
+				outputChannel <- Etablissement{
+					Key: row[field["NumeroCompte"]],
+					Batch: map[string]Batch{
+						batch: Batch{
 							Cotisation: map[string]Cotisation{
 								hash: cotisation,
 							},
@@ -82,9 +82,7 @@ func parseCotisation(path string, CompteSiretMapping map[string]string) chan Val
 				}
 			}
 		}
-
 		close(outputChannel)
 	}()
-
 	return outputChannel
 }

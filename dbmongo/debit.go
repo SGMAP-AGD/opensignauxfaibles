@@ -29,40 +29,40 @@ type Debit struct {
 	DebitSuivant                 string    `json:"debit_suivant" bson:"debit_suivant omitempty"`
 }
 
-func parseDebit(path string, CompteSiretMapping map[string]string) chan Value {
-	outputChannel := make(chan Value)
-
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println("Error", err)
-	}
-
-	reader := csv.NewReader(bufio.NewReader(file))
-	reader.Comma = ';'
-	fields, err := reader.Read()
-
-	numeroCompteIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "num_cpte" })
-	numeroEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Num_Ecn" })
-	dateTraitementIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Dt_trt_ecn" })
-	partOuvriereIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Mt_PO" })
-	partPatronaleIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Mt_PP" })
-	numeroHistoriqueEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Num_Hist_Ecn" })
-	etatCompteIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Etat_cpte" })
-	codeProcedureCollectiveIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Cd_pro_col" })
-	periodeIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Periode" })
-	codeOperationEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Cd_op_ecn" })
-	codeMotifEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Motif_ecn" })
+func parseDebit(paths []string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	go func() {
-		for {
-			row, error := reader.Read()
-			if error == io.EOF {
-				break
-			} else if error != nil {
-				log.Fatal(error)
+		for _, path := range paths {
+			file, err := os.Open(path)
+			if err != nil {
+				fmt.Println("Error", err)
 			}
 
-			if siret, ok := CompteSiretMapping[row[numeroCompteIndex]]; ok {
+			reader := csv.NewReader(bufio.NewReader(file))
+			reader.Comma = ';'
+			fields, err := reader.Read()
+
+			numeroCompteIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "num_cpte" })
+			numeroEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Num_Ecn" })
+			dateTraitementIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Dt_trt_ecn" })
+			partOuvriereIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Mt_PO" })
+			partPatronaleIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Mt_PP" })
+			numeroHistoriqueEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Num_Hist_Ecn" })
+			etatCompteIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Etat_cpte" })
+			codeProcedureCollectiveIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Cd_pro_col" })
+			periodeIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Periode" })
+			codeOperationEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Cd_op_ecn" })
+			codeMotifEcartNegatifIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Motif_ecn" })
+
+			for {
+				row, error := reader.Read()
+				if error == io.EOF {
+					break
+				} else if error != nil {
+					log.Fatal(error)
+				}
+
 				debit := Debit{}
 				debit.NumeroCompte = row[numeroCompteIndex]
 				debit.NumeroEcartNegatif = row[numeroEcartNegatifIndex]
@@ -79,10 +79,11 @@ func parseDebit(path string, CompteSiretMapping map[string]string) chan Value {
 				debit.CodeMotifEcartNegatif = row[codeMotifEcartNegatifIndex]
 
 				hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: siret,
-						Compte: Compte{
+
+				outputChannel <- Etablissement{
+					Key: row[numeroCompteIndex],
+					Batch: map[string]Batch{
+						batch: Batch{
 							Debit: map[string]Debit{
 								hash: debit,
 							},
@@ -93,5 +94,6 @@ func parseDebit(path string, CompteSiretMapping map[string]string) chan Value {
 		}
 		close(outputChannel)
 	}()
+
 	return outputChannel
 }

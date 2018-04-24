@@ -19,8 +19,8 @@ type CCSF struct {
 	Action         string    `json:"action" json:"action"`
 }
 
-func parseCCSF(path string, CompteSiretMapping map[string]string) chan Value {
-	outputChannel := make(chan Value)
+func parseCCSF(path string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -54,10 +54,10 @@ func parseCCSF(path string, CompteSiretMapping map[string]string) chan Value {
 
 			hash := fmt.Sprintf("%x", structhash.Md5(ccsf, 1))
 
-			outputChannel <- Value{
-				Value: Etablissement{
-					Siret: CompteSiretMapping[r[f["NumeroCompte"]]],
-					Compte: Compte{
+			outputChannel <- Etablissement{
+				Key: r[f["NumeroCompte"]],
+				Batch: map[string]Batch{
+					batch: Batch{
 						CCSF: map[string]CCSF{
 							hash: ccsf,
 						},

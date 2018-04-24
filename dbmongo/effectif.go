@@ -32,36 +32,43 @@ func parseEffectifPeriod(effectifPeriods []string) ([]time.Time, error) {
 	return periods, nil
 }
 
-func getCompteSiretMapping(path string) map[string]string {
+func getCompteSiretMapping(path []string) map[string]string {
 	compteSiretMapping := make(map[string]string)
 
-	file, _ := os.Open(path)
+	for _, p := range path {
+		file, _ := os.Open(p)
 
-	reader := csv.NewReader(bufio.NewReader(file))
-	reader.Comma = ';'
-	fields, _ := reader.Read()
+		reader := csv.NewReader(bufio.NewReader(file))
+		reader.Comma = ';'
 
-	siretIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "SIRET" })
-	compteIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "compte" })
+		// discard header row
+		reader.Read()
 
-	for {
-		row, error := reader.Read()
-		if error == io.EOF {
-			break
-		} else if error != nil {
-			log.Fatal(error)
+		siretIndex := 3
+		compteIndex := 0
+
+		for {
+			row, error := reader.Read()
+			if error == io.EOF {
+				break
+			} else if error != nil {
+				log.Fatal(error)
+			}
+
+			compteSiretMapping[row[compteIndex]] = row[siretIndex]
 		}
-
-		compteSiretMapping[row[compteIndex]] = row[siretIndex]
 	}
-
 	return compteSiretMapping
 }
 
-func parseEffectif(path string) chan Value {
+func parseEffectif(path string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
+
 	file, err := os.Open(path)
+
 	if err != nil {
 		fmt.Println("Error", err)
+
 	}
 
 	reader := csv.NewReader(bufio.NewReader(file))
@@ -81,7 +88,6 @@ func parseEffectif(path string) chan Value {
 	if err != nil {
 		log.Panic("Aborting: could not read a period:", err)
 	}
-	outputChannel := make(chan Value)
 
 	go func() {
 		for {
@@ -93,7 +99,7 @@ func parseEffectif(path string) chan Value {
 			}
 
 			i := 0
-			effectif := map[string]Effectif{}
+			effectif := make(map[string]Effectif)
 
 			for i < boundaryIndex {
 				e, _ := strconv.Atoi(row[i])
@@ -109,18 +115,16 @@ func parseEffectif(path string) chan Value {
 			}
 
 			if len(row[siretIndex]) == 14 {
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: row[siretIndex],
-						Compte: Compte{
+				outputChannel <- Etablissement{
+					Siret: row[siretIndex],
+					Batch: map[string]Batch{
+						batch: Batch{
 							Effectif: effectif,
 						},
 					},
 				}
-
 			}
 		}
-
 		close(outputChannel)
 	}()
 

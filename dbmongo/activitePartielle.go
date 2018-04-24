@@ -9,12 +9,6 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-// ActivitePartielle Informations d'activité partielle
-type ActivitePartielle struct {
-	Demande      map[string]APDemande      `json:"demande" bson:"demande"`
-	Consommation map[string]APConsommation `json:"consommation" bson:"consommation"`
-}
-
 // APDemande Demande d'activité partielle
 type APDemande struct {
 	ID                 string    `json:"id_demande" bson:"id_demande"`
@@ -47,8 +41,8 @@ type APConsommation struct {
 	Periode        time.Time `json:"periode" bson:"periode"`
 }
 
-func parseActivitePartielleDemande(path string) chan Value {
-	outputChannel := make(chan Value)
+func parseAPDemande(path string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -59,7 +53,6 @@ func parseActivitePartielleDemande(path string) chan Value {
 		for _, sheet := range xlFile.Sheets {
 			for _, row := range sheet.Rows[3:] {
 				apdemande := APDemande{}
-				apdemande.ID = row.Cells[2].Value
 				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[14].Value)
 				apdemande.Effectif, _ = strconv.Atoi(row.Cells[15].Value)
 				apdemande.DateStatut, _ = excelToTime(row.Cells[16].Value)
@@ -86,11 +79,11 @@ func parseActivitePartielleDemande(path string) chan Value {
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: row.Cells[3].Value,
-						ActivitePartielle: ActivitePartielle{
-							Demande: map[string]APDemande{
+				outputChannel <- Etablissement{
+					Key: row.Cells[3].Value,
+					Batch: map[string]Batch{
+						batch: Batch{
+							APDemande: map[string]APDemande{
 								hash: apdemande,
 							},
 						},
@@ -104,8 +97,8 @@ func parseActivitePartielleDemande(path string) chan Value {
 	return outputChannel
 }
 
-func parseActivitePartielleConsommation(path string) chan Value {
-	outputChannel := make(chan Value)
+func parseAPConsommation(path string, batch string) chan Etablissement {
+	outputChannel := make(chan Etablissement)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -127,11 +120,11 @@ func parseActivitePartielleConsommation(path string) chan Value {
 				}
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apconsommation, 1))
-				outputChannel <- Value{
-					Value: Etablissement{
-						Siret: row.Cells[2].Value,
-						ActivitePartielle: ActivitePartielle{
-							Consommation: map[string]APConsommation{
+				outputChannel <- Etablissement{
+					Key: row.Cells[3].Value,
+					Batch: map[string]Batch{
+						batch: Batch{
+							APConsommation: map[string]APConsommation{
 								hash: apconsommation,
 							},
 						},
