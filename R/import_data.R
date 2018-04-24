@@ -363,20 +363,29 @@ import_table_naf <- function(path) {
     col_names = c("code_naf_niveau5", "code_naf_niveau4", "code_naf_niveau3", "code_naf_niveau2", "code_naf_niveau1")
   ) %>%
     dplyr::select(code_naf_niveau5, code_naf_niveau1) %>%
-    dplyr::mutate(
-      code_naf_niveau5 = stringr::str_replace(
-        string = code_naf_niveau5,
-        pattern = "([[:digit:]]{2})\\.([[:digit:]]{2}[[:upper:]]{1})",
-        replacement = "\\1\\2")
+    dplyr::left_join(
+      y = readxl::read_excel(
+        path = "data-raw/naf/naf2008_liste_n5.xls",
+        sheet = "Feuil1",
+        skip = 3,
+        col_names = c("code_naf_niveau5", "libelle_naf_niveau5")
+      ),
+      by = "code_naf_niveau5"
     ) %>%
     dplyr::left_join(
       y = readxl::read_excel(
         path = "data-raw/naf/naf2008_liste_n1.xls",
         sheet = "Feuil1",
-      skip = 3,
-      col_names = c("code_naf_niveau1", "libelle_naf_niveau1")
-    ),
-    by = "code_naf_niveau1"
+        skip = 3,
+        col_names = c("code_naf_niveau1", "libelle_naf_niveau1")
+      ),
+      by = "code_naf_niveau1"
+    )  %>%
+    dplyr::mutate(
+      code_naf_niveau5 = stringr::str_replace(
+        string = code_naf_niveau5,
+        pattern = "([[:digit:]]{2})\\.([[:digit:]]{2}[[:upper:]]{1})",
+        replacement = "\\1\\2")
     )
   return(output_table)
 }
