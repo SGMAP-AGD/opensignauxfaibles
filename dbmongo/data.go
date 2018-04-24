@@ -10,7 +10,7 @@ import (
 
 func dataDebit(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
-	var data Value
+	var data interface{}
 
 	// mapFct, _ := ioutil.ReadFile("js/dataDebit_map.js")
 	// reduceFct, _ := ioutil.ReadFile("js/dataDebit_reduce.js")
@@ -23,7 +23,7 @@ func dataDebit(c *gin.Context) {
 	// }
 
 	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).Select(bson.M{"value.compte.debit": 1, "value.compte.cotisation": 1}).One(&data)
-	//c.JSON(200, data.Value.Compte)
+	c.JSON(200, data)
 }
 
 func reduce(c *gin.Context) {
@@ -89,12 +89,12 @@ func browseOrig(c *gin.Context) {
 	c.JSON(200, etablissement)
 }
 
-func reduceEtablissement(c *gin.Context) {
+func compact(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	mapFct, _ := ioutil.ReadFile("map.js")
-	reduceFct, _ := ioutil.ReadFile("reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("finalize.js")
+	mapFct, _ := ioutil.ReadFile("js/compact_map.js")
+	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
 
 	job := &mgo.MapReduce{
 		Map:      string(mapFct),
@@ -109,12 +109,12 @@ func reduceEtablissement(c *gin.Context) {
 	c.JSON(200, etablissement)
 }
 
-func reduceEtablissements(c *gin.Context) {
+func compactAll(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	mapFct, _ := ioutil.ReadFile("map.js")
-	reduceFct, _ := ioutil.ReadFile("reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("finalize.js")
+	mapFct, _ := ioutil.ReadFile("js/compact_map.js")
+	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
 
 	job := &mgo.MapReduce{
 		Map:      string(mapFct),

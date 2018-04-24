@@ -60,6 +60,16 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 	return list, err
 }
 
+func importAll(c *gin.Context) {
+	importAltares(c)
+	importAPConso(c)
+	importAPDemande(c)
+	importEffectif(c)
+	importDebit(c)
+	importCotisation(c)
+	importDelais(c)
+}
+
 func importAltares(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 	batch := c.Params.ByName("batch")

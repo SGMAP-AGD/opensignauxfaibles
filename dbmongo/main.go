@@ -35,6 +35,7 @@ func main() {
 		api.GET("/repo/create/:region/:periode", createRepo)
 
 		api.GET("/purge", purge)
+		api.GET("/import/all/:region/:batch", importAll)
 		api.GET("/import/apdemande/:region/:batch", importAPDemande)
 		api.GET("/import/apconso/:region/:batch", importAPConso)
 		api.GET("/import/cotisation/:region/:batch", importCotisation)
@@ -43,8 +44,8 @@ func main() {
 		api.GET("/import/altares/:region/:batch", importAltares)
 		api.GET("/import/delais/:region/:batch", importEffectif)
 
-		api.GET("/reduceEtablissement/:siret", reduceEtablissement)
-		api.GET("/reduceEtablissement", reduceEtablissements)
+		api.GET("/import/compact/:siret", compact)
+		api.GET("/import/compact", compactAll)
 		api.GET("/reduce/:siret", reduce)
 		api.GET("/reduce", reduceAll)
 		api.GET("/etablissement/:siret", browseEtablissement)

@@ -58,13 +58,14 @@ export default {
       var self = this
       self.datacollection.datasets = []
       axios.get(self.$api + '/data/debit/' + this.siret ).then(function (response) {
-        var debit = response.data.debit
-        var cotisation = response.data.cotisation
+        var debit = response.data.value.compte.debit
+        var cotisation = response.data.value.compte.cotisation
+        console.log(debit)
         // Mise en forme de la cotisation
         var calCot = Object.keys(cotisation).reduce(function (m, k) {
           var c = cotisation[k]
-          var start = new Date(c.period.start)
-          var end = new Date(c.period.end)
+          var start = new Date(c.periode.start)
+          var end = new Date(c.periode.end)
           var periods = self.$generatePeriodSerie(start, end)
           periods.map(function (date) {
             m[date] = (m[date] || 0) + c.du/periods.length
