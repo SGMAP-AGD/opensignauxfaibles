@@ -14,6 +14,7 @@ source("./tools/data_prep/impute_missing_data_BdF.R")
 source("./tools/objective/objective_RJ_LJ_PS.R")
 source("./tools/split/split_snapshot_each_month.R")
 source("./tools/utilities/elapsed_months.R")
+source("./tools/post_analysis/export_top100.R")
 
 # seed
 
@@ -66,7 +67,7 @@ table_wholesample_sel <- table_wholesample_prep %>%
 
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
 
-tw_complete <- mice::complete(mids,1) # provisoire. Continuer avec l'objet mids: with(mids, ...)
+tw_complete <- mice::complete(mids,1)
 
 # Check for NAs, infinites
 
@@ -75,7 +76,7 @@ tw_complete <- mice::complete(mids,1) # provisoire. Continuer avec l'objet mids:
 
 
   #provisoire: retrait NA et inf
-  tw_complete <-tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
+  tw_complete <- tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
 
 # Split
 
@@ -124,15 +125,21 @@ randomForest <- train(formula,
 
 # Prediction
 
+tw_complete_long <- mice::complete(mids,'long')
+#provisoire: retrait NA et inf
+tw_complete_long <- tw_complete_long %>% filter(!is.infinite(log_cotisationdue_effectif))
 
-sample_actual <- tw_complete %>% filter(periode == actual_period |
-                                        periode == actual_period %m-% months(1) |
-                                        periode == actual_period %m-% months(2) |
-                                        periode == actual_period %m-% months(3))
+sample_actual <- tw_complete_long %>%
+  filter(periode == actual_period |
+        periode == actual_period %m-% months(1) |
+        periode == actual_period %m-% months(2))
 
 prob <- predict(randomForest, newdata = sample_actual,type = "prob")
 
 prediction <- sample_actual %>%
   cbind(prob = prob$default) %>%
-  arrange(prob)
+  group_by(siret) %>%
+  summarize(prob = mean(prob), periode =actual_period) %>%
+  arrange(desc(prob)) %>%
+  as.data.frame()
 

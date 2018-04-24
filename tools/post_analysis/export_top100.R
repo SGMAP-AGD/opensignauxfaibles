@@ -1,4 +1,4 @@
-export_top100 <- function(table_wholesample, prediction,export_filter = TRUE) {
+export_top100 <- function(prediction,table_wholesample,export_filter = TRUE) {
 
   if(is.character(export_filter) & export_filter == 'IM'){
     bool_filter <- table_wholesample$code_naf_niveau1 == 'C'
@@ -25,7 +25,9 @@ export_top100 <- function(table_wholesample, prediction,export_filter = TRUE) {
 
   temp_sample <-  table_wholesample %>%
     filter(bool_filter) %>%
-    dplyr::inner_join(prediction %>% select(siret,periode, prob), by = c('siret','periode')) %>%
+    mutate(periode = as.Date(periode)) %>%
+    dplyr::inner_join(prediction %>% select(siret,periode, prob),
+                      by = c('siret','periode')) %>%
     dplyr::filter(periode == der_periode) %>%
     dplyr::mutate(
       proc_collective  = (numero_compte %in% comptes_proc_collectives)
@@ -47,6 +49,7 @@ export_top100 <- function(table_wholesample, prediction,export_filter = TRUE) {
       code_departement,
       region,
       libelle_naf_niveau1,
+      libelle_naf_niveau5,
       code_ape,
       montant_part_ouvriere,
       montant_part_patronale,

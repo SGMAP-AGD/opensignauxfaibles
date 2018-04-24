@@ -1,4 +1,14 @@
-plot_comparison <- function(df1,df2, max_rank = 100){
+plot_comparison <- function(df1,df2, table_wholesample,max_rank = 100){
+
+  table_wholesample <- table_wholesample %>%
+    mutate(periode = as.Date(periode))
+
+
+
+  df1 <- inner_join(df1 %>% select(siret,periode,prob),
+                    table_wholesample, by = c('siret','periode'))
+  df2 <- inner_join(df2 %>% select(siret,periode,prob),
+                    table_wholesample, by = c('siret','periode'))
 
   assert_that('prob' %in% colnames(df1) & 'prob' %in% colnames(df2))
 
