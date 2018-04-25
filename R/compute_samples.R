@@ -1356,6 +1356,7 @@ collect_wholesample <- function(db, table) {
     from = "wholesample"
   ) %>%
     dplyr::collect(n = Inf) %>%
+    dplyr::mutate(periode = as.Date(periode)) %>%
     dplyr::mutate(siren =  stringr::str_sub(siret,1,9) , annee = lubridate::year(periode)) %>%
     dplyr::left_join(y = bdf, by = c("annee","siren")) %>%
     group_by(siret) %>%
@@ -1381,21 +1382,21 @@ collect_wholesample <- function(db, table) {
     dplyr::mutate(
       cut_effectif = forcats::fct_relevel(
         dplyr::case_when(
-          .$effectif < 20 ~ "10-20",
-          .$effectif < 50 ~ "21-50",
-          TRUE ~ "Plus de 50"
+          .$effectif < 20 ~ "10_20",
+          .$effectif < 50 ~ "21_50",
+          TRUE ~ "Plus_de_50"
         )
       ),
       cut_growthrate = forcats::fct_relevel(
         dplyr::case_when(
           .$lag_effectif_missing == TRUE ~ "manquant",
-          .$growthrate_effectif < .80 ~ "moins 20%",
-          .$growthrate_effectif < .95 ~ "moins 20 à 5%",
+          .$growthrate_effectif < .80 ~ "moins_20pourcent",
+          .$growthrate_effectif < .95 ~ "moins_20_a_5_pourcent",
           .$growthrate_effectif < 1.05 ~ "stable",
-          .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
-          TRUE ~ "plus 20%"
+          .$growthrate_effectif < 1.20 ~ "plus_5_a_20_pourcent",
+          TRUE ~ "plus_20_pourcent"
         ),
-        c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
+        c("moins_20pourcent", "moins_20_a_5_pourcent","stable", "plus_5_a_20_pourcent",  "plus_20_pourcent", "manquant")
       ),
       outcome_0_12 = forcats::fct_explicit_na(
         factor(outcome_0_12, levels = c("non-default", "default")),

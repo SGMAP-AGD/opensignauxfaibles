@@ -39,19 +39,6 @@ table_wholesample_prep <- objective_RJ_LJ_PS(table_wholesample)
 table_wholesample_prep <- table_wholesample_prep %>%
   mutate(outcome = factor(outcome, levels = c(TRUE,FALSE), labels =  c("default", "non_default")))
 
-# TODO Corriger à la source, javascript !!
-table_wholesample_prep <- table_wholesample_prep %>%
-  mutate(cut_growthrate = fct_recode(cut_growthrate,
-                                     "moins_20pourcent" =  "moins 20%",
-                                     "moins_20_a_5_pourcent" = "moins 20 à 5%",
-                                     "plus_5_a_20_pourcent" = "plus 5 à 20%",
-                                     "plus_20_pourcent" = "plus 20%")) %>%
-  mutate(cut_effectif = fct_recode(cut_effectif,
-                                   "10_20" = "10-20",
-                                   "21_50" = "21-50",
-                                   "Plus_de_50" = "Plus de 50"
-  ))
-
 # Feature selection
 
 table_wholesample_sel <- table_wholesample_prep %>%
