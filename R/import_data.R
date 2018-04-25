@@ -200,17 +200,18 @@ import_table_cotisation <- function(path) {
 import_table_debit <- function(path) {
   table_debit <- readr::read_csv2(
     file = path,
-    col_names = c("numero_compte", "numero_ecart_negatif",
+    col_names = c("numero_compte", "numero_ecart_negatif", "numero_compte_externe",
                   "date_traitement_ecart_negatif",
                   "montant_part_ouvriere", "montant_part_patronale",
                   "numero_historique_ecart_negatif",
                   "date_immatriculation_1", "etat_compte",
                   "code_procedure_collective", "siren",
                   "periode", "date_immatriculation",
-                  "code_operation_ecart_negatif", "code_motif_ecart_negatif"),
+                  "code_operation_ecart_negatif", "code_motif_ecart_negatif","majorations_retard"),
     col_types = readr::cols(
       numero_compte = readr::col_character(),
       numero_ecart_negatif = readr::col_character(),
+      numero_compte_externe = readr::col_character(),
       date_traitement_ecart_negatif = readr::col_character(),
       montant_part_ouvriere = readr::col_number(),
       montant_part_patronale = readr::col_number(),
@@ -222,7 +223,8 @@ import_table_debit <- function(path) {
       periode = readr::col_character(),
       date_immatriculation = readr::col_date(),
       code_operation_ecart_negatif = readr::col_character(),
-      code_motif_ecart_negatif = readr::col_character()
+      code_motif_ecart_negatif = readr::col_character(),
+      majorations_retard = readr::col_integer()
     ),
     skip = 1,
     progress = FALSE
@@ -361,20 +363,29 @@ import_table_naf <- function(path) {
     col_names = c("code_naf_niveau5", "code_naf_niveau4", "code_naf_niveau3", "code_naf_niveau2", "code_naf_niveau1")
   ) %>%
     dplyr::select(code_naf_niveau5, code_naf_niveau1) %>%
-    dplyr::mutate(
-      code_naf_niveau5 = stringr::str_replace(
-        string = code_naf_niveau5,
-        pattern = "([[:digit:]]{2})\\.([[:digit:]]{2}[[:upper:]]{1})",
-        replacement = "\\1\\2")
+    dplyr::left_join(
+      y = readxl::read_excel(
+        path = "data-raw/naf/naf2008_liste_n5.xls",
+        sheet = "Feuil1",
+        skip = 3,
+        col_names = c("code_naf_niveau5", "libelle_naf_niveau5")
+      ),
+      by = "code_naf_niveau5"
     ) %>%
     dplyr::left_join(
       y = readxl::read_excel(
         path = "data-raw/naf/naf2008_liste_n1.xls",
         sheet = "Feuil1",
-      skip = 3,
-      col_names = c("code_naf_niveau1", "libelle_naf_niveau1")
-    ),
-    by = "code_naf_niveau1"
+        skip = 3,
+        col_names = c("code_naf_niveau1", "libelle_naf_niveau1")
+      ),
+      by = "code_naf_niveau1"
+    )  %>%
+    dplyr::mutate(
+      code_naf_niveau5 = stringr::str_replace(
+        string = code_naf_niveau5,
+        pattern = "([[:digit:]]{2})\\.([[:digit:]]{2}[[:upper:]]{1})",
+        replacement = "\\1\\2")
     )
   return(output_table)
 }

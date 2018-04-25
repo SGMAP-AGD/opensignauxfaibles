@@ -14,76 +14,18 @@ database_signauxfaibles <- database_connect()
 ## Import table altares
 
 ```{bash}
-in2csv data-raw/altares/RECAP_ALTARES_201803.xlsx > data-raw/altares/RECAP_ALTARES_201803.csv
+in2csv data-raw/altares/RECAP_ALTARES_201804.xlsx > data-raw/altares/RECAP_ALTARES_201804.csv
 ```
 
 ```{r}
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_altares")
 import_table_altares(
-  path = "data-raw/altares/RECAP_ALTARES_201803.csv"
+  path = "data-raw/altares/RECAP_ALTARES_201804.csv"
   ) %>% 
   insert_multi(
     dest = database_signauxfaibles,
     df = .,
     slices = 10,
-        "apart_last12_months" = 0,
-        "apart_consommee" = 0,
-        "apart_share_heuresconsommees" = 0,
-        "apart_heures_consommees" = 0
-      )
-    ) %>%
-    dplyr::mutate(
-      cut_effectif = forcats::fct_relevel(
-        dplyr::case_when(
-          .$effectif < 20 ~ "10-20",
-          .$effectif < 50 ~ "21-50",
-          TRUE ~ "Plus de 50"
-        )
-      ),
-      cut_growthrate = forcats::fct_relevel(
-        dplyr::case_when(
-          .$lag_effectif_missing == TRUE ~ "manquant",
-          .$growthrate_effectif < .80 ~ "moins 20%",
-          .$growthrate_effectif < .95 ~ "moins 20 à 5%",
-          .$growthrate_effectif < 1.05 ~ "stable",
-          .$growthrate_effectif < 1.20 ~ "plus 5 à 20%",
-          TRUE ~ "plus 20%"
-        ),
-        c("stable", "moins 20%", "moins 20 à 5%", "plus 5 à 20%", "plus 20%", "manquant")
-      ),
-      outcome_0_12 = forcats::fct_explicit_na(
-        factor(outcome_0_12, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      outcome_6_18 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      outcome_12_24 = forcats::fct_explicit_na(
-        factor(outcome_6_18, levels = c("non-default", "default")),
-        na_level = "non-default"),
-      cotisationdue_effectif = (mean_cotisation_due) / effectif,
-      log_cotisationdue_effectif = log(cotisationdue_effectif),
-      ratio_dettecumulee_cotisation = (montant_part_ouvriere + montant_part_patronale) / mean_cotisation_due,
-      indicatrice_dettecumulee = (montant_part_ouvriere + montant_part_patronale > 0),
-      log_ratio_dettecumulee_cotisation = dplyr::if_else(
-        condition = indicatrice_dettecumulee == TRUE,
-        true = log(ratio_dettecumulee_cotisation),
-        false = 0
-      ),
-      ratio_dettecumulee_cotisation_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m) / mean_cotisation_due,
-      indicatrice_dettecumulee_12m = (montant_part_ouvriere_12m + montant_part_patronale_12m > 0),
-      log_ratio_dettecumulee_cotisation_12m = dplyr::if_else(
-        condition = indicatrice_dettecumulee_12m == TRUE,
-        true = log(ratio_dettecumulee_cotisation_12m),
-        false = 0
-      ),
-      indicatrice_croissance_dettecumulee = (
-        montant_part_ouvriere + montant_part_patronale > lag_montant_part_ouvriere + lag_montant_part_patronale
-      )
-    )
-}
-
-
-
     name = "table_altares"
     );
 ```
@@ -191,7 +133,7 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_activiteparti
 
 dplyr::bind_rows(
   import_table_activite_partielle(
-    path = "data-raw/activite_partielle/act_partielle_ddes_2012_fév2018.xlsx",
+    path = "data-raw/apdemande/act_partielle_ddes_2012_mars2018.xlsx",
     hta = "hta",
     mta = "mta",
     effectif_autorise = "eff_auto"
@@ -212,7 +154,7 @@ dplyr::bind_rows(
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consommee")
 
   import_apart_heuresconsommees(
-    path = "data-raw/activite_partielle/act_partielle_conso_fév2018.xlsx",
+    path = "data-raw/apconso/act_partielle_conso_mars2018.xlsx",
     sheet = "INDEMNITE",
     skip = 0,
     date = "mois",
@@ -238,7 +180,7 @@ db_drop_table_ifexist(db = database_signauxfaibles, table = "table_apart_consomm
 db_drop_table_ifexist(db = database_signauxfaibles, table = "table_banquedefrance")
 
 table_temp <-
-readxl::read_excel(path = "data-raw/banque_de_france/201712.xlsx")
+readxl::read_excel(path = "data-raw/bdf/201712.xlsx")
 table_temp %>% rename(
 "siren" = "d1",
 "annee" = "Annee",
@@ -270,24 +212,26 @@ db_drop_table_ifexist(
   )
 
 dplyr::bind_rows(
-    import_table_cotisation(    path = "data-raw/cotisations/cotisations_bourgogne_0_201608.txt"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201609_201701.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201702_201703.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201704_201707.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201708_201710.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201711.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201712.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201801.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_bourgogne_201802.csv"),
-    import_table_cotisation(    path = "data-raw/cotisations/cotisations_frc_0_201701.txt"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201702_201703.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201704_201707.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201708_201710.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201711.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201712.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201801.csv"),
-    import_table_cotisation_csv(path = "data-raw/cotisations/cotisations_frc_201802.csv")
-  ) %>%
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_0_201608.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201609_201701.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201702_201703.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201704_201707.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201708_201710.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201711.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201712.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201801.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201802.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_bourgogne_201803.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_0_201701.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201702_201703.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201704_201707.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201708_201710.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201711.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201712.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201801.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201802.csv"),
+    import_table_cotisation_csv(path = "data-raw/cotisation/cotisations_frc_201803.csv")
+      ) %>%
   dplyr::distinct() %>%
   insert_multi(
     dest = database_signauxfaibles,
@@ -353,8 +297,8 @@ import_table_effectif2(
 db_drop_table_ifexist(db = database_signauxfaibles, "table_ccsv")
 
 dplyr::bind_rows(
-  import_table_ccsv(path = "data-raw/ccsv/Bourgogne_ccsf_201803.csv"),
-  import_table_ccsv(path = "data-raw/ccsv/FRC_ccsf_201803.csv")
+  import_table_ccsv(path = "data-raw/ccsf/Bourgogne_ccsf_042018.csv"),
+  import_table_ccsv(path = "data-raw/ccsf/FRC_ccsf_042018.csv")
   ) %>%
   dplyr::distinct() %>%
   insert_multi(

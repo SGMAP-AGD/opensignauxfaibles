@@ -3,10 +3,6 @@ title: "Compute whole samples"
 output:
   html_document: default
   html_notebook: default
-params:
-  start: "2013-01-01"
-  end: "2017-03-01"
-  last: "2018-01-01"
 ---
 
 ```{r setup}
