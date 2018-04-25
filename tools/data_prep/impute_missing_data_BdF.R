@@ -77,9 +77,7 @@ impute_missing_data_BdF <- function(df,seed = 1234){
                printFlag = TRUE,
                seed = seed)
 
-  browser()
-
-  long_by_year <- complete(temp_mids,'long', include = TRUE)
+  long_by_year <- mice::complete(temp_mids,'long', include = TRUE)
 
   # Expanding imputed values at each period
   long_by_periode <- df %>%
