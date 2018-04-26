@@ -1,4 +1,4 @@
-export_top100 <- function(prediction,table_wholesample,export_filter = TRUE) {
+export_top <- function(prediction,table_wholesample, top = 100,export_filter = TRUE) {
 
   if(is.character(export_filter) & export_filter == 'IM'){
     bool_filter <- table_wholesample$code_naf_niveau1 == 'C'
@@ -83,14 +83,14 @@ export_top100 <- function(prediction,table_wholesample,export_filter = TRUE) {
       log_ratio_dettecumulee_cotisation,
       numero_compte
     ) %>%
-    dplyr::slice(1:100) %>%
+    dplyr::slice(1:top) %>%
     write.table(
       row.names = F,
       dec = ',',
       sep = ';',
       file = paste0('output/algo1_',
                     der_periode,
-                    if_else(is.character(first(export_filter)), first(export_filter), ''),
+                    ifelse(is.character(first(export_filter)), first(export_filter), ''),
                     '.csv'),
       quote = T,
       append = F
