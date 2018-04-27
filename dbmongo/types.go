@@ -33,6 +33,7 @@ type Batch struct {
 	Altares        map[string]Altares        `json:"altares,omitempty" bson:"altares,omitempty"`
 	APDemande      map[string]APDemande      `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
 	APConsommation map[string]APConsommation `json:"apconso,omitempty" bson:"apconso,omitempty"`
+	Sirene         map[string]Sirene         `json:"sirene,omitempty" bson:"sirene,omitempty"`
 }
 
 // Periode Période de temps avec un début et une fin

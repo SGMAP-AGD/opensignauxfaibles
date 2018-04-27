@@ -43,6 +43,7 @@ func main() {
 		api.GET("/import/effectif/:region/:batch", importEffectif)
 		api.GET("/import/altares/:region/:batch", importAltares)
 		api.GET("/import/delais/:region/:batch", importEffectif)
+		api.GET("/import/sirene/:region/:batch", importSirene)
 
 		api.GET("/import/compact/:siret", compact)
 		api.GET("/import/compact", compactAll)
@@ -72,5 +73,4 @@ func loadConfig() {
 	viper.SetDefault("JWT_SECRET", "One might change this because one day it will not be sufficient")
 	err := viper.ReadInConfig()
 	fmt.Println(err)
-
 }

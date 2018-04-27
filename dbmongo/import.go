@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
 )
 
@@ -25,6 +26,7 @@ func createRepo(c *gin.Context) {
 		"debit",
 		"delais",
 		"effectif",
+		"sirene",
 	}
 
 	var response map[string]string
@@ -48,7 +50,19 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 	list := make(map[string][]string)
 	var l []os.FileInfo
 	err := make(map[string]error)
-	directories := []string{"admin_urssaf", "altares", "altares", "apdemande", "apconso", "bdf", "ccsf", "cotisation", "debit", "delais", "effectif"}
+	directories := []string{
+		"admin_urssaf",
+		"altares",
+		"altares",
+		"apdemande",
+		"apconso",
+		"bdf",
+		"ccsf",
+		"cotisation",
+		"debit",
+		"delais",
+		"effectif",
+		"sirene"}
 
 	for _, dir := range directories {
 		l, err[dir] = ioutil.ReadDir(fmt.Sprintf("%s/%s/%s/%s", basePath, region, period, dir))
@@ -89,7 +103,7 @@ func importEffectif(c *gin.Context) {
 	batch := c.Params.ByName("batch")
 	region := c.Params.ByName("region")
 	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
-	effectif := files["effectif"][0]
+	effectif := files["effectif"]
 
 	for etablissement := range parseEffectif(effectif, batch) {
 		etablissement.Region = region
@@ -191,7 +205,7 @@ func importDelais(c *gin.Context) {
 	value.Value.Batch = make(map[string]Batch)
 	value.Value.Batch[batch] = Batch{Delais: map[string]Delais{}}
 
-	for etablissement := range parseCotisation(delais, batch) {
+	for etablissement := range parseDelais(delais, batch) {
 		etablissement.Region = region
 		etablissement.Siret = mapping[etablissement.Key]
 		if value.Value.Siret == etablissement.Siret {
@@ -204,6 +218,27 @@ func importDelais(c *gin.Context) {
 		}
 	}
 	insertValue(db, value)
+}
+
+func importSirene(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	sirene := files["sirene"]
+	values := make([]interface{}, 0)
+	i := 0
+	for etablissement := range parseSirene(sirene, batch) {
+		if i == 1000 {
+			db.C("Etablissement").Insert(values...)
+			values = make([]interface{}, 0)
+			i = 0
+		}
+		etablissement.Region = region
+		values = append(values, Value{Value: etablissement, ID: bson.NewObjectId()})
+		i++
+	}
+	db.C("Etablissement").Insert(values...)
 }
 
 func purge(c *gin.Context) {

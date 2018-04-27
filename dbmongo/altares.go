@@ -39,7 +39,6 @@ func parseAltares(path string, batch string) chan Etablissement {
 	codeEvenementIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Code de la nature de l'événement" })
 	siretIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Siret" })
 
-	fmt.Println(fields)
 	go func() {
 		for {
 			row, error := reader.Read()
