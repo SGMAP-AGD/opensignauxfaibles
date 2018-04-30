@@ -35,6 +35,8 @@ plot_comparison <- function(df1,df2, table_wholesample,max_rank = 100){
     mutate(prob_diffs = replace(prob_diffs, is.na(prob_diffs),0))
 
 
-  ggplot(df, aes(x=prob, y = prob_diffs, size = as.numeric(effectif), color = new_or_old)) +
-    geom_point()
+  p <- ggplot(df, aes(x=ranking, y = prob_diffs, size = as.numeric(effectif), color = new_or_old)) +
+    geom_point(aes(text = paste('siret:',siret)))
+
+  ggplotly(p)
 }
