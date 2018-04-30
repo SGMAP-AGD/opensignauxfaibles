@@ -927,8 +927,7 @@ compute_sample_nbdebits <- function(db, .date, n_months) {
         ~ periodicity == "monthly",
         ~ code_operation_ecart_negatif == "1"),
         ~ period < .date2,
-        ~ montant_part_ouvriere > 0,
-        ~ montant_part_patronale > 0
+        ~ montant_part_ouvriere + montant_part_patronale> 0
         ) %>%
     dplyr::semi_join(
       y =  get_table_last_n_months(.date = .date, .n_months = n_months),
