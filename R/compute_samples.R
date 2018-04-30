@@ -562,7 +562,7 @@ compute_sample_dettecumulee <- function(db, .date) {
   .date <- lubridate::ymd(.date)
 
   dplyr::tbl(db, from = "table_debit") %>%
-    dplyr::filter(periodicity %in% c("monthly", "quarterly") && date_traitement_ecart_negatif < .date %m+% 1) %>%
+    dplyr::filter(periodicity %in% c("monthly", "quarterly") && date_traitement_ecart_negatif < .date) %>%
     dplyr::group_by_(~ numero_compte, ~ period, ~ numero_ecart_negatif) %>%
     dplyr::filter_(
       .dots = list(
