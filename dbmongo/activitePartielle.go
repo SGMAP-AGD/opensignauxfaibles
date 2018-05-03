@@ -32,8 +32,8 @@ type APDemande struct {
 	EffectifConsomme   int       `json:"effectif_consomme" bson:"effectif_consomme"`
 }
 
-// APConsommation Consommation d'activité partielle
-type APConsommation struct {
+// APConso Consommation d'activité partielle
+type APConso struct {
 	ID             string    `json:"id_conso" bson:"id_conso"`
 	HeureConsommee float64   `json:"heure_consomme" bson:"heure_consomme"`
 	Montant        float64   `json:"montant" bson:"montant"`
@@ -108,7 +108,7 @@ func parseAPConsommation(path string, batch string) chan Etablissement {
 	go func() {
 		for _, sheet := range xlFile.Sheets {
 			for _, row := range sheet.Rows[3:] {
-				apconsommation := APConsommation{}
+				apconsommation := APConso{}
 				apconsommation.ID = row.Cells[1].Value
 				apconsommation.Periode, err = excelToTime(row.Cells[15].Value)
 				apconsommation.HeureConsommee, err = strconv.ParseFloat(row.Cells[16].Value, 64)
@@ -124,7 +124,7 @@ func parseAPConsommation(path string, batch string) chan Etablissement {
 					Key: row.Cells[3].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
-							APConsommation: map[string]APConsommation{
+							APConso: map[string]APConso{
 								hash: apconsommation,
 							},
 						},

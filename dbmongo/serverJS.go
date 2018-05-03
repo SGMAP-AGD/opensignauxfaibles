@@ -17,6 +17,7 @@ func (f ServerJSFunc) Add(db *mgo.Database) {
 }
 
 func declareServerFunctions(db *mgo.Database) {
+
 	f := ServerJSFunc{
 		ID:    "generatePeriodSerie",
 		Value: bson.JavaScript{Code: "function (date_debut, date_fin) {var date_next = new Date(date_debut.getTime());var serie = [];while (date_next.getTime() < date_fin.getTime()) {serie.push(new Date(date_next.getTime()));date_next.setUTCMonth(date_next.getUTCMonth() + 1);}return serie;}"},
@@ -36,4 +37,5 @@ func declareServerFunctions(db *mgo.Database) {
 		ID:    "DateAddMonth",
 		Value: bson.JavaScript{Code: `function(date, nbMonth) {var result = new Date(date.getTime());result.setUTCMonth(result.getUTCMonth() + nbMonth);return result;}`},
 	}
+	f.Add(db)
 }

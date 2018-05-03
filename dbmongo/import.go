@@ -24,7 +24,7 @@ func createRepo(c *gin.Context) {
 		"ccsf",
 		"cotisation",
 		"debit",
-		"delais",
+		"delai",
 		"effectif",
 		"sirene",
 	}
@@ -60,7 +60,7 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 		"ccsf",
 		"cotisation",
 		"debit",
-		"delais",
+		"delai",
 		"effectif",
 		"sirene"}
 
@@ -81,7 +81,7 @@ func importAll(c *gin.Context) {
 	importEffectif(c)
 	importDebit(c)
 	importCotisation(c)
-	importDelais(c)
+	importDelai(c)
 }
 
 func importAltares(c *gin.Context) {
@@ -109,6 +109,7 @@ func importEffectif(c *gin.Context) {
 		etablissement.Region = region
 		insertValue(db, Value{Value: etablissement})
 	}
+	c.JSON(200, "OK")
 }
 
 func importAPDemande(c *gin.Context) {
@@ -193,24 +194,24 @@ func importCotisation(c *gin.Context) {
 	insertValue(db, value)
 }
 
-func importDelais(c *gin.Context) {
+func importDelai(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 	batch := c.Params.ByName("batch")
 	region := c.Params.ByName("region")
 	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
-	delais := files["delais"]
+	delai := files["delai"]
 	mapping := getCompteSiretMapping(files["admin_urssaf"])
 
 	value := Value{Value: Etablissement{}}
 	value.Value.Batch = make(map[string]Batch)
-	value.Value.Batch[batch] = Batch{Delais: map[string]Delais{}}
+	value.Value.Batch[batch] = Batch{Delai: map[string]Delai{}}
 
-	for etablissement := range parseDelais(delais, batch) {
+	for etablissement := range parseDelai(delai, batch) {
 		etablissement.Region = region
 		etablissement.Siret = mapping[etablissement.Key]
 		if value.Value.Siret == etablissement.Siret {
-			for k, v := range etablissement.Batch[batch].Delais {
-				value.Value.Batch[batch].Delais[k] = v
+			for k, v := range etablissement.Batch[batch].Delai {
+				value.Value.Batch[batch].Delai[k] = v
 			}
 		} else {
 			insertValue(db, value)
