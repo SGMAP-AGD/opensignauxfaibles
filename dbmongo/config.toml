@@ -7,3 +7,7 @@
 # DB = "opensignauxfaibles"
 # DB = "jason"
 APP_DATA = "/home/christophe/Project/data-raw/"
+
+KANBOARD_ENDPOINT = "http://localhost/kanboard-1.2.1/jsonrpc.php"
+KANBOARD_USERNAME = "admin"
+KANBOARD_PASSWORD = "admin"

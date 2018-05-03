@@ -26,7 +26,7 @@ type Debit struct {
 	Periode                      Periode   `json:"periode" bson:"periode"`
 	CodeOperationEcartNegatif    string    `json:"code_operation_ecart_negatif" bson:"code_operation_ecart_negatif"`
 	CodeMotifEcartNegatif        string    `json:"code_motif_ecart_negatif" bson:"code_motif_ecart_negatif"`
-	DebitSuivant                 string    `json:"debit_suivant" bson:"debit_suivant omitempty"`
+	DebitSuivant                 string    `json:"debit_suivant,omitempty" bson:"debit_suivant,omitempty"`
 }
 
 func parseDebit(paths []string, batch string) chan Etablissement {

@@ -25,15 +25,15 @@ type Etablissement struct {
 
 // Batch lot de data
 type Batch struct {
-	Effectif       map[string]Effectif       `json:"effectif,omitempty" bson:"effectif,omitempty"`
-	Delais         map[string]Delais         `json:"delais,omitempty" bson:"delais,omitempty"`
-	Debit          map[string]Debit          `json:"debit,omitempty" bson:"debit,omitempty"`
-	CCSF           map[string]CCSF           `json:"ccsf,omitempty" bson:"ccsf,omitempty"`
-	Cotisation     map[string]Cotisation     `json:"cotisation,omitempty" bson:"cotisation,omitempty"`
-	Altares        map[string]Altares        `json:"altares,omitempty" bson:"altares,omitempty"`
-	APDemande      map[string]APDemande      `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
-	APConsommation map[string]APConsommation `json:"apconso,omitempty" bson:"apconso,omitempty"`
-	Sirene         map[string]Sirene         `json:"sirene,omitempty" bson:"sirene,omitempty"`
+	Effectif   map[string]Effectif   `json:"effectif,omitempty" bson:"effectif,omitempty"`
+	Delai      map[string]Delai      `json:"delai,omitempty" bson:"delai,omitempty"`
+	Debit      map[string]Debit      `json:"debit,omitempty" bson:"debit,omitempty"`
+	CCSF       map[string]CCSF       `json:"ccsf,omitempty" bson:"ccsf,omitempty"`
+	Cotisation map[string]Cotisation `json:"cotisation,omitempty" bson:"cotisation,omitempty"`
+	Altares    map[string]Altares    `json:"altares,omitempty" bson:"altares,omitempty"`
+	APDemande  map[string]APDemande  `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
+	APConso    map[string]APConso    `json:"apconso,omitempty" bson:"apconso,omitempty"`
+	Sirene     map[string]Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
 }
 
 // Periode Période de temps avec un début et une fin

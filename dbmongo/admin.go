@@ -12,7 +12,7 @@ import (
 // Path Chemins d'accès aux répertoires sources
 type Path struct {
 	Debit      string `json:"debit" bson:"debit"`
-	Delais     string `json:"delais" bson:"delais"`
+	Delai      string `json:"delai" bson:"delai"`
 	Cotisation string `json:"cotisation" bson:"cotisation"`
 	Ccsf       string `json:"ccsf" bson:"ccsf"`
 	Altares    string `json:"altares" bson:"altares"`

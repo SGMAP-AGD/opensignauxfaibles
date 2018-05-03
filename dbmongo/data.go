@@ -22,16 +22,16 @@ func dataDebit(c *gin.Context) {
 	// 	Finalize: string(finalizeFct),
 	// }
 
-	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).Select(bson.M{"value.compte.debit": 1, "value.compte.cotisation": 1}).One(&data)
+	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).One(&data)
 	c.JSON(200, data)
 }
 
 func reduce(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	mapFct, _ := ioutil.ReadFile("map2.js")
-	reduceFct, _ := ioutil.ReadFile("reduce2.js")
-	finalizeFct, _ := ioutil.ReadFile("finalize2.js")
+	mapFct, _ := ioutil.ReadFile("js/algo1_map.js")
+	reduceFct, _ := ioutil.ReadFile("js/algo1_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/algo1_finalize.js")
 
 	job := &mgo.MapReduce{
 		Map:      string(mapFct),
@@ -39,12 +39,13 @@ func reduce(c *gin.Context) {
 		Finalize: string(finalizeFct),
 	}
 
-	var etablissement []struct {
-		ID    string      `json:"id" bson:"_id"`
-		Value interface{} `json:"value" bson:"value"`
-	}
+	// var etablissement []struct {
+	// 	ID    string      `json:"id" bson:"_id"`
+	// 	Value interface{} `json:"value" bson:"value"`
+	// }
+	var etablissement interface{}
 
-	db.C("Etablissement").Find(bson.M{"_id": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -52,9 +53,9 @@ func reduce(c *gin.Context) {
 func reduceAll(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	mapFct, _ := ioutil.ReadFile("map2.js")
-	reduceFct, _ := ioutil.ReadFile("reduce2.js")
-	finalizeFct, _ := ioutil.ReadFile("finalize2.js")
+	mapFct, _ := ioutil.ReadFile("js/algo1_map.js")
+	reduceFct, _ := ioutil.ReadFile("js/algo1_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/algo1_finalize.js")
 
 	job := &mgo.MapReduce{
 		Map:      string(mapFct),

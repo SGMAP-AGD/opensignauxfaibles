@@ -1,5 +1,5 @@
 function reduce(key, values) {
-    r = values.reduce((m, value) => {
+    return values.reduce((m, value) => {
         Object.keys(value.batch).map(batch => {
             Object.keys(value.batch[batch]).map(type => {
                 m.batch[batch] = (m.batch[batch] || {})
@@ -9,5 +9,4 @@ function reduce(key, values) {
         })
         return m
     })
-    return r
 }

@@ -58,8 +58,9 @@ export default {
       var self = this
       self.datacollection.datasets = []
       axios.get(self.$api + '/data/debit/' + this.siret ).then(function (response) {
-        var debit = response.data.value.compte.debit
-        var cotisation = response.data.value.compte.cotisation
+        console.log(response.data)
+        var debit = (response.data.value.batch["1802"].debit || {})
+        var cotisation = (response.data.value.batch["1802"].cotisation || {})
         console.log(debit)
         // Mise en forme de la cotisation
         var calCot = Object.keys(cotisation).reduce(function (m, k) {
@@ -131,7 +132,7 @@ export default {
         })
         self.datacollection.datasets.push({
           label: 'Dette Cumulée',
-          radius: 5,
+          radius: 2,
           borderWidth: 3,
           steppedLine: true,
           backgroundColor:  'rgba(128,0,0,0.4)',
