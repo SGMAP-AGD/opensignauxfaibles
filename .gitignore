@@ -14,6 +14,7 @@ inst/fiches/*
 inst/*.html
 output/*
 dbmongo/data-raw
+dbmongo/dbmongo
 .vscode/*
 dbmongo/static/*
 archive/*

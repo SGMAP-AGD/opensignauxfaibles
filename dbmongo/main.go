@@ -33,7 +33,9 @@ func main() {
 		api.DELETE("/admin/region", AdminRegionDelete)
 		api.GET("/repo/create/:region/:periode", createRepo)
 		api.GET("/purge", purge)
+
 		api.GET("/kanboard/task/create/:siret", createTaskFromSiret)
+
 		api.GET("/import/all/:region/:batch", importAll)
 		api.GET("/import/apdemande/:region/:batch", importAPDemande)
 		api.GET("/import/apconso/:region/:batch", importAPConso)
