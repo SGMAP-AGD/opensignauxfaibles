@@ -14,6 +14,12 @@ type Value struct {
 	Value Etablissement `json:"value" bson:"value"`
 }
 
+// ValueEntreprise permet de stocker une entreprise dans un objet Bson
+type ValueEntreprise struct {
+	ID    bson.ObjectId `json:"id" bson:"_id"`
+	Value Entreprise    `json:"value" bson:"value"`
+}
+
 // Etablissement objet établissement (/entreprise/)
 type Etablissement struct {
 	Siret       string           `json:"siret" bson:"siret"`
@@ -23,8 +29,17 @@ type Etablissement struct {
 	Batch       map[string]Batch `json:"batch" bson:"batch"`
 }
 
+// Entreprise object Entreprise
+type Entreprise struct {
+	Siren  string           `json:"siren" bson:"siren"`
+	Region string           `json:"region" bson:"region"`
+	Key    string           `json:"-" bson:"-"`
+	Batch  map[string]Batch `json:"batch" bson:"batch"`
+}
+
 // Batch lot de data
 type Batch struct {
+	Compact    map[string]bool       `json:"compact" bson:"compact"`
 	Effectif   map[string]Effectif   `json:"effectif,omitempty" bson:"effectif,omitempty"`
 	Delai      map[string]Delai      `json:"delai,omitempty" bson:"delai,omitempty"`
 	Debit      map[string]Debit      `json:"debit,omitempty" bson:"debit,omitempty"`
@@ -34,6 +49,7 @@ type Batch struct {
 	APDemande  map[string]APDemande  `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
 	APConso    map[string]APConso    `json:"apconso,omitempty" bson:"apconso,omitempty"`
 	Sirene     map[string]Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
+	BDF        map[string]BDF        `json:"bdf,omitempty" bson:"bdf,omitempty"`
 }
 
 // Periode Période de temps avec un début et une fin

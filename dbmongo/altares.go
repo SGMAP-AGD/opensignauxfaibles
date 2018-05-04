@@ -63,6 +63,9 @@ func parseAltares(path string, batch string) chan Etablissement {
 					Key: row[siretIndex],
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
 							Altares: map[string]Altares{
 								hash: altares,
 							},

@@ -87,6 +87,9 @@ func parseDelai(paths []string, batch string) chan Etablissement {
 					Key: row[field["NumeroCompte"]],
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": true,
+							},
 							Delai: map[string]Delai{
 								hash: delai,
 							},

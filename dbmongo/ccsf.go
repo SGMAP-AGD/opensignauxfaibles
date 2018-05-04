@@ -58,6 +58,9 @@ func parseCCSF(path string, batch string) chan Etablissement {
 				Key: r[f["NumeroCompte"]],
 				Batch: map[string]Batch{
 					batch: Batch{
+						Compact: map[string]bool{
+							"status": false,
+						},
 						CCSF: map[string]CCSF{
 							hash: ccsf,
 						},

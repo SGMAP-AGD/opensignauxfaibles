@@ -83,6 +83,9 @@ func parseAPDemande(path string, batch string) chan Etablissement {
 					Key: row.Cells[3].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
 							APDemande: map[string]APDemande{
 								hash: apdemande,
 							},

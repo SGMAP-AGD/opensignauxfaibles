@@ -84,6 +84,9 @@ func parseDebit(paths []string, batch string) chan Etablissement {
 					Key: row[numeroCompteIndex],
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
 							Debit: map[string]Debit{
 								hash: debit,
 							},

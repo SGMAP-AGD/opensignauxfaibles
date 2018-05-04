@@ -22,3 +22,4 @@ RData/*
 exploration/*
 RData/*
 dbmongo/config.toml
+dbmongo/debug

@@ -133,3 +133,42 @@ func compactAll(c *gin.Context) {
 
 	c.JSON(200, etablissement)
 }
+
+func compactEntreprise(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	mapFct, _ := ioutil.ReadFile("js/compact_map_entreprise.js")
+	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
+
+	job := &mgo.MapReduce{
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+	}
+
+	var entreprise []interface{}
+
+	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).MapReduce(job, &entreprise)
+
+	c.JSON(200, entreprise)
+}
+
+func compactAllEntreprise(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	mapFct, _ := ioutil.ReadFile("js/compact_map_entreprise.js")
+	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
+	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
+
+	job := &mgo.MapReduce{
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+		Out:      bson.M{"replace": "Entreprise"},
+	}
+
+	db.C("Entreprise").Find(nil).MapReduce(job, nil)
+
+	c.JSON(200, "OK dude")
+}

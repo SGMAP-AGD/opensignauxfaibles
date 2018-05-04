@@ -91,6 +91,9 @@ func parseSirene(paths []string, batch string) chan Etablissement {
 					Siret: sirene.Siren + sirene.Nic,
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
 							Sirene: map[string]Sirene{
 								hash: sirene,
 							},

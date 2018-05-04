@@ -27,6 +27,7 @@ func createRepo(c *gin.Context) {
 		"delai",
 		"effectif",
 		"sirene",
+		"bdf",
 	}
 
 	var response map[string]string
@@ -62,7 +63,9 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 		"debit",
 		"delai",
 		"effectif",
-		"sirene"}
+		"sirene",
+		"bdf",
+	}
 
 	for _, dir := range directories {
 		l, err[dir] = ioutil.ReadDir(fmt.Sprintf("%s/%s/%s/%s", basePath, region, period, dir))
@@ -123,6 +126,20 @@ func importAPDemande(c *gin.Context) {
 	for etablissement := range parseAPDemande(apdemande, batch) {
 		etablissement.Region = region
 		insertValue(db, Value{Value: etablissement})
+	}
+}
+
+func importBDF(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	bdf := files["bdf"]
+
+	for entreprise := range parseBDF(bdf, batch) {
+		entreprise.Region = region
+		insertValueEntreprise(db, ValueEntreprise{Value: entreprise})
 	}
 }
 
