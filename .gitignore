@@ -19,5 +19,4 @@ dbmongo/static/*
 archive/*
 RData/*
 exploration/*
-RData/*
 dbmongo/config.toml

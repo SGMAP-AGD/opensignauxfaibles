@@ -1,20 +1,4 @@
-library("opensignauxfaibles")
-library("dplyr")
-library("mongolite")
 
-db <- mongo(collection = "algo1", db = "opensignauxfaibles")
-
-data <- db$aggregate('[{"$unwind":{"path": "$value"}}]')$value %>%
-  mutate(
-    cut_growthrate = forcats::fct_relevel(
-      cut_growthrate,
-      c("stable", "moins de 20%", "moins 20 à 5%",
-        "plus 5 à 20%", "plus 20%", "manquant")),
-    cut_effectif = forcats::fct_relevel(cut_effectif),
-    outcome_0_12 = factor(outcome_0_12,
-                          levels = c("non-default", "default")
-    )
-  )
 
 #
 # sample_train <- data %>%
