@@ -74,6 +74,9 @@ func parseCotisation(paths []string, batch string) chan Etablissement {
 					Key: row[field["NumeroCompte"]],
 					Batch: map[string]Batch{
 						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
 							Cotisation: map[string]Cotisation{
 								hash: cotisation,
 							},

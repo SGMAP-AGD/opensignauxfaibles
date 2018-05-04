@@ -33,7 +33,11 @@ func main() {
 		api.DELETE("/admin/region", AdminRegionDelete)
 		api.GET("/repo/create/:region/:periode", createRepo)
 		api.GET("/purge", purge)
-		api.GET("/kanboard/task/create/:siret", createTaskFromSiret)
+
+		api.GET("/kanboard/task/create/:siret", getKBProject)
+
+		api.GET("/import/bdf/:region/:batch", importBDF)
+
 		api.GET("/import/all/:region/:batch", importAll)
 		api.GET("/import/apdemande/:region/:batch", importAPDemande)
 		api.GET("/import/apconso/:region/:batch", importAPConso)
@@ -43,8 +47,10 @@ func main() {
 		api.GET("/import/altares/:region/:batch", importAltares)
 		api.GET("/import/delai/:region/:batch", importDelai)
 		api.GET("/import/sirene/:region/:batch", importSirene)
-		api.GET("/import/compact/:siret", compact)
-		api.GET("/import/compact", compactAll)
+		api.GET("/compact/etablissement/:siret", compact)
+		api.GET("/compact/etablissement", compactAll)
+		api.GET("/compact/entreprise/:siren", compactEntreprise)
+		api.GET("/compact/entreprise", compactAllEntreprise)
 
 		api.GET("/reduce/:siret", reduce)
 

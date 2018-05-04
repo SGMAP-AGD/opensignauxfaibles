@@ -14,9 +14,11 @@ inst/fiches/*
 inst/*.html
 output/*
 dbmongo/data-raw
+dbmongo/dbmongo
 .vscode/*
 dbmongo/static/*
 archive/*
 RData/*
 exploration/*
 dbmongo/config.toml
+dbmongo/debug

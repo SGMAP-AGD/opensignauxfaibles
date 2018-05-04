@@ -38,3 +38,10 @@ func insertValue(db *mgo.Database, value Value) {
 		db.C("Etablissement").Insert(value)
 	}
 }
+
+func insertValueEntreprise(db *mgo.Database, value ValueEntreprise) {
+	if value.Value.Siren != "" {
+		value.ID = bson.NewObjectId()
+		db.C("Entreprise").Insert(value)
+	}
+}

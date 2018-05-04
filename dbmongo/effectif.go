@@ -122,6 +122,9 @@ func parseEffectif(paths []string, batch string) chan Etablissement {
 						Siret: row[siretIndex],
 						Batch: map[string]Batch{
 							batch: Batch{
+								Compact: map[string]bool{
+									"status": false,
+								},
 								Effectif: effectif,
 							},
 						},
