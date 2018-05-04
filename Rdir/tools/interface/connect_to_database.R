@@ -1,10 +1,5 @@
 connect_to_database <- function(collection){
-
-  library(mongolite)
-  library(dplyr)
-
   dbconnection <- mongo(collection = collection, db = 'opensignauxfaibles', url = 'mongodb://localhost:27017')
-
 
   data <- dbconnection$aggregate('[{"$unwind":{"path": "$value"}}]')$value %>%
     mutate(
@@ -17,4 +12,7 @@ connect_to_database <- function(collection){
                             levels = c("non-default", "default")
       )
     )
+
+  return(data)
+
 }
