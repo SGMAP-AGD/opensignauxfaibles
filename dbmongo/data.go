@@ -43,7 +43,19 @@ func reduce(c *gin.Context) {
 	// 	ID    string      `json:"id" bson:"_id"`
 	// 	Value interface{} `json:"value" bson:"value"`
 	// }
-	var etablissement interface{}
+	var etablissement []interface{}
+
+	// db.C("Etablissement").Pipe(
+	// 	[]bson.M{
+	// 		{"$match": bson.M{"value.siret": c.Params.ByName("siret")}},
+	// 		{"$addFields": bson.M{"value.siren": bson.M{"$substr": []interface{}{"$value.siret", 0, 9}}}},
+	// 		{"$lookup": bson.M{"from": "Entreprise",
+	// 			"localField":   "value.siren",
+	// 			"foreignField": "value.siren",
+	// 			"as":           "value.entreprise",
+	// 		},
+	// 		},
+	// 	}).Batch
 
 	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
 

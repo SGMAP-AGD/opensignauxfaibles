@@ -88,7 +88,7 @@ func parseDelai(paths []string, batch string) chan Etablissement {
 					Batch: map[string]Batch{
 						batch: Batch{
 							Compact: map[string]bool{
-								"status": true,
+								"status": false,
 							},
 							Delai: map[string]Delai{
 								hash: delai,
