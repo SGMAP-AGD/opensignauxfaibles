@@ -63,15 +63,15 @@ tw_complete <- mice::complete(mids,1)
 
 
 # TODO FIX ME
-  #provisoire: retrait NA et inf
-  tw_complete <- tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
+#provisoire: retrait NA et inf
+tw_complete <- tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
 
 ###########################
 ## Split train test #######
 ###########################
 
-  seed <- 10011
-  set.seed(seed)
+seed <- 10011
+set.seed(seed)
 
 samples <-
   split_snapshot_each_month(
@@ -89,15 +89,10 @@ cv_folds <- samples$cv_fold
 #### Model #######
 ##################
 
-formula <-  (
-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-    log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee +
-    indicatrice_croissance_dettecumulee +
-    nb_debits +   delai + delai_sup_6mois +
-    taux_marge + financier_ct + financier + delai_fournisseur + poids_frng + dette_fiscale
-)
+formula <-  cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee
 
 
 ctrl <-
@@ -110,12 +105,12 @@ ctrl <-
   )
 
 randomForest <- train(formula,
-                 data = sample_train,
-                 method = 'rf',
-                 metric = 'AUC',
-                 trControl = ctrl,
-                 tuneLength = 10,
-                 na.action = "na.omit")
+                      data = sample_train,
+                      method = 'rf',
+                      metric = 'AUC',
+                      trControl = ctrl,
+                      tuneLength = 10,
+                      na.action = "na.omit")
 
 
 ####################
@@ -128,8 +123,8 @@ tw_complete_long <- tw_complete_long %>% filter(!is.infinite(log_cotisationdue_e
 
 sample_actual <- tw_complete_long %>%
   filter(periode == actual_period |
-        periode == actual_period %m-% months(1) |
-        periode == actual_period %m-% months(2))
+           periode == actual_period %m-% months(1) |
+           periode == actual_period %m-% months(2))
 
 prob <- predict(randomForest, newdata = sample_actual,type = "prob")
 
