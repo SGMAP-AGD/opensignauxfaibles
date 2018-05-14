@@ -5,12 +5,11 @@ connect_to_database <- function(collection){
     mutate(
       cut_growthrate = forcats::fct_relevel(
         cut_growthrate,
-        c("stable", "moins_de_20p", "moins_20_a_5p",
+        c("moins_de_20p", "moins_20_a_5p","stable",
           "plus_5_a_20p", "plus_20p", "manquant")),
       cut_effectif = forcats::fct_relevel(cut_effectif),
-      outcome_0_12 = factor(outcome_0_12,
-                            levels = c(FALSE,TRUE),
-                            labels =  c("default", "non_default")
+      outcome_0_12 = forcats::fct_relevel(outcome_0_12,
+                              c("default", "non_default")
       )
     )
 
