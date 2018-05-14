@@ -93,7 +93,6 @@ func importAltares(c *gin.Context) {
 	altares := files["altares"][0]
 
 	for etablissement := range parseAltares(altares, batch) {
-		fmt.Println(etablissement)
 		etablissement.Region = region
 		err := insertValue(db, Value{Value: etablissement})
 		fmt.Println(err)
