@@ -94,7 +94,7 @@ func importAltares(c *gin.Context) {
 
 	for etablissement := range parseAltares(altares, batch) {
 		etablissement.Region = region
-		err := insertValue(db, Value{Value: etablissement})
+		insertValue(db, Value{Value: etablissement})
 	}
 }
 
