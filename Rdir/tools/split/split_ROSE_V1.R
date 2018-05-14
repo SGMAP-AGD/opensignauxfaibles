@@ -38,8 +38,8 @@ split_ROSE_V1 <-
       filter(outcome_any,
              as.Date(periode) >= date_inf,
                as.Date(periode) <= date_sup) %>%
-      filter(elapsed_months(periode,date_effet) <= 0,
-            elapsed_months(periode,date_effet) > -12)
+      filter(elapsed_months(periode,date_defaillance) <= 0,
+            elapsed_months(periode,date_defaillance) > -12)
 
     oversampled_subsample <- wholesample %>%
       filter(!outcome_any) %>%

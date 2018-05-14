@@ -45,7 +45,7 @@ table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
 ######################
 
 table_wholesample_sel <- table_wholesample %>%
-  select(siret,periode,outcome,outcome_any,date_effet, cut_effectif,cut_growthrate, lag_effectif_missing,
+  select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
          apart_last12_months, apart_consommee, apart_share_heuresconsommees,
          log_cotisationdue_effectif,
          log_ratio_dettecumulee_cotisation, indicatrice_dettecumulee,

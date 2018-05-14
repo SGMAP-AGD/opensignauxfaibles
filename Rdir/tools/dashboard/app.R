@@ -75,9 +75,9 @@ server <- function(input, output) {
 
     my_data_slice <-  my_data %>%
       slice(1)
-    if (!is.na(my_data_slice$date_effet)) {
+    if (!is.na(my_data_slice$date_defaillance)) {
       plot <- plot +
-        geom_vline(xintercept = as.Date(my_data_slice$date_effet),
+        geom_vline(xintercept = as.Date(my_data_slice$date_defaillance),
                    colour = '#AF0000')
     }
     plot
@@ -111,9 +111,9 @@ server <- function(input, output) {
 
     procedure_collective <-
       ifelse(
-        is.na(table$date_effet),
+        is.na(table$date_defaillance),
         "Pas de procédure collective connue",
-        paste("Procédure collective:", '<p style="color:#AF0000">',as.character(table$date_effet),'</p>')
+        paste("Procédure collective:", '<p style="color:#AF0000">',as.character(table$date_defaillance),'</p>')
       )
 
 
