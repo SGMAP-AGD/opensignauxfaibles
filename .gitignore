@@ -17,3 +17,4 @@ Rdir/RData/*
 Rdir/exploration/*
 dbmongo/config.toml
 dbmongo/debug
+.Rproj.user

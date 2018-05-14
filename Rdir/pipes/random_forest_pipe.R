@@ -1,8 +1,12 @@
+#############
+## Imports ##
+#############
+
 # Libraries
 library(tidyverse)
 library(lubridate)
 library(assertthat)
-library(opensignauxfaibles)
+library(mongolite)
 library(mice)
 library(caret)
 library(broom)
@@ -10,38 +14,37 @@ library(randomForest)
 library(MLmetrics)
 
 # Sources
+source("./tools/interface/connect_to_database.R")
 source("./tools/data_prep/impute_missing_data_BdF.R")
 source("./tools/objective/objective_RJ_LJ_PS.R")
 source("./tools/split/split_snapshot_each_month.R")
 source("./tools/utilities/elapsed_months.R")
-source("./tools/post_analysis/export_top100.R")
+source("./tools/post_analysis/export_top.R")
 
-# seed
+##################
+## Last Periode ##
+##################
 
-seed <- 10011
-set.seed(seed)
+actual_period <- as.Date("2018-04-01")
 
-# Actual date
-actual_period <- as.Date("2018-03-01")
+#################
+## Collecting  ##
+##   data      ##
+#################
 
-# Collecting data
+table_wholesample <- connect_to_database('algo1')
 
-database_signauxfaibles <- database_connect()
-table_wholesample <-
-  collect_wholesample(db = database_signauxfaibles, table = "wholesample") %>%
-  as.data.frame()
+#################
+## Objective ####
+#################
 
-# Objective
-# TODO move to javascript !!
+table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
 
-table_wholesample_prep <- objective_RJ_LJ_PS(table_wholesample)
+######################
+# Feature selection ##
+######################
 
-table_wholesample_prep <- table_wholesample_prep %>%
-  mutate(outcome = factor(outcome, levels = c(TRUE,FALSE), labels =  c("default", "non_default")))
-
-# Feature selection
-
-table_wholesample_sel <- table_wholesample_prep %>%
+table_wholesample_sel <- table_wholesample %>%
   select(siret,periode,outcome,outcome_any,date_effet, cut_effectif,cut_growthrate, lag_effectif_missing,
          apart_last12_months, apart_consommee, apart_share_heuresconsommees,
          log_cotisationdue_effectif,
@@ -50,22 +53,25 @@ table_wholesample_sel <- table_wholesample_prep %>%
          nb_debits,
          delai, delai_sup_6mois, taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
 
-# Impute missing data from BdF
+#############################
+## Missing data imputation ##
+#############################
 
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
 
 tw_complete <- mice::complete(mids,1)
 
-# Check for NAs, infinites
 
-# detect_na(table_wholesample_sel %>% select(-taux_marge, -financier_ct, -financier, -delai_fournisseur, -poids_frng, -dette_fiscale))
-# detect_infinite(table_wholesample_sel %>% select(-taux_marge, -financier_ct, -financier, -delai_fournisseur, -poids_frng, -dette_fiscale))
-
-
+# TODO FIX ME
   #provisoire: retrait NA et inf
   tw_complete <- tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
 
-# Split
+###########################
+## Split train test #######
+###########################
+
+  seed <- 10011
+  set.seed(seed)
 
 samples <-
   split_snapshot_each_month(
@@ -79,7 +85,9 @@ samples <-
 sample_train <- samples$train
 cv_folds <- samples$cv_fold
 
-# apply algorithm
+##################
+#### Model #######
+##################
 
 formula <-  (
   outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
@@ -110,7 +118,9 @@ randomForest <- train(formula,
                  na.action = "na.omit")
 
 
-# Prediction
+####################
+### Prediction #####
+####################
 
 tw_complete_long <- mice::complete(mids,'long')
 #provisoire: retrait NA et inf

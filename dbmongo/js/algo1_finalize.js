@@ -176,23 +176,23 @@ function finalize(k, v) {
         if (val.lag_effectif_missing) {
             val.cut_growthrate = "manquant"
         } else if (val.growthrate_effectif < 0.8) {
-            val.cut_growthrate = "moins de 20%"
+            val.cut_growthrate = "moins_de_20p"
         } else if (val.growthrate_effectif < 0.95) {
-            val.cut_growthrate = "moins 20 à 5%" 
+            val.cut_growthrate = "moins_20_a_5p" 
         } else if (val.growthrate_effectif < 1.05) {
             val.cut_growthrate = "stable"
         } else if (val.growthrate_effectif < 1.20) {
-            val.cut_growthrate = "plus 5 à 20%"
+            val.cut_growthrate = "plus_5_a_20p"
         } else {
-            val.cut_growthrate = "plus 20%"
+            val.cut_growthrate = "plus_20p"
         }
 
         if ((val.effectif || 0) <= 20) {
-            val.cut_effectif = "10-20"
+            val.cut_effectif = "10_20"
         } else if (val.effectif <= 50) {
-            val.cut_effectif = "21-50"
+            val.cut_effectif = "21_50"
         } else {
-            val.cut_effectif = "Plus de 50"
+            val.cut_effectif = "Plus_de_50"
         }
 
         var e = Object.keys(val.effectif_history).reduce(function (m,h) {
