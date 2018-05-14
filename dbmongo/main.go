@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
-	"github.com/chrnin/ganboard"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,8 @@ import (
 
 func main() {
 	// Lancer Rserve en background
+
+	InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
 	loadConfig()
 
@@ -34,7 +37,8 @@ func main() {
 		api.GET("/repo/create/:region/:periode", createRepo)
 		api.GET("/purge", purge)
 
-		api.GET("/kanboard/task/create/:siret", getKBProject)
+		//api.GET("/kanboard/task/create/:siret", createKBProject)
+		api.GET("/kanboard/listprojects", listProjects)
 
 		api.GET("/import/bdf/:region/:batch", importBDF)
 
@@ -47,11 +51,13 @@ func main() {
 		api.GET("/import/altares/:region/:batch", importAltares)
 		api.GET("/import/delai/:region/:batch", importDelai)
 		api.GET("/import/sirene/:region/:batch", importSirene)
+
 		api.GET("/compact/etablissement/:siret", compact)
 		api.GET("/compact/etablissement", compactAll)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactAllEntreprise)
 
+		api.GET("/prediction/inject/:region/:batch", injectPrediction)
 		api.GET("/reduce/:siret", reduce)
 
 		api.GET("/reduce", reduceAll)
@@ -81,27 +87,4 @@ func loadConfig() {
 	viper.SetDefault("KANBOARD_PASSWORD", "admin")
 	err := viper.ReadInConfig()
 	fmt.Println(err)
-}
-
-// Kanboard -> ganboard.Client in gingonic context
-func Kanboard() gin.HandlerFunc {
-
-	endpoint := viper.GetString("KANBOARD_ENDPOINT")
-	username := viper.GetString("KANBOARD_USERNAME")
-	password := viper.GetString("KANBOARD_PASSWORD")
-
-	client := ganboard.Client{
-		Endpoint: endpoint,
-		Username: username,
-		Password: password,
-	}
-
-	return func(c *gin.Context) {
-		c.Set("KBCLIENT", &client)
-		c.Next()
-	}
-}
-
-func debugalgo1(c *gin.Context) {
-
 }

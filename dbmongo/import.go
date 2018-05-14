@@ -54,7 +54,6 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 	directories := []string{
 		"admin_urssaf",
 		"altares",
-		"altares",
 		"apdemande",
 		"apconso",
 		"bdf",
@@ -73,7 +72,6 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 			list[dir] = append(list[dir], fmt.Sprintf("%s/%s/%s/%s/%s", basePath, region, period, dir, f.Name()))
 		}
 	}
-
 	return list, err
 }
 
@@ -95,8 +93,10 @@ func importAltares(c *gin.Context) {
 	altares := files["altares"][0]
 
 	for etablissement := range parseAltares(altares, batch) {
+		fmt.Println(etablissement)
 		etablissement.Region = region
-		insertValue(db, Value{Value: etablissement})
+		err := insertValue(db, Value{Value: etablissement})
+		fmt.Println(err)
 	}
 }
 

@@ -32,16 +32,20 @@ func DB() gin.HandlerFunc {
 	}
 }
 
-func insertValue(db *mgo.Database, value Value) {
+func insertValue(db *mgo.Database, value Value) error {
 	if value.Value.Siret != "" {
 		value.ID = bson.NewObjectId()
-		db.C("Etablissement").Insert(value)
+		err := db.C("Etablissement").Insert(value)
+		return err
 	}
+	return nil
 }
 
-func insertValueEntreprise(db *mgo.Database, value ValueEntreprise) {
+func insertValueEntreprise(db *mgo.Database, value ValueEntreprise) error {
 	if value.Value.Siren != "" {
 		value.ID = bson.NewObjectId()
-		db.C("Entreprise").Insert(value)
+		err := db.C("Entreprise").Insert(value)
+		return err
 	}
+	return nil
 }

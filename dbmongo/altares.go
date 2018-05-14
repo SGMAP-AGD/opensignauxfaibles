@@ -60,7 +60,7 @@ func parseAltares(path string, batch string) chan Etablissement {
 			hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 			if err == nil {
 				outputChannel <- Etablissement{
-					Key: row[siretIndex],
+					Siret: row[siretIndex],
 					Batch: map[string]Batch{
 						batch: Batch{
 							Compact: map[string]bool{
