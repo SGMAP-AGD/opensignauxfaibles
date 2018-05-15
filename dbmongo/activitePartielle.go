@@ -53,6 +53,7 @@ func parseAPDemande(path string, batch string) chan Etablissement {
 		for _, sheet := range xlFile.Sheets {
 			for _, row := range sheet.Rows[3:] {
 				apdemande := APDemande{}
+				apdemande.ID = row.Cells[2].Value
 				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[14].Value)
 				apdemande.Effectif, _ = strconv.Atoi(row.Cells[15].Value)
 				apdemande.DateStatut, _ = excelToTime(row.Cells[16].Value)
@@ -81,7 +82,7 @@ func parseAPDemande(path string, batch string) chan Etablissement {
 
 				outputChannel <- Etablissement{
 					Siret: row.Cells[3].Value,
-					Key: row.Cells[3].Value,
+					Key:   row.Cells[3].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
 							Compact: map[string]bool{
@@ -125,8 +126,8 @@ func parseAPConsommation(path string, batch string) chan Etablissement {
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apconsommation, 1))
 				outputChannel <- Etablissement{
-					Siret: row.Cells[3].Value,
-					Key: row.Cells[3].Value,
+					Siret: row.Cells[2].Value,
+					Key:   row.Cells[2].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
 							APConso: map[string]APConso{
