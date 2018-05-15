@@ -4,6 +4,7 @@
 
 # Libraries
 library(tidyverse)
+library(tricky)
 library(lubridate)
 library(assertthat)
 library(mongolite)
@@ -12,6 +13,7 @@ library(caret)
 library(broom)
 library(randomForest)
 library(MLmetrics)
+library(tibbletime)
 
 # Sources
 source("./tools/interface/connect_to_database.R")
@@ -48,10 +50,10 @@ table_wholesample_sel <- table_wholesample %>%
   select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
          apart_last12_months, apart_consommee, apart_share_heuresconsommees,
          log_cotisationdue_effectif,
-         log_ratio_dettecumulee_cotisation, indicatrice_dettecumulee,
-         indicatrice_croissance_dettecumulee,
-         nb_debits,
-         delai, delai_sup_6mois, taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
+         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m)#,
+         #indicatrice_croissance_dettecumulee,
+         #nb_debits,
+         #delai, delai_sup_6mois, taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
 
 #############################
 ## Missing data imputation ##
@@ -60,11 +62,6 @@ table_wholesample_sel <- table_wholesample %>%
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
 
 tw_complete <- mice::complete(mids,1)
-
-
-# TODO FIX ME
-#provisoire: retrait NA et inf
-tw_complete <- tw_complete %>% filter(!is.infinite(log_cotisationdue_effectif))
 
 ###########################
 ## Split train test #######
@@ -78,22 +75,33 @@ samples <-
     tw_complete,
     date_inf = as.Date("2015-01-01"),
     date_sup = as.Date("2016-12-01"),
-    frac_train = 0.7,
-    frac_cross = 0.3
+    frac_train = 0.6,
+    frac_cross = 0.2
   )
 
-sample_train <- samples$train
+sample_train <- tw_complete %>%
+      semi_join(samples$train, by = c('siret','periode'))
+sample_test <- tw_complete %>%
+      semi_join(samples$test, by = c('siret','periode'))
 cv_folds <- samples$cv_fold
 
 ##################
 #### Model #######
 ##################
 
-formula <-  cut_effectif + cut_growthrate + lag_effectif_missing +
+formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
   log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee
+  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
 
+
+sample_train <- sample_train %>%
+  mutate(outcome = fct_recode(
+    as.factor(outcome),
+    default = "TRUE",
+    non_default = "FALSE"
+  ) %>%
+    fct_relevel(c("default","non_default")))
 
 ctrl <-
   trainControl(
@@ -106,7 +114,7 @@ ctrl <-
 
 randomForest <- train(formula,
                       data = sample_train,
-                      method = 'rf',
+                      method = 'glm',
                       metric = 'AUC',
                       trControl = ctrl,
                       tuneLength = 10,

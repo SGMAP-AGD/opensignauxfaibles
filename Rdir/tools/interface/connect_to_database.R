@@ -13,6 +13,7 @@ connect_to_database <- function(collection){
       )
     )
 
-  return(data)
+  return(data %>%
+           as_tbl_time(periode))
 
 }

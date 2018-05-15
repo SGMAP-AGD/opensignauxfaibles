@@ -27,40 +27,45 @@ split_snapshot_each_month <-
       msg = "Fractions must be positive and strictly not exceed 1"
     )
 
+    wholesample <- wholesample %>%
+      arrange(periode) %>%
+      select(siret,periode,date_defaillance,outcome_any)
     # donnees desequilibrees et donnees surechantillonnees
 
-    imbalanced_subsample <- wholesample %>%
-      filter(periode == date_sup)
+    imbalanced_sample <- wholesample %>%
+      filter_time(~date_sup)
 
     default_oversample <- wholesample %>%
-      filter(outcome_any,
-             as.Date(periode) >= date_inf,
-               as.Date(periode) <= date_sup) %>%
+      filter(outcome_any) %>%
+      filter_time(date_inf ~ date_sup) %>%
       filter(elapsed_months(periode,date_defaillance) <= 0,
             elapsed_months(periode,date_defaillance) > -12)
 
-    oversampled_subsample <- wholesample %>%
+    oversampled_sample <- wholesample %>%
       filter(!outcome_any) %>%
-      filter(periode == date_sup) %>%
-      bind_rows(default_oversample)
+      filter_time( ~ date_sup) %>%
+      bind_rows(default_oversample) %>%
+      as_tbl_time(periode)
 
     #
 
 
-    sample_sirets_train <- oversampled_subsample %>%
+    sample_sirets_train <- oversampled_sample %>%
+      as_tibble() %>%
       group_by(siret) %>%
-      summarize(a = first(siret)) %>%
-      select(-a) %>%
+      summarize() %>%
       sample_frac(frac_train)
 
 
-    sample_train <- oversampled_subsample %>%
-      inner_join(sample_sirets_train,by = "siret")
+    sample_train <- oversampled_sample %>%
+      inner_join(sample_sirets_train,by = "siret") %>%
+      select(siret, periode)
 
     cv_folds <- groupKFold(sample_train$siret, k = 5)
 
-    sample_test <- imbalanced_subsample %>%
-      anti_join(sample_sirets_train,by = "siret")
+    sample_test <- imbalanced_sample %>%
+      anti_join(sample_sirets_train,by = "siret") %>%
+      select(siret, periode)
 
     return(list("train" =  sample_train,"cv_folds" = cv_folds, "test" = sample_test))
   }

@@ -1,5 +1,6 @@
 function finalize(k, v) {
 
+ 
     v = Object.keys(v.batch).sort().reduce((m,batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
@@ -32,7 +33,7 @@ function finalize(k, v) {
                 "apart_last12_months": false,
                 "apart_heures_consommees_array": [],
                 "effectif_history": {},
-                "outcome_0_12": "non-default",
+                "outcome_0_12": "non_default",
                 "date_defaillance": null,
                 "cotisation_due_periode": {},
                 "debit_array": []
@@ -91,7 +92,7 @@ function finalize(k, v) {
             }
         })
     
-
+       
     // defaillance - On prend la date de l'évènement le plus proche dans l'avenir par rapport à period
     Object.keys(v.altares).map(
         function(hash) {
@@ -237,7 +238,7 @@ function finalize(k, v) {
         delete val.montant_dette
         delete val.apart_heures_consommees_array
         delete val.cotisation_due_periode
-        delete val.date_defaillance
+        //delete val.date_defaillance
         delete val.montant_part_ouvriere
         delete val.montant_part_patronale
         delete val.ratio_dettecumulee_cotisation_12m
