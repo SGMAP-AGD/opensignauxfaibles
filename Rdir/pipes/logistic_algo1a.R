@@ -89,9 +89,16 @@ samples <-
 
 sample_train <- tw_complete %>%
       semi_join(samples$train, by = c('siret','periode'))
+
+cv_folds <- samples$cv_fold
+
+sample_eyeball <- tw_complete %>%
+  semi_joint(samples$eyeball, by = c('siret','periode'))
+
 sample_test <- tw_complete %>%
       semi_join(samples$test, by = c('siret','periode'))
-cv_folds <- samples$cv_fold
+
+
 
 ##################
 #### Model #######
