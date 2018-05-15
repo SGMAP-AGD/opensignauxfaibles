@@ -75,6 +75,27 @@ function finalize(k, v) {
 
     // activite partielle
 
+    apart = {}
+    for (k in v.apdemande) {
+        var valueap = v.apdemande[k]
+        apart[valueap.id_demande] = {"demande": k,
+                                   "consommation": []}
+    }
+
+    for (k in v.apconso) {
+        var valueap = v.apconso[k]
+        if (valueap.id_conso.substring(0,10) in apart) {
+            apart[valueap.id_conso.substring(0,10)].consommation.push(k)
+        }
+    }
+
+    for (k in apart) {
+        v.apdemande[apart[k].demande].hash_consommation = apart[k].consommation
+        for (j in apart[k].consommation) {
+            v.apconso[apart[k].consommation[j]].hash_demande = apart[k].demande;
+        }
+    }
+
     Object.keys(v.apconso).map(
         function(h) {
             var conso = v.apconso[h]

@@ -53,26 +53,6 @@ function finalize(k, o) {
 
     // relier les demandes d'activité partielle aux consommations
 
-    // apart = {}
-    // for (k in r.activite_partielle.demande) {
-    //     var value = r.activite_partielle.demande[k]
-    //     apsart[value.id_demande] = {"demande": k,
-    //                                "consommation": []}
-    // }
-
-    // for (k in r.activite_partielle.consommation) {
-    //     var value = r.activite_partielle.consommation[k]
-    //     if (value.id_conso.substring(0,10) in apart) {
-    //         apart[value.id_conso.substring(0,10)].consommation.push(k)
-    //     }
-    // }
-
-    // for (k in apart) {
-    //     r.activite_partielle.demande[apart[k].demande].hash_consommation = apart[k].consommation
-    //     for (j in apart[k].consommation) {
-    //         r.activite_partielle.consommation[apart[k].consommation[j]].hash_demande = apart[k].demande;
-    //     }
-    // }
     o.index = {"algo1": Object.keys(o.batch).some(batch => o.batch[batch].effectif)}
     
     return o
