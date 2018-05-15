@@ -35,6 +35,13 @@ actual_period <- as.Date("2018-04-01")
 #################
 
 table_wholesample <- connect_to_database('algo1')
+table_bdf <- quickndirty_bdf_database()
+
+table_wholesample <- table_wholesample %>%
+  mutate(annee = year(periode),
+         siren = str_sub(siret,1,9)) %>%
+  left_join(table_bdf, by = c('siren','annee'))
+
 
 #################
 ## Objective ####
@@ -50,10 +57,11 @@ table_wholesample_sel <- table_wholesample %>%
   select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
          apart_last12_months, apart_consommee, apart_share_heuresconsommees,
          log_cotisationdue_effectif,
-         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m)#,
+         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m,
          #indicatrice_croissance_dettecumulee,
          #nb_debits,
-         #delai, delai_sup_6mois, taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
+         #delai, delai_sup_6mois,
+         taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
 
 #############################
 ## Missing data imputation ##
@@ -112,7 +120,7 @@ ctrl <-
     index = cv_folds
   )
 
-randomForest <- train(formula,
+glm_res <- train(formula,
                       data = sample_train,
                       method = 'glm',
                       metric = 'AUC',

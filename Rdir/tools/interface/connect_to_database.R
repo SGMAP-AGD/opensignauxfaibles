@@ -14,6 +14,8 @@ connect_to_database <- function(collection){
     )
 
   return(data %>%
+           mutate(periode = as.Date(periode)) %>%
+           arrange(periode) %>%
            as_tbl_time(periode))
 
 }
