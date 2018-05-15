@@ -80,6 +80,7 @@ func parseAPDemande(path string, batch string) chan Etablissement {
 				hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
 				outputChannel <- Etablissement{
+					Siret: row.Cells[3].Value,
 					Key: row.Cells[3].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
@@ -124,6 +125,7 @@ func parseAPConsommation(path string, batch string) chan Etablissement {
 
 				hash := fmt.Sprintf("%x", structhash.Md5(apconsommation, 1))
 				outputChannel <- Etablissement{
+					Siret: row.Cells[3].Value,
 					Key: row.Cells[3].Value,
 					Batch: map[string]Batch{
 						batch: Batch{
