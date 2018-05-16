@@ -92,9 +92,8 @@ func importAltares(c *gin.Context) {
 	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
 	altares := files["altares"][0]
 
-	for etablissement := range parseAltares(altares, batch) {
-		etablissement.Region = region
-		insertValue(db, Value{Value: etablissement})
+	for entreprise := range parseAltares(altares, batch, region) {
+		insertValueEntreprise(db, ValueEntreprise{Value: entreprise})
 	}
 }
 
@@ -108,7 +107,7 @@ func importEffectif(c *gin.Context) {
 
 	for etablissement := range parseEffectif(effectif, batch) {
 		etablissement.Region = region
-		insertValue(db, Value{Value: etablissement})
+		insertValueEntreprise(db, ValueEntreprise{Value: etablissement})
 	}
 	c.JSON(200, "OK")
 }
@@ -260,5 +259,6 @@ func importSirene(c *gin.Context) {
 func purge(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 	db.C("Etablissement").RemoveAll(nil)
+	db.C("Entreprise").RemoveAll(nil)
 	c.String(200, "Done")
 }

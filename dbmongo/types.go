@@ -26,15 +26,16 @@ type Etablissement struct {
 	Region      string           `json:"region" bson:"region"`
 	Key         string           `json:"-" bson:"-"`
 	AncienSiret []string         `json:"ancien_siret,omitempty" bson:"ancien_siret,omitempty"`
-	Batch       map[string]Batch `json:"batch" bson:"batch"`
+	Batch       map[string]Batch `json:"batch,omitempty" bson:"batch,omitempty"`
 }
 
 // Entreprise object Entreprise
 type Entreprise struct {
-	Siren  string           `json:"siren" bson:"siren"`
-	Region string           `json:"region" bson:"region"`
-	Key    string           `json:"-" bson:"-"`
-	Batch  map[string]Batch `json:"batch" bson:"batch"`
+	Siren         string                   `json:"siren" bson:"siren"`
+	Region        string                   `json:"region,omitempty" bson:"region,omitempty"`
+	Key           string                   `json:"-" bson:"-"`
+	Batch         map[string]Batch         `json:"batch,omitempty" bson:"batch,omitempty"`
+	Etablissement map[string]Etablissement `json:"etablissement,omitempty" bson:"etablissement,omitempty"`
 }
 
 // Batch lot de data

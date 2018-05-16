@@ -62,8 +62,8 @@ func getCompteSiretMapping(path []string) map[string]string {
 	return compteSiretMapping
 }
 
-func parseEffectif(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseEffectif(paths []string, batch string) chan Entreprise {
+	outputChannel := make(chan Entreprise)
 
 	go func() {
 		for _, path := range paths {
@@ -118,14 +118,20 @@ func parseEffectif(paths []string, batch string) chan Etablissement {
 				}
 
 				if len(row[siretIndex]) == 14 {
-					outputChannel <- Etablissement{
-						Siret: row[siretIndex],
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
+					outputChannel <- Entreprise{
+						Siren: row[siretIndex][0:9],
+						Key:   row[siretIndex],
+						Etablissement: map[string]Etablissement{
+							row[siretIndex]: Etablissement{
+								Siret: row[siretIndex],
+								Batch: map[string]Batch{
+									batch: Batch{
+										Compact: map[string]bool{
+											"status": false,
+										},
+										Effectif: effectif,
+									},
 								},
-								Effectif: effectif,
 							},
 						},
 					}

@@ -1,6 +1,6 @@
 function finalize(k, o) {
     var deleteOld = new Set(["effectif", "apdemande", "apconso"])
-    Object.keys(o.batch).sort().reduce((m, batch) => {
+    Object.keys((o.batch||{})).sort().reduce((m, batch) => {
         Object.keys(o.batch[batch]).map(type => {
             m[type] = (m[type] || new Set())
             var keys = Object.keys(o.batch[batch][type])
@@ -17,7 +17,25 @@ function finalize(k, o) {
         })
         return m
     }, {})
-
+    Object.keys((o.etablissement||{})).forEach(etablissement => {
+        Object.keys(o.etablissement[etablissement].batch).sort().reduce((m, batch) => {
+            Object.keys(o.etablissement[etablissement].batch[batch]).map(type => {
+                m[type] = (m[type] || new Set())
+                var keys = Object.keys(o.etablissement[etablissement].batch[batch][type])
+                if (deleteOld.has(type) && o.etablissement[etablissement].batch[batch].compact.status == false) {
+                    var discardKeys = [...m[type]].filter(key => !(new Set(keys).has(key)))
+                    discardKeys.forEach(key => {
+                        m[type].delete(key)
+                        o.etablissement[etablissement].batch[batch][type][key] = null
+                    })
+                }
+                keys.filter(key => (m[type].has(key))).forEach(key => delete o.etablissement[etablissement].batch[batch][type][key])
+                m[type] = new Set([...m[type]].concat(keys))
+                o.etablissement[etablissement].batch[batch].compact.status = true
+            })
+            return m
+        }, {})
+    })
 
         // // relier les débits
         // var debit = Object.keys(o.batch).reduce((m, batch) => {
@@ -73,7 +91,7 @@ function finalize(k, o) {
     //         r.activite_partielle.consommation[apart[k].consommation[j]].hash_demande = apart[k].demande;
     //     }
     // }
-    o.index = {"algo1": Object.keys(o.batch).some(batch => o.batch[batch].effectif)}
+    // o.index = {"algo1": Object.keys(o.batch).some(batch => o.batch[batch].effectif)}
     
-    return o
+ return o
 }

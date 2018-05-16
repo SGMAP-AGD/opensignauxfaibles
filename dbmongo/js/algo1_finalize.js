@@ -1,12 +1,24 @@
 function finalize(k, v) {
 
-    v = Object.keys(v.batch).sort().reduce((m,batch) => {
+    entreprise = Object.keys((v.batch||{})).sort().reduce((m,batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
             Object.assign(m[type],v.batch[batch][type])
         })
         return m
-    }, {})
+    },{})
+
+    etablissements = Object.keys((v.etablissement||{})).map(etablissement => {
+        return Object.keys(v.etablissement[etablissement].batch).sort().reduce((m,batch) => {
+            Object.keys(v.etablissement[etablissement].batch[batch]).forEach((type) => {
+                m[type] = (m[type] || {})
+                Object.assign(m[type],v.etablissement[etablissement].batch[batch][type])
+            })
+            return m
+        }, {"entreprise": entreprise, "siret": etablissement})
+    })
+
+    return etablissements.map(v => {
 
     v.apconso = (v.apconso||{})
     v.apdemande = (v.apdemande||{})
@@ -26,7 +38,7 @@ function finalize(k, v) {
     //liste_periodes = [new Date("2015-01-01"), new Date("2016-01-01"), new Date("2018-04-01")]
 
     var value_array = liste_periodes.map(function(e) {
-        return {"siret": k,
+        return {"siret": v.siret,
                 "periode": e, 
                 "lag_effectif_missing": true,
                 "apart_last12_months": false,
@@ -237,7 +249,7 @@ function finalize(k, v) {
         delete val.montant_dette
         delete val.apart_heures_consommees_array
         delete val.cotisation_due_periode
-        delete val.date_defaillance
+        // delete val.date_defaillance
         delete val.montant_part_ouvriere
         delete val.montant_part_patronale
         delete val.ratio_dettecumulee_cotisation_12m
@@ -249,6 +261,7 @@ function finalize(k, v) {
     })
 
     return value_array
+    })
     
 }
 

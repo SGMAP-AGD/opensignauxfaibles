@@ -22,7 +22,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(DB())
-	r.Use(Kanboard())
+	// r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	r.Use(cors.Default())
 
@@ -52,13 +52,12 @@ func main() {
 		api.GET("/import/delai/:region/:batch", importDelai)
 		api.GET("/import/sirene/:region/:batch", importSirene)
 
-		api.GET("/compact/etablissement/:siret", compact)
-		api.GET("/compact/etablissement", compactAll)
-		api.GET("/compact/entreprise/:siren", compactEntreprise)
-		api.GET("/compact/entreprise", compactAllEntreprise)
+		api.GET("/compact/:siren", compact)
+		api.GET("/compact/", compactAll)
 
 		api.GET("/prediction/inject/:region/:batch", injectPrediction)
-		api.GET("/reduce/:siret", reduce)
+
+		api.GET("/reduce/:siren", reduce)
 
 		api.GET("/reduce", reduceAll)
 		api.GET("/etablissement/:siret", browseEtablissement)
