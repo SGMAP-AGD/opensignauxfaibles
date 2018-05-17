@@ -1,5 +1,6 @@
 impute_missing_data_BdF <- function(df,seed = 1234){
 
+  df <- df %>% as.data.frame()
   all_variables = colnames(df)
 
 
@@ -12,8 +13,8 @@ impute_missing_data_BdF <- function(df,seed = 1234){
 
   variables_to_impute <-  c(
     'taux_marge' ,
-    'financier_ct' ,
-    'financier' ,
+    'financier_court_terme' ,
+    'frais_financier' ,
     'delai_fournisseur' ,
     'poids_frng' ,
     'dette_fiscale'
@@ -36,8 +37,8 @@ impute_missing_data_BdF <- function(df,seed = 1234){
     'delai' ,
     'delai_sup_6mois' ,
     'taux_marge' ,
-    'financier_ct' ,
-    'financier' ,
+    'financier_court_terme' ,
+    'frais_financier' ,
     'delai_fournisseur' ,
     'poids_frng' ,
     'dette_fiscale'
@@ -56,6 +57,7 @@ impute_missing_data_BdF <- function(df,seed = 1234){
     ungroup() %>%
     filter(annee >= 2014)
 
+  # Initialisation
   ini <-  mice(df2,
               maxit = 0,
               printFlag = FALSE)
@@ -95,5 +97,6 @@ impute_missing_data_BdF <- function(df,seed = 1234){
     mids$pred[,all_variables[!(all_variables %in% predictors)]] = 0
     mids$meth[all_variables[!(all_variables %in% variables_to_impute)]] = ''
     mids$pred[all_variables[!(all_variables %in% variables_to_impute)],] = 0
+    mids$seed <- seed
 return(mids)
 }

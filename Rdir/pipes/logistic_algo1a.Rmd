@@ -31,6 +31,7 @@ source("../tools/objective/objective_RJ_LJ_PS.R")
 source("../tools/split/split_snapshot_each_month.R")
 source("../tools/utilities/elapsed_months.R")
 source("../tools/post_analysis/export_top.R")
+source("../tools/interface/quickndirty_bdf_database.R")
 
 ```
 
@@ -55,14 +56,14 @@ table_wholesample <- table_wholesample %>%
 ```{r}
 table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
 
-# Peutetre a integrer a objective_RJ_... 
+# Peut-etre a integrer a objective_RJ_... 
 table_wholesample <- table_wholesample %>%
   mutate(outcome = fct_recode(
     as.factor(outcome),
     default = "TRUE",
     non_default = "FALSE"
   ) %>%
-    fct_relevel(c("non_default","default")))
+    fct_relevel(c("default","non_default")))
 
 ```
 
@@ -76,15 +77,16 @@ table_wholesample_sel <- table_wholesample %>%
          #indicatrice_croissance_dettecumulee,
          #nb_debits,
          #delai, delai_sup_6mois,
-         taux_marge, financier_ct, financier, delai_fournisseur, poids_frng, dette_fiscale)
+         taux_marge, financier_court_terme, frais_financier, delai_fournisseur, poids_frng, dette_fiscale)
 ```
 ## Imputation des données manquantes
 
 Uniquement si les données Banque de France ont été importées
 
 ```{r}
+seed <- 1234
 mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
-tw_complete <- mice::complete(mids,1)
+tw_complete <- mice::complete(mids,1) %>% as_tbl_time(periode)
 ```
 
 sinon 
@@ -114,9 +116,9 @@ samples <-
 sample_train <- tw_complete %>%
       semi_join(samples$train, by = c('siret','periode'))
 
-cv_folds <- samples$cv_fold
+cv_folds <- groupKFold(sample_train$siret, k = 5) #samples$cv_fold
 
-sample_eyeball <- tw_complete %>%
+sample_eyeball <- table_wholesample_sel %>%
   semi_join(samples$eyeball, by = c('siret','periode'))
 
 sample_test <- tw_complete %>%
@@ -142,15 +144,16 @@ for (i in 1:5) {
       filter(periode == max(periode)) %>% 
       as.data.frame()
     
-    aux_glm <- glm(formula, family = "binomial", data = aux_train)
+    aux_glm <- glm(formula, family = "binomial", data = aux_train %>% mutate(outcome =fct_relevel(outcome,c("non_default","default"))))
     
     aux_cv <- sample_train %>% 
       slice(-cv_folds[[i]]) %>% 
       broom::augment(aux_glm,newdata = .,type.predict = 'response') %>% 
       rename(prediction = .fitted)
     
-    AUCPR[i] <- pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default')) %>%
-                  .$auc.integral
+    PR <-  pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default'),curve = TRUE)
+    AUCPR[i] <-  PR$auc.integral
+    F1[i] <- max(2*PR$curve[,1] * PR$curve[,2] / (PR$curve[,1] + PR$curve[,2]),na.rm = TRUE)
 }
 
 final_glm <- glm(
@@ -160,6 +163,7 @@ final_glm <- glm(
   )
 
 algo1a_AUC <- mean(AUCPR)
+algo1a_F <- mean(F1)
 ```
 
 Avec suréchantillonnage
@@ -216,40 +220,112 @@ glm1c_res <- train(formula,
                       na.action = "na.omit")
 
 algo1c_AUC <- glm1c_res$results$AUC
+algo1c_F1 <- glm1c_res$results$F
 ```
 
 Avec foret aleatoire
 
 ```{r}
+set.seed(1900)
+formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee + 
+  taux_marge + financier_ct + financier + delai_fournisseur + poids_frng + dette_fiscale
 
+ctrl <- 
+  trainControl( 
+    method = "cv", 
+    classProbs = TRUE, 
+    summaryFunction = prSummary, 
+    savePredictions = "all", 
+    index = cv_folds 
+  ) 
+ 
+attr(sample_train$outcome,'contrasts') <- NULL
+randomForest <- train(formula, 
+                 data =  sample_train %>% 
+                   mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
+                 method = 'ranger', 
+                 metric = 'AUC', 
+                 trControl = ctrl, 
+                 tuneLength = 10, 
+                 na.action = "na.omit") 
+
+algo2a_AUC <- max(randomForest$results$AUC)
+
+```
+
+VERIF Foret aleatoire
+```{r}
+AUCPR <- numeric(length = 5)
+F1 <- numeric(length = 5)
+for (i in 1:5) {
+    aux_train <- sample_train %>%
+      slice(cv_folds[[i]])
+
+    aux_train <- aux_train %>%
+      as.data.frame()
+    
+    ctrl <- 
+  trainControl( 
+    method = "none", 
+    classProbs = TRUE, 
+    summaryFunction = prSummary, 
+    savePredictions = "all"
+  ) 
+ 
+aux_randomForest <- train(formula, 
+                 data = aux_train, 
+                 method = 'rf', 
+                 metric = 'AUC', 
+                 trControl = ctrl, 
+                 tuneLength = 1, 
+                 na.action = "na.omit") 
+    
+    aux_cv <- sample_train %>% 
+      slice(-cv_folds[[i]]) 
+    
+    preds <- predict(aux_randomForest,newdata = aux_cv,type='prob')
+      
+    aux_cv <- aux_cv %>% 
+      mutate(prediction = preds$default)
+    
+    PR <-  pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default'),curve = TRUE)
+    AUCPR[i] <-  PR$auc.integral
+    F1[i] <- max(2*PR$curve[,1] * PR$curve[,2] / (PR$curve[,1] + PR$curve[,2]),na.rm = TRUE)
+}
+
+algo2a_AUC <- mean(AUCPR)
+algo2a_F <- mean(F1)
 ```
 
 
 Avec moyenne glissante sur trois périodes
 ```{r}
-
+# AUCPR <- numeric(length = 5)
+# for (i in 1:5) {
+#     # aux_train <- sample_train %>% 
+#     #   slice(cv_folds[[i]]) 
+#     # 
+#     # aux_train <- aux_train %>% 
+#     #   as.data.frame()
+#     
+#     aux_cv <- randomForest$pred[[randomForest$pred 
+#       # sample_train %>% 
+#       # slice(-cv_folds[[i]]) %>% 
+#       # broom::augment(aux_glm,newdata = .,type.predict = 'response') %>% 
+#       # rename(prediction = .fitted)
+#     
+#     PR <-  pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default'),curve = TRUE)
+#     AUCPR[i] <-  PR$auc.integral
+#     F1[i] <- max(2*PR$curve[,1] * PR$curve[,2] / (PR$curve[,1] + PR$curve[,2]),na.rm = TRUE)
+# }
 ```
 
-####################
-### Prediction #####
-####################
 
-tw_complete_long <- mice::complete(mids,'long')
-#provisoire: retrait NA et inf
-tw_complete_long <- tw_complete_long %>% filter(!is.infinite(log_cotisationdue_effectif))
+## TEST
+```{r}
 
-sample_actual <- tw_complete_long %>%
-  filter(periode == actual_period |
-           periode == actual_period %m-% months(1) |
-           periode == actual_period %m-% months(2))
-
-prob <- predict(randomForest, newdata = sample_actual,type = "prob")
-
-prediction <- sample_actual %>%
-  cbind(prob = prob$default) %>%
-  group_by(siret) %>%
-  summarize(prob = mean(prob), periode =actual_period) %>%
-  arrange(desc(prob)) %>%
-  as.data.frame()
 ```
 
