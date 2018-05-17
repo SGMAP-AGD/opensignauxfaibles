@@ -16,6 +16,33 @@ function finalize(k, v) {
     v.cotisation = (v.cotisation || {})
     v.debit = (v.debit || {})
 
+    // relier les débits
+    var ecn = Object.keys(v.debit).reduce((m, h) => {
+        var d = [h, v.debit[h]]
+        var start = d[1].periode.start
+        var end = d[1].periode.end
+        var num_ecn = d[1].numero_ecart_negatif
+        var compte = d[1].numero_compte
+        var key = start + "-" + end + "-" + num_ecn + "-" + compte
+        m[key] = (m[key] || []).concat([{
+            "hash": d[0], 
+            "numero_historique": d[1].numero_historique,
+            "date_traitement": d[1].date_traitement
+        }])
+        return m 
+    }, {})
+    Object.keys(ecn).forEach(i => {
+
+        ecn[i].sort(compareDebit)
+        var l = ecn[i].length
+        ecn[i].forEach((e,idx) => {
+
+            if (idx <= l-2) {
+                v.debit[e.hash].debit_suivant = ecn[i][idx+1].hash;  
+            }
+        })
+    })
+
     var date_debut = new Date("2014-01-01");
     var date_fin = new Date("2018-03-01");
     var date_fin_effectif = new Date("2018-01-01")
@@ -145,10 +172,9 @@ function finalize(k, v) {
 
     var value_dette = {}
 
-    Object.keys(v.debit).map(function(h) {
+    Object.keys(v.debit).forEach(function(h) {
         var debit = v.debit[h]
         if (debit.part_ouvriere + debit.part_patronale > 0) {
-
             var debit_suivant = (v.debit[debit.debit_suivant] || debit)
             date_limite = new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
             date_traitement_debut = new Date(
@@ -161,14 +187,13 @@ function finalize(k, v) {
 
             periode_debut = (date_traitement_debut.getTime() >= date_limite.getTime() ? date_limite : date_traitement_debut)
             periode_fin = (date_traitement_fin.getTime() >= date_limite.getTime() ? date_limite : date_traitement_fin)
-
             generatePeriodSerie(periode_debut, periode_fin).map(function(date) {
                 time = date.getTime()
                 value_dette[time] = (value_dette[time] || []).concat([{"periode": debit.periode.start, "part_ouvriere": debit.part_ouvriere, "part_patronale": debit.part_patronale}])
             })
         }
     })
- 
+
     Object.keys(value).map(function(time) {
         var currentTime = value[time].periode.getTime()
         var beforeTime = new Date(value[time].periode.getTime()).setFullYear(value[time].periode.getFullYear()-1)
@@ -253,20 +278,20 @@ function finalize(k, v) {
         val.apart_last12_months = (val.apart_last12_months?1:0)
         val.apart_consommee = (val.apart_heures_consommees>0?1:0)
 
-        delete val.effectif_history
-        delete val.cotisation_array
-        delete val.debit_array
-        delete val.montant_dette
-        delete val.apart_heures_consommees_array
-        delete val.cotisation_due_periode
-        //delete val.date_defaillance
-        delete val.montant_part_ouvriere
-        delete val.montant_part_patronale
-        delete val.ratio_dettecumulee_cotisation_12m
-        delete val.mean_cotisation_due
-        delete val.effectif_date
-        delete val.effectif_average
-        delete val.lag_effectif
+        // delete val.effectif_history
+        // delete val.cotisation_array
+        // delete val.debit_array
+        // delete val.montant_dette
+        // delete val.apart_heures_consommees_array
+        // delete val.cotisation_due_periode
+        // //delete val.date_defaillance
+        // delete val.montant_part_ouvriere
+        // delete val.montant_part_patronale
+        // delete val.ratio_dettecumulee_cotisation_12m
+        // delete val.mean_cotisation_due
+        // delete val.effectif_date
+        // delete val.effectif_average
+        // delete val.lag_effectif
 
     })
 
