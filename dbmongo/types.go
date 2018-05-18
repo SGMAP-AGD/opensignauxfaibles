@@ -9,13 +9,13 @@ import (
 // Value Objet racine pour le stockage établissement.
 // En insertion, ID est un ObjectId généré automatiquement, puis devient un siret après mapReduce
 // Value est une map des lots d'intégration à ordonner par ordre alphanumérique
-type Value struct {
-	ID    bson.ObjectId `json:"id" bson:"_id"`
-	Value Etablissement `json:"value" bson:"value"`
-}
+// type Value struct {
+// 	ID    bson.ObjectId `json:"id" bson:"_id"`
+// 	Value Etablissement `json:"value" bson:"value"`
+// }
 
-// ValueEntreprise permet de stocker une entreprise dans un objet Bson
-type ValueEntreprise struct {
+// Value permet de stocker une entreprise dans un objet Bson
+type Value struct {
 	ID    bson.ObjectId `json:"id" bson:"_id"`
 	Value Entreprise    `json:"value" bson:"value"`
 }
@@ -23,7 +23,7 @@ type ValueEntreprise struct {
 // Etablissement objet établissement (/entreprise/)
 type Etablissement struct {
 	Siret       string           `json:"siret" bson:"siret"`
-	Region      string           `json:"region" bson:"region"`
+	Region      string           `json:"region,omitempty" bson:"region,omitempty"`
 	Key         string           `json:"-" bson:"-"`
 	AncienSiret []string         `json:"ancien_siret,omitempty" bson:"ancien_siret,omitempty"`
 	Batch       map[string]Batch `json:"batch,omitempty" bson:"batch,omitempty"`

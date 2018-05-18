@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/cnf/structhash"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Sirene informations sur les entreprises
@@ -25,6 +26,7 @@ type Sirene struct {
 	TypeVoie           string    `json,omitempty:"type_voie" bson,omitempty:"type_voie"`
 	CodePostal         string    `json,omitempty:"code_postal" bson,omitempty:"code_postal"`
 	Cedex              string    `json,omitempty:"cedex" bson,omitempty:"cedex"`
+	Region             string    `json,omitempty:"region" bson,omitempty:"region"`
 	Departement        string    `json,omitempty:"departement" bson,omitempty:"departement"`
 	Commune            string    `json,omitempty:"commune" bson,omitempty:"commune"`
 	APE                string    `json,omitempty:"ape" bson,omitempty:"ape"`
@@ -41,8 +43,8 @@ type Sirene struct {
 	DebutActivite      time.Time `json:"debut_activite" bson:"debut_activite"`
 }
 
-func parseSirene(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseSirene(paths []string, batch string, region string) chan Sirene {
+	outputChannel := make(chan Sirene)
 	spew.Dump(paths)
 	go func() {
 		for _, path := range paths {
@@ -71,6 +73,7 @@ func parseSirene(paths []string, batch string) chan Etablissement {
 				sirene.TypeVoie = row[19]
 				sirene.CodePostal = row[20]
 				sirene.Cedex = row[21]
+				sirene.Region = row[23]
 				sirene.Departement = row[24]
 				sirene.Commune = row[28]
 				sirene.APE = row[42]
@@ -85,21 +88,8 @@ func parseSirene(paths []string, batch string) chan Etablissement {
 				sirene.TrancheCA, _ = strconv.Atoi(row[89])
 				sirene.Sigle = row[61]
 				sirene.DebutActivite, _ = time.Parse("20060102", row[51])
-				hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
-				outputChannel <- Etablissement{
-					Siret: sirene.Siren + sirene.Nic,
-					Batch: map[string]Batch{
-						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
-							Sirene: map[string]Sirene{
-								hash: sirene,
-							},
-						},
-					},
-				}
+				outputChannel <- sirene
 			}
 		}
 		close(outputChannel)
@@ -107,3 +97,45 @@ func parseSirene(paths []string, batch string) chan Etablissement {
 
 	return outputChannel
 }
+
+// hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
+
+func importSirene(c *gin.Context) {
+	insertWorker := c.Keys["DBW"].(chan Value)
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+
+	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+
+	sirene := files["sirene"]
+	for sirene := range parseSirene(sirene, batch, region) {
+		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
+
+		value := Value{
+			Value: Entreprise{
+				Siren:  sirene.Siren,
+				Region: sirene.Region,
+				Etablissement: map[string]Etablissement{
+					sirene.Siren + sirene.Nic: Etablissement{
+						Siret: sirene.Siren + sirene.Nic,
+						Batch: map[string]Batch{
+							batch: Batch{
+								Compact: map[string]bool{
+									"status": false,
+								},
+								Sirene: map[string]Sirene{
+									hash: sirene,
+								}}}}}}}
+		insertWorker <- value
+	}
+
+	insertWorker <- Value{}
+
+}
+
+// etablissement.Region = region
+// 		values = append(values, ValueEntreprise{Value: etablissement, ID: bson.NewObjectId()})
+// 		i++
+// 	}
+// 	db.C("Etablissement").Insert(values...)
+//}

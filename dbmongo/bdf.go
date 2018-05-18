@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"github.com/tealeg/xlsx"
 )
 
@@ -25,8 +27,8 @@ type BDF struct {
 	FraisFinancier      float64   `json:"frais_financier" bson:"frais_financier"`
 }
 
-func parseBDF(path []string, batch string) chan Entreprise {
-	outputChannel := make(chan Entreprise)
+func parseBDF(path []string) chan BDF {
+	outputChannel := make(chan BDF)
 
 	go func() {
 		for _, file := range path {
@@ -50,21 +52,7 @@ func parseBDF(path []string, batch string) chan Entreprise {
 					bdf.FinancierCourtTerme, err = strconv.ParseFloat(row.Cells[9].Value, 64)
 					bdf.FraisFinancier, err = strconv.ParseFloat(row.Cells[10].Value, 64)
 
-					hash := fmt.Sprintf("%x", structhash.Md5(bdf, 1))
-
-					outputChannel <- Entreprise{
-						Siren: bdf.Siren,
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								BDF: map[string]BDF{
-									hash: bdf,
-								},
-							},
-						},
-					}
+					outputChannel <- bdf
 				}
 			}
 		}
@@ -72,4 +60,29 @@ func parseBDF(path []string, batch string) chan Entreprise {
 	}()
 
 	return outputChannel
+}
+
+func importBDF(c *gin.Context) {
+	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	files := allFiles["bdf"]
+
+	for bdf := range parseBDF(files) {
+		hash := fmt.Sprintf("%x", structhash.Md5(bdf, 1))
+
+		value := Value{
+			Value: Entreprise{
+				Siren: bdf.Siren,
+				Batch: map[string]Batch{
+					batch: Batch{
+						Compact: map[string]bool{
+							"status": false,
+						},
+						BDF: map[string]BDF{
+							hash: bdf,
+						}}}}}
+		insertWorker <- value
+	}
 }

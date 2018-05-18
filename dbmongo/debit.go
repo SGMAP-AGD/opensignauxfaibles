@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Debit Débit – fichier Urssaf
@@ -29,8 +31,8 @@ type Debit struct {
 	DebitSuivant                 string    `json:"debit_suivant,omitempty" bson:"debit_suivant,omitempty"`
 }
 
-func parseDebit(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseDebit(paths []string) chan Debit {
+	outputChannel := make(chan Debit)
 
 	go func() {
 		for _, path := range paths {
@@ -78,25 +80,44 @@ func parseDebit(paths []string, batch string) chan Etablissement {
 				debit.CodeOperationEcartNegatif = row[codeOperationEcartNegatifIndex]
 				debit.CodeMotifEcartNegatif = row[codeMotifEcartNegatifIndex]
 
-				hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
-
-				outputChannel <- Etablissement{
-					Key: row[numeroCompteIndex],
-					Batch: map[string]Batch{
-						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
-							Debit: map[string]Debit{
-								hash: debit,
-							},
-						},
-					},
-				}
+				outputChannel <- debit
 			}
 		}
 		close(outputChannel)
 	}()
 
 	return outputChannel
+}
+
+func importDebit(c *gin.Context) {
+	insertWorker := c.Keys["DBW"].(chan Value)
+
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+
+	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	dataSource := files["debit"]
+	mapping := getCompteSiretMapping(files["admin_urssaf"])
+
+	for debit := range parseDebit(dataSource) {
+		if siret, ok := mapping[debit.NumeroCompte]; ok {
+			hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
+
+			value := Value{
+				Value: Entreprise{
+					Siren: siret[0:9],
+					Etablissement: map[string]Etablissement{
+						siret: Etablissement{
+							Siret: siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									Debit: map[string]Debit{
+										hash: debit,
+									}}}}}}}
+			insertWorker <- value
+		}
+	}
 }

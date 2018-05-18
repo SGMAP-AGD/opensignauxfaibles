@@ -117,7 +117,7 @@ func compactAll(c *gin.Context) {
 		Map:      string(mapFct),
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
-		Out:      bson.M{"replace": "Etablissement"},
+		Out:      bson.M{"replace": "Entreprise"},
 	}
 
 	var etablissement []struct {

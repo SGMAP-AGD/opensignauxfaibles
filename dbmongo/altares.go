@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Altares Extrait du récapitulatif altarès
@@ -18,10 +20,11 @@ type Altares struct {
 	DateParution  time.Time `json:"date_parution" bson:"date_parution"`
 	CodeJournal   string    `json:"code_journal" bson:"code_journal"`
 	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
+	Siret         string    `json:"-" bson:"-"`
 }
 
-func parseAltares(path string, batch string, region string) chan Entreprise {
-	outputChannel := make(chan Entreprise)
+func parseAltares(path string, batch string) chan Altares {
+	outputChannel := make(chan Altares)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -52,36 +55,46 @@ func parseAltares(path string, batch string, region string) chan Entreprise {
 			dateParution, _ := time.Parse("2006-01-02", row[dateParutionIndex])
 
 			altares := Altares{
+				Siret:         row[siretIndex],
 				DateEffet:     dateEffet,
 				DateParution:  dateParution,
 				CodeJournal:   row[codeJournalIndex],
 				CodeEvenement: row[codeEvenementIndex],
 			}
-			hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 			if err == nil {
-				outputChannel <- Entreprise{
-					Siren: row[siretIndex][0:9],
-					Key:   row[siretIndex],
-					Etablissement: map[string]Etablissement{
-						row[siretIndex]: Etablissement{
-							Siret:  row[siretIndex],
-							Region: region,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Altares: map[string]Altares{
-										hash: altares,
-									},
-								},
-							},
-						},
-					},
-				}
+				outputChannel <- altares
+
 			}
 		}
 		close(outputChannel)
 	}()
 	return outputChannel
+}
+
+func importAltares(c *gin.Context) {
+	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	batch := c.Params.ByName("batch")
+	region := c.Params.ByName("region")
+	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	altares := files["altares"][0]
+
+	for altares := range parseAltares(altares, batch) {
+		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
+
+		value := Value{
+			Value: Entreprise{
+				Siren: altares.Siret[0:9],
+				Etablissement: map[string]Etablissement{
+					altares.Siret: Etablissement{
+						Siret: altares.Siret,
+						Batch: map[string]Batch{
+							batch: Batch{
+								Compact: map[string]bool{
+									"status": false,
+								},
+								Altares: map[string]Altares{
+									hash: altares,
+								}}}}}}}
+		insertWorker <- value
+	}
 }

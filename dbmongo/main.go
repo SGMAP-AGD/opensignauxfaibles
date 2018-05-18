@@ -40,22 +40,22 @@ func main() {
 		//api.GET("/kanboard/task/create/:siret", createKBProject)
 		api.GET("/kanboard/listprojects", listProjects)
 
-		api.GET("/import/bdf/:region/:batch", importBDF)
-
 		api.GET("/import/all/:region/:batch", importAll)
 		api.GET("/import/apdemande/:region/:batch", importAPDemande)
 		api.GET("/import/apconso/:region/:batch", importAPConso)
 		api.GET("/import/cotisation/:region/:batch", importCotisation)
+		api.GET("/import/ccsf/:region/:batch", importCCSF)
 		api.GET("/import/debit/:region/:batch", importDebit)
 		api.GET("/import/effectif/:region/:batch", importEffectif)
 		api.GET("/import/altares/:region/:batch", importAltares)
 		api.GET("/import/delai/:region/:batch", importDelai)
 		api.GET("/import/sirene/:region/:batch", importSirene)
+		api.GET("/import/bdf/:region/:batch", importBDF)
 
 		api.GET("/compact/:siren", compact)
 		api.GET("/compact/", compactAll)
 
-		api.GET("/prediction/inject/:region/:batch", injectPrediction)
+		// api.GET("/prediction/inject/:region/:batch", injectPrediction)
 
 		api.GET("/reduce/:siren", reduce)
 
