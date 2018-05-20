@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -45,7 +44,6 @@ type Sirene struct {
 
 func parseSirene(paths []string, batch string, region string) chan Sirene {
 	outputChannel := make(chan Sirene)
-	spew.Dump(paths)
 	go func() {
 		for _, path := range paths {
 			file, err := os.Open(path)

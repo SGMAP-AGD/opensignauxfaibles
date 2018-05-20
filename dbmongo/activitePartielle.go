@@ -161,7 +161,6 @@ func importAPConso(c *gin.Context) {
 
 	for apconso := range parseAPConso(files) {
 		hash := fmt.Sprintf("%x", structhash.Md5(apconso, 1))
-		fmt.Println(apconso.Siret)
 		value := Value{
 			Value: Entreprise{
 				Siren: apconso.Siret[0:9],

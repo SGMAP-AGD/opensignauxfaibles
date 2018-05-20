@@ -75,15 +75,15 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 }
 
 func importAll(c *gin.Context) {
-	go importAltares(c)
-	go importAPConso(c)
-	go importAPDemande(c)
-	go importEffectif(c)
-	go importDebit(c)
-	go importBDF(c)
-	go importCotisation(c)
-	go importDelai(c)
-	go importSirene(c)
+	importAltares(c)
+	importAPConso(c)
+	importAPDemande(c)
+	importEffectif(c)
+	importDebit(c)
+	importBDF(c)
+	importCotisation(c)
+	importDelai(c)
+	importSirene(c)
 }
 
 func purge(c *gin.Context) {
