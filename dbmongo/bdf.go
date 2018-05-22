@@ -65,8 +65,7 @@ func parseBDF(path []string) chan BDF {
 func importBDF(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["bdf"]
 
 	for bdf := range parseBDF(files) {

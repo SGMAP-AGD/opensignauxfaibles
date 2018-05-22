@@ -135,9 +135,8 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 func importEffectif(c *gin.Context) {
 	insertWorker := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
 
-	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 
 	effectif := files["effectif"]
 	for effectif := range parseEffectif(effectif) {

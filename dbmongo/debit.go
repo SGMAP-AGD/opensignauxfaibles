@@ -94,9 +94,8 @@ func importDebit(c *gin.Context) {
 	insertWorker := c.Keys["DBW"].(chan Value)
 
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
 
-	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	dataSource := files["debit"]
 	mapping := getCompteSiretMapping(files["admin_urssaf"])
 

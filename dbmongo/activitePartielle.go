@@ -96,8 +96,7 @@ func parseAPDemande(path string) chan APDemande {
 func importAPDemande(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apdemande"][0]
 
 	for apdemande := range parseAPDemande(files) {
@@ -156,8 +155,7 @@ func parseAPConso(path string) chan APConso {
 func importAPConso(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apconso"][0]
 
 	for apconso := range parseAPConso(files) {

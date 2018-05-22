@@ -75,8 +75,7 @@ func parseAltares(path string, batch string) chan Altares {
 func importAltares(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
-	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	altares := files["altares"][0]
 
 	for altares := range parseAltares(altares, batch) {

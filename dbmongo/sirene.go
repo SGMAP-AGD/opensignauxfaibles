@@ -42,7 +42,7 @@ type Sirene struct {
 	DebutActivite      time.Time `json:"debut_activite" bson:"debut_activite"`
 }
 
-func parseSirene(paths []string, batch string, region string) chan Sirene {
+func parseSirene(paths []string, batch string) chan Sirene {
 	outputChannel := make(chan Sirene)
 	go func() {
 		for _, path := range paths {
@@ -102,12 +102,11 @@ func parseSirene(paths []string, batch string, region string) chan Sirene {
 func importSirene(c *gin.Context) {
 	insertWorker := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
-	region := c.Params.ByName("region")
 
-	files, _ := GetFileList(viper.GetString("APP_DATA"), region, batch)
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 
 	sirene := files["sirene"]
-	for sirene := range parseSirene(sirene, batch, region) {
+	for sirene := range parseSirene(sirene, batch) {
 		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 		value := Value{
@@ -131,10 +130,3 @@ func importSirene(c *gin.Context) {
 	insertWorker <- Value{}
 
 }
-
-// etablissement.Region = region
-// 		values = append(values, ValueEntreprise{Value: etablissement, ID: bson.NewObjectId()})
-// 		i++
-// 	}
-// 	db.C("Etablissement").Insert(values...)
-//}

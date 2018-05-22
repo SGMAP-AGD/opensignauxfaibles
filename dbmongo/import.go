@@ -46,7 +46,7 @@ func createRepo(c *gin.Context) {
 }
 
 // GetFileList construit la liste des fichiers à traiter
-func GetFileList(basePath string, region string, period string) (map[string][]string, map[string]error) {
+func GetFileList(basePath string, period string) (map[string][]string, map[string]error) {
 	list := make(map[string][]string)
 	var l []os.FileInfo
 	err := make(map[string]error)
@@ -66,9 +66,9 @@ func GetFileList(basePath string, region string, period string) (map[string][]st
 	}
 
 	for _, dir := range directories {
-		l, err[dir] = ioutil.ReadDir(fmt.Sprintf("%s/%s/%s/%s", basePath, region, period, dir))
+		l, err[dir] = ioutil.ReadDir(fmt.Sprintf("%s/%s/%s", basePath, period, dir))
 		for _, f := range l {
-			list[dir] = append(list[dir], fmt.Sprintf("%s/%s/%s/%s/%s", basePath, region, period, dir, f.Name()))
+			list[dir] = append(list[dir], fmt.Sprintf("%s/%s/%s/%s", basePath, period, dir, f.Name()))
 		}
 	}
 	return list, err
