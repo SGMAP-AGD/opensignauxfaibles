@@ -66,6 +66,7 @@ func parseAltares(path string, batch string) chan Altares {
 
 			}
 		}
+		file.Close()
 		close(outputChannel)
 	}()
 	return outputChannel

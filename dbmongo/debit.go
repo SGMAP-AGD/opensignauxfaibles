@@ -82,6 +82,7 @@ func parseDebit(paths []string) chan Debit {
 
 				outputChannel <- debit
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()

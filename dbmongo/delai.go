@@ -86,6 +86,7 @@ func parseDelai(paths []string) chan Delai {
 				outputChannel <- delai
 
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()

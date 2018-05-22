@@ -72,8 +72,9 @@ func parseCotisation(paths []string) chan Cotisation {
 
 				outputChannel <- cotisation
 			}
-
+			file.Close()
 		}
+
 		close(outputChannel)
 	}()
 	return outputChannel

@@ -89,6 +89,7 @@ func parseSirene(paths []string, batch string, region string) chan Sirene {
 
 				outputChannel <- sirene
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()

@@ -58,6 +58,7 @@ func parseCCSF(path string) chan CCSF {
 			outputChannel <- ccsf
 		}
 		close(outputChannel)
+		file.Close()
 	}()
 	return outputChannel
 }

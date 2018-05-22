@@ -125,6 +125,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 					outputChannel <- effectif
 				}
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()

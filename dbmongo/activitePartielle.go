@@ -49,6 +49,7 @@ func parseAPDemande(path string) chan APDemande {
 	outputChannel := make(chan APDemande)
 
 	xlFile, err := xlsx.OpenFile(path)
+
 	if err != nil {
 		fmt.Println("Error", err)
 	}
