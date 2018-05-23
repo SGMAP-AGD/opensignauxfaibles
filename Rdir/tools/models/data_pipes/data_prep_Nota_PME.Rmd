@@ -46,7 +46,7 @@ colnames(notapme) <- c("siren","raison_sociale","score_notapme","score_rentabili
 
 ```{r}
 table_wholesample_sel <- table_wholesample_prep %>%
-  select(siret,periode,outcome,outcome_any,date_effet, cut_effectif,cut_growthrate, lag_effectif_missing,
+  select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
            apart_last12_months, apart_consommee, apart_share_heuresconsommees,
            log_cotisationdue_effectif,
            log_ratio_dettecumulee_cotisation, indicatrice_dettecumulee,
@@ -84,7 +84,7 @@ ggplot(table_wholesample_full_join,
        aes(x = outcome_any, fill = absent)) + 
        geom_bar(position = 'fill')
 ggplot(table_wholesample_full_join 
-       %>% mutate(outcome2017 = !is.na(date_effet) & as.Date(date_effet) >= "2017-01-01"),
+       %>% mutate(outcome2017 = !is.na(date_defaillance) & as.Date(date_defaillance) >= "2017-01-01"),
         aes(x = outcome2017, fill = absent)) + 
        geom_bar(position = 'fill')
 

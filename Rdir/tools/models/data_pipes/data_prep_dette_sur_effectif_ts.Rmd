@@ -31,7 +31,7 @@ table_wholesample_sel <-
     periode,
     outcome,
     outcome_any,
-    date_effet,
+    date_defaillance,
     dette
   )
 ```
@@ -63,7 +63,7 @@ detect_infinite(ts_wholesample)
 
 ```{r}
 #provisoire
-full_wholesample <- ts_wholesample %>% filter(complete.cases(ts_wholesample %>% select(-date_effet)))
+full_wholesample <- ts_wholesample %>% filter(complete.cases(ts_wholesample %>% select(-date_defaillance)))
 ```
 
 ```{r}

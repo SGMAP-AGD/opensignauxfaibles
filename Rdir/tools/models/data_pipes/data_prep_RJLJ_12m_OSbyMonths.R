@@ -39,7 +39,7 @@ table_wholesample_sel <-
     periode,
     outcome,
     outcome_any,
-    date_effet,
+    date_defaillance,
     poids_frng,
     taux_marge,
     delai_fournisseur,

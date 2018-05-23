@@ -84,7 +84,7 @@ func parseAPDemande(path string) chan APDemande {
 				apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[31].Value, 64)
 				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[32].Value)
 
-				outputChannel <- apdemande
+        outputChannel <- apdemande
 			}
 		}
 		close(outputChannel)
@@ -142,7 +142,6 @@ func parseAPConso(path string) chan APConso {
 				if err != nil {
 					fmt.Println(err)
 				}
-
 				outputChannel <- apconso
 			}
 		}

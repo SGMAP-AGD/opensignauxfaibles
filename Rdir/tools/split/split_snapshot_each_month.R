@@ -16,51 +16,68 @@ split_snapshot_each_month <-
            date_inf,
            date_sup,
            frac_train = 0.60,
-           frac_cross = 0.20) {
+           frac_cross = 0.20,
+           frac_eyeball = 0.05) {
 
     assert_that(
       frac_train > 0 ,
-      frac_train < 1,
       frac_cross > 0,
-      frac_cross < 1,
-      frac_train + frac_cross <= 1,
-      msg = "Fractions must be positive and strictly not exceed 1"
+      frac_eyeball >= 0,
+      frac_train < 1,
+      frac_train + frac_cross + frac_eyeball <= 1,
+      msg = "Fractions must be positive and not exceed 1"
     )
 
+    wholesample <- wholesample %>%
+      arrange(periode) %>%
+      select(siret,periode,date_defaillance,outcome_any)
     # donnees desequilibrees et donnees surechantillonnees
 
-    imbalanced_subsample <- wholesample %>%
-      filter(periode == date_sup)
+    imbalanced_sample <- wholesample %>%
+      filter_time(~date_sup)
 
     default_oversample <- wholesample %>%
-      filter(outcome_any,
-             as.Date(periode) >= date_inf,
-               as.Date(periode) <= date_sup) %>%
-      filter(elapsed_months(periode,date_effet) <= 0,
-            elapsed_months(periode,date_effet) > -12)
+      filter(outcome_any) %>%
+      filter_time(date_inf ~ date_sup) %>%
+      filter(elapsed_months(periode,date_defaillance) <= 0,
+            elapsed_months(periode,date_defaillance) > -12)
 
-    oversampled_subsample <- wholesample %>%
+    oversampled_sample <- wholesample %>%
       filter(!outcome_any) %>%
-      filter(periode == date_sup) %>%
-      bind_rows(default_oversample)
+      filter_time( ~ date_sup) %>%
+      bind_rows(default_oversample) %>%
+      as_tbl_time(periode)
 
     #
 
 
-    sample_sirets_train <- oversampled_subsample %>%
+    sample_sirets_train <- oversampled_sample %>%
+      as_tibble() %>%
       group_by(siret) %>%
-      summarize(a = first(siret)) %>%
-      select(-a) %>%
+      summarize() %>%
       sample_frac(frac_train)
 
 
-    sample_train <- oversampled_subsample %>%
-      inner_join(sample_sirets_train,by = "siret")
+    sample_train <- oversampled_sample %>%
+      inner_join(sample_sirets_train,by = "siret") %>%
+      select(siret, periode)
 
     cv_folds <- groupKFold(sample_train$siret, k = 5)
 
-    sample_test <- imbalanced_subsample %>%
-      anti_join(sample_sirets_train,by = "siret")
+    remaining <- imbalanced_sample %>%
+      anti_join(sample_sirets_train,by = "siret") %>%
+      select(siret, periode)
 
-    return(list("train" =  sample_train,"cv_folds" = cv_folds, "test" = sample_test))
+    if (frac_eyeball > 0) {
+      sample_eyeball <- remaining %>%
+        sample_frac(frac_eyeball / (1 - frac_train - frac_cross))
+    } else {
+      sample_eyeball <-
+        tibble(siret = character(), periode = as.Date(character()))
+    }
+
+    sample_test <- remaining %>%
+      anti_join(sample_eyeball, by = 'siret')
+
+    return(list("train" =  sample_train,"cv_folds" = cv_folds, "eyeball" = sample_eyeball,  "test" = sample_test))
   }

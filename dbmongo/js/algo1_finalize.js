@@ -78,6 +78,7 @@ function finalize(k, v) {
                 }
         });
 
+
         var value = value_array.reduce(function(periode, val, index) {
             periode[val.periode.getTime()] = val     
             return periode
@@ -111,10 +112,7 @@ function finalize(k, v) {
 
 
 
-        // activite partielle
-
-        
-
+        // activite partielle    
         var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
             apart[v.apdemande[hash].id_demande] = {
                 "demande": k,
@@ -151,6 +149,7 @@ function finalize(k, v) {
                             value[time].apart_heures_consommees_array.push(conso.heure_consomme);
                         }
                     })     
+
                 }
             })
         
@@ -220,6 +219,7 @@ function finalize(k, v) {
             if (time in value_dette) {
                 value[time].debit_array = value_dette[time]
             }
+
         })
 
         value_array.map(function(val,index) {
@@ -308,7 +308,6 @@ function finalize(k, v) {
             delete val.effectif_date
             delete val.effectif_average
             delete val.lag_effectif
-
         })
 
         return value_array
