@@ -88,6 +88,7 @@ func importAll(c *gin.Context) {
 	importCotisation(c)
 	importDelai(c)
 	importSirene(c)
+	importDPAE(c)
 }
 
 func purge(c *gin.Context) {
