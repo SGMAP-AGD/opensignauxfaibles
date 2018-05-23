@@ -67,7 +67,6 @@ func importBDF(c *gin.Context) {
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["bdf"]
-
 	for bdf := range parseBDF(files) {
 		hash := fmt.Sprintf("%x", structhash.Md5(bdf, 1))
 

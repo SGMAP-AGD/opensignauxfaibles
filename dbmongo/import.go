@@ -13,8 +13,8 @@ import (
 func createRepo(c *gin.Context) {
 	// db := c.Keys["DB"].(*mgo.Database)
 	basePath := viper.GetString("APP_DATA")
+	batch := c.Params.ByName("batch")
 
-	// db.C("region").Find(bson.M{"ID"})
 	directories := []string{
 		"admin_urssaf",
 		"apconso",
@@ -26,14 +26,13 @@ func createRepo(c *gin.Context) {
 		"delai",
 		"effectif",
 		"sirene",
-		"bdf",
 	}
 
-	var response map[string]string
+	response := make(map[string]string)
 	var status int
 	for _, directory := range directories {
-		path := basePath + "/" + directory
-		err := os.MkdirAll(path, 700)
+		path := basePath + "/" + batch + "/" + directory
+		err := os.MkdirAll(path, 0755)
 		status = 200
 		if err != nil {
 			status = 207
@@ -42,7 +41,7 @@ func createRepo(c *gin.Context) {
 			response[path] = "ok"
 		}
 	}
-	c.JSON(status, "ok")
+	c.JSON(status, response)
 }
 
 // GetFileList construit la liste des fichiers à traiter
@@ -62,7 +61,6 @@ func GetFileList(basePath string, period string) (map[string][]string, map[strin
 		"delai",
 		"effectif",
 		"sirene",
-		"bdf",
 	}
 
 	for _, dir := range directories {

@@ -101,7 +101,7 @@ func compact(c *gin.Context) {
 
 	var etablissement []interface{}
 
-	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
+	db.C("Entreprise").Find(bson.M{"_id": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }

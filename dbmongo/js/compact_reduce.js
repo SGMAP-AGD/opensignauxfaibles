@@ -11,9 +11,9 @@ function reduce(key, values) {
 
         Object.keys((value.etablissement||{})).forEach(etablissement => {
             Object.keys(value.etablissement[etablissement].batch).map(batch => {
-                var region = value.etablissement[etablissement].batch[batch].sirene.region
-                if ((value.region||[]).indexOf(region) == -1) {
-                    value.region = (value.region||[]).concat([region])
+                var region = (value.region||"")
+                if ((m.region||[]).indexOf(region) == -1 && region != "") {
+                    m.region = (m.region||[]).concat([region])
                 }
                 Object.keys(value.etablissement[etablissement].batch[batch]).map(type => {
                     m.etablissement = (m.etablissement||{})
@@ -28,6 +28,6 @@ function reduce(key, values) {
 
 
         return m
-    },{})
+    },{"siren": key})
 
 }
