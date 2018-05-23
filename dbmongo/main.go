@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -62,15 +63,22 @@ func main() {
 		api.GET("/reduce/:siren", reduce)
 
 		api.GET("/reduce", reduceAll)
-		api.GET("/etablissement/:siret", browseEtablissement)
+		api.GET("/browse/:siren", browse)
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
 		api.GET("/data/debit/:siret", dataDebit)
+
+		api.GET("/debug", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
 }
 
+func debug(c *gin.Context) {
+	target := []string{"A", "B", "C", "Z"}
+	data := []string{"A", "B", "D", "E", "F", "Z"}
+	spew.Dump(sliceIndexArray(target, data))
+}
 func loadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")

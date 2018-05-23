@@ -48,43 +48,88 @@ type APConso struct {
 func parseAPDemande(path string) chan APDemande {
 	outputChannel := make(chan APDemande)
 
-	xlFile, err := xlsx.OpenFile(path)
-
-	if err != nil {
-		fmt.Println("Error", err)
-	}
-
 	go func() {
-		for _, sheet := range xlFile.Sheets {
-			for _, row := range sheet.Rows[3:] {
-				apdemande := APDemande{}
-				apdemande.ID = row.Cells[2].Value
-				apdemande.Siret = row.Cells[3].Value
-				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[14].Value)
-				apdemande.Effectif, _ = strconv.Atoi(row.Cells[15].Value)
-				apdemande.DateStatut, _ = excelToTime(row.Cells[16].Value)
-				apdemande.TxPC, _ = strconv.ParseFloat(row.Cells[17].Value, 64)
-				apdemande.TxPCUnedicDares, _ = strconv.ParseFloat(row.Cells[18].Value, 64)
-				apdemande.TxPCEtatDares, _ = strconv.ParseFloat(row.Cells[19].Value, 64)
-				periodStart, _ := excelToTime(row.Cells[20].Value)
-				periodEnd, _ := excelToTime(row.Cells[21].Value)
-				apdemande.Periode = Periode{
-					Start: periodStart,
-					End:   periodEnd,
-				}
-				apdemande.HTA, _ = strconv.ParseFloat(row.Cells[22].Value, 64)
-				apdemande.MTA, _ = strconv.ParseFloat(row.Cells[23].Value, 64)
-				apdemande.EffectifAutorise, _ = strconv.Atoi(row.Cells[24].Value)
-				apdemande.ProdHTAEffectif, _ = strconv.ParseFloat(row.Cells[25].Value, 64)
-				apdemande.MotifRecoursSE, _ = strconv.Atoi(row.Cells[26].Value)
-				apdemande.Perimetre, _ = strconv.Atoi(row.Cells[27].Value)
-				apdemande.RecoursAnterieur, _ = strconv.Atoi(row.Cells[28].Value)
-				apdemande.AvisCE, _ = strconv.Atoi(row.Cells[29].Value)
-				apdemande.HeureConsommee, _ = strconv.ParseFloat(row.Cells[30].Value, 64)
-				apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[31].Value, 64)
-				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[32].Value)
+		xlFile, err := xlsx.OpenFile(path)
+		if err != nil {
+			fmt.Println("parseAPDemande: Avorté " + err.Error())
+			close(outputChannel)
+			return
+		}
 
-        outputChannel <- apdemande
+		for _, sheet := range xlFile.Sheets {
+
+			f := make(map[string]int)
+			for idx, cell := range sheet.Rows[0].Cells {
+				f[cell.Value] = idx
+			}
+
+			fields := []string{"ID_DA",
+				"ETAB_SIRET",
+				"EFF_ENT",
+				"EFF_ETAB",
+				"DATE_STATUT",
+				"TX_PC",
+				"TX_PC_UNEDIC_DARES",
+				"TX_PC_ETAT_DARES",
+				"DATE_DEB",
+				"DATE_FIN",
+				"HTA",
+				"MTA",
+				"EFF_AUTO",
+				"PROD_HTA_EFF",
+				"MOTIF_RECOURS_SE",
+				"PERIMETRE_AP",
+				"RECOURS_ANTERIEUR",
+				"AVIS_CE",
+				"S_HEURE_CONSOM_TOT",
+				"S_MONTANT_CONSOM_TOT",
+				"S_EFF_CONSOM_TOT",
+			}
+
+			minLength := 0
+			for _, field := range fields {
+				if i, err := f[field]; !err {
+					fmt.Println("parseAPDemande: Avorté, " + field + " non trouvé.")
+					close(outputChannel)
+					return
+				} else {
+					minLength = max(minLength, i)
+				}
+			}
+
+			// FIXME: établir une meilleure méthode pour tester la validité de la ligne
+			for _, row := range sheet.Rows[3:] {
+				if len(row.Cells) >= minLength {
+					apdemande := APDemande{}
+					apdemande.ID = row.Cells[f["ID_DA"]].Value
+					apdemande.Siret = row.Cells[f["ETAB_SIRET"]].Value
+					apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[f["EFF_ENT"]].Value)
+					apdemande.Effectif, _ = strconv.Atoi(row.Cells[f["EFF_ETAB"]].Value)
+					apdemande.DateStatut, _ = excelToTime(row.Cells[f["DATE_STATUT"]].Value)
+					apdemande.TxPC, _ = strconv.ParseFloat(row.Cells[f["TX_PC"]].Value, 64)
+					apdemande.TxPCUnedicDares, _ = strconv.ParseFloat(row.Cells[f["TX_PC_UNEDIC_DARES"]].Value, 64)
+					apdemande.TxPCEtatDares, _ = strconv.ParseFloat(row.Cells[f["TX_PC_ETAT_DARES"]].Value, 64)
+					periodStart, _ := excelToTime(row.Cells[f["DATE_DEB"]].Value)
+					periodEnd, _ := excelToTime(row.Cells[f["DATE_FIN"]].Value)
+					apdemande.Periode = Periode{
+						Start: periodStart,
+						End:   periodEnd,
+					}
+					apdemande.HTA, _ = strconv.ParseFloat(row.Cells[f["HTA"]].Value, 64)
+					apdemande.MTA, _ = strconv.ParseFloat(row.Cells[f["MTA"]].Value, 64)
+					apdemande.EffectifAutorise, _ = strconv.Atoi(row.Cells[f["EFF_AUTO"]].Value)
+					apdemande.ProdHTAEffectif, _ = strconv.ParseFloat(row.Cells[f["PROD_HTA_EFF"]].Value, 64)
+					apdemande.MotifRecoursSE, _ = strconv.Atoi(row.Cells[f["MOTIF_RECOURS_SE"]].Value)
+					apdemande.Perimetre, _ = strconv.Atoi(row.Cells[f["PERIMETRE_AP"]].Value)
+					apdemande.RecoursAnterieur, _ = strconv.Atoi(row.Cells[f["RECOURS_ANTERIEUR"]].Value)
+					apdemande.AvisCE, _ = strconv.Atoi(row.Cells[f["AVIS_CE"]].Value)
+					apdemande.HeureConsommee, _ = strconv.ParseFloat(row.Cells[f["S_HEURE_CONSOM_TOT"]].Value, 64)
+					apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[f["S_MONTANT_CONSOM_TOT"]].Value, 64)
+					apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
+
+					outputChannel <- apdemande
+				}
+
 			}
 		}
 		close(outputChannel)
@@ -97,26 +142,28 @@ func importAPDemande(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	files := allFiles["apdemande"][0]
+	files := allFiles["apdemande"]
 
-	for apdemande := range parseAPDemande(files) {
-		hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
+	for _, file := range files {
+		for apdemande := range parseAPDemande(file) {
+			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
-		value := Value{
-			Value: Entreprise{
-				Siren: apdemande.Siret[0:9],
-				Etablissement: map[string]Etablissement{
-					apdemande.Siret: Etablissement{
-						Siret: apdemande.Siret,
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								APDemande: map[string]APDemande{
-									hash: apdemande,
-								}}}}}}}
-		insertWorker <- value
+			value := Value{
+				Value: Entreprise{
+					Siren: apdemande.Siret[0:9],
+					Etablissement: map[string]Etablissement{
+						apdemande.Siret: Etablissement{
+							Siret: apdemande.Siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									APDemande: map[string]APDemande{
+										hash: apdemande,
+									}}}}}}}
+			insertWorker <- value
+		}
 	}
 }
 
@@ -127,22 +174,31 @@ func parseAPConso(path string) chan APConso {
 	if err != nil {
 		fmt.Println("Error", err)
 	}
-
 	go func() {
 		for _, sheet := range xlFile.Sheets {
-			for _, row := range sheet.Rows[3:] {
-				apconso := APConso{}
-				apconso.ID = row.Cells[1].Value
-				apconso.Siret = row.Cells[2].Value
-				apconso.Periode, err = excelToTime(row.Cells[15].Value)
-				apconso.HeureConsommee, err = strconv.ParseFloat(row.Cells[16].Value, 64)
-				apconso.Montant, err = strconv.ParseFloat(row.Cells[17].Value, 64)
-				apconso.Effectif, err = strconv.Atoi(row.Cells[18].Value)
+			fields := sheet.Rows[0]
+			idxID := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ID_DA" })
+			idxSiret := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ETAB_SIRET" })
+			idxPeriode := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MOIS" })
+			idxHeureConsommee := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "HEURES" })
+			idxMontants := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MONTANTS" })
+			idxEffectifs := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "EFFECTIFS" })
 
-				if err != nil {
-					fmt.Println(err)
+			for _, row := range sheet.Rows[1:] {
+				if len(row.Cells) > 0 {
+					apconso := APConso{}
+					apconso.ID = row.Cells[idxID].Value
+					apconso.Siret = row.Cells[idxSiret].Value
+					apconso.Periode, err = excelToTime(row.Cells[idxPeriode].Value)
+					apconso.HeureConsommee, err = strconv.ParseFloat(row.Cells[idxHeureConsommee].Value, 64)
+					apconso.Montant, err = strconv.ParseFloat(row.Cells[idxMontants].Value, 64)
+					apconso.Effectif, err = strconv.Atoi(row.Cells[idxEffectifs].Value)
+
+					if err != nil {
+						fmt.Println(err)
+					}
+					outputChannel <- apconso
 				}
-				outputChannel <- apconso
 			}
 		}
 		close(outputChannel)
@@ -155,24 +211,26 @@ func importAPConso(c *gin.Context) {
 	insertWorker, _ := c.Keys["DBW"].(chan Value)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	files := allFiles["apconso"][0]
+	files := allFiles["apconso"]
 
-	for apconso := range parseAPConso(files) {
-		hash := fmt.Sprintf("%x", structhash.Md5(apconso, 1))
-		value := Value{
-			Value: Entreprise{
-				Siren: apconso.Siret[0:9],
-				Etablissement: map[string]Etablissement{
-					apconso.Siret: Etablissement{
-						Siret: apconso.Siret,
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								APConso: map[string]APConso{
-									hash: apconso,
-								}}}}}}}
-		insertWorker <- value
+	for _, file := range files {
+		for apconso := range parseAPConso(file) {
+			hash := fmt.Sprintf("%x", structhash.Md5(apconso, 1))
+			value := Value{
+				Value: Entreprise{
+					Siren: apconso.Siret[0:9],
+					Etablissement: map[string]Etablissement{
+						apconso.Siret: Etablissement{
+							Siret: apconso.Siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									APConso: map[string]APConso{
+										hash: apconso,
+									}}}}}}}
+			insertWorker <- value
+		}
 	}
 }

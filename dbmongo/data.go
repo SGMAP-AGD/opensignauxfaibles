@@ -70,12 +70,12 @@ func reduceAll(c *gin.Context) {
 	c.JSON(200, etablissement)
 }
 
-func browseEtablissement(c *gin.Context) {
+func browse(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	var etablissement []interface{}
-	db.C("testcollection").Find(bson.M{"_id": c.Params.ByName("siret")}).All(&etablissement)
-	c.JSON(200, etablissement)
+	var entreprise []interface{}
+	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).All(&entreprise)
+	c.JSON(200, entreprise)
 }
 
 func browseOrig(c *gin.Context) {

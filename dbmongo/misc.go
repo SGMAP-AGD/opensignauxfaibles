@@ -20,6 +20,25 @@ func sliceIndex(limit int, predicate func(i int) bool) int {
 	return -1
 }
 
+func sliceIndexArray(target []string, data []string) []int {
+	l := len(target)
+	var idx []int
+
+	for a := 1; a <= l; a++ {
+		idx = append(idx, -1)
+	}
+
+	for idxTarget, t := range target {
+		for idxData, d := range data {
+			if d == t {
+				idx[idxTarget] = idxData
+			}
+		}
+	}
+
+	return idx
+}
+
 func excelToTime(excel string) (time.Time, error) {
 	excelInt, err := strconv.ParseInt(excel, 10, 64)
 	if err != nil {
@@ -88,4 +107,18 @@ func getCompteSiretMapping(path []string) map[string]string {
 		file.Close()
 	}
 	return compteSiretMapping
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

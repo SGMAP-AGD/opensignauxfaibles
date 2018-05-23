@@ -17,6 +17,7 @@ func createRepo(c *gin.Context) {
 
 	directories := []string{
 		"admin_urssaf",
+		"altares",
 		"apconso",
 		"apdemande",
 		"bdf",

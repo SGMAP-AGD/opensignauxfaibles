@@ -115,16 +115,17 @@ function finalize(k, v) {
         // activite partielle    
         var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
             apart[v.apdemande[hash].id_demande] = {
-                "demande": k,
+                "demande": hash,
                 "consommation": []
             }
             return apart
         }, {})
 
         Object.keys(v.apconso).forEach(hash => {
-            var valueap = v.apconso[k]
+            var valueap = v.apconso[hash]
+            print(valueap)
             if (valueap.id_conso.substring(0,10) in apart) {
-                apart[valueap.id_conso.substring(0,10)].consommation.push(k)
+                apart[valueap.id_conso.substring(0,10)].consommation.push(hash)
             }
         })
 
@@ -293,7 +294,15 @@ function finalize(k, v) {
             val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1||1))
             val.apart_last12_months = (val.apart_last12_months?1:0)
             val.apart_consommee = (val.apart_heures_consommees>0?1:0)
-
+            
+            var sireneHashes = Object.keys(v.sirene)
+            if (sireneHashes.length != 0) {
+                v.sirene = v.sirene[sireneHashes[0]]
+            }
+            
+            val.lattitude = (v.sirene||{"lattitude": null}).lattitude
+            val.longitude = (v.sirene||{"longitude": null}).longitude
+            
             delete val.effectif_history
             delete val.cotisation_array
             delete val.debit_array
@@ -308,6 +317,7 @@ function finalize(k, v) {
             delete val.effectif_date
             delete val.effectif_average
             delete val.lag_effectif
+
         })
 
         return value_array
