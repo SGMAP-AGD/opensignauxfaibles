@@ -52,6 +52,7 @@ type Batch struct {
 	Sirene     map[string]Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
 	BDF        map[string]BDF        `json:"bdf,omitempty" bson:"bdf,omitempty"`
 	Prediction map[string]Prediction `json:"prediction,omitempty" bson:"prediction,omitempty"`
+	DPAE       map[string]DPAE       `json:"dpae,omitempty" bson:"dpae,omitempty"`
 }
 
 // Periode Période de temps avec un début et une fin

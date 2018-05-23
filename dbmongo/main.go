@@ -50,6 +50,7 @@ func main() {
 		api.GET("/import/delai/:batch", importDelai)
 		api.GET("/import/sirene/:batch", importSirene)
 		api.GET("/import/bdf/:batch", importBDF)
+		api.GET("/import/dpae/:batch", importDPAE)
 
 		api.GET("/repo/create/:batch", createRepo)
 

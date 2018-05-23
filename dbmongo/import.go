@@ -26,6 +26,9 @@ func createRepo(c *gin.Context) {
 		"delai",
 		"effectif",
 		"sirene",
+		"interim",
+		"dmmo",
+		"dpae",
 	}
 
 	response := make(map[string]string)
@@ -61,6 +64,9 @@ func GetFileList(basePath string, period string) (map[string][]string, map[strin
 		"delai",
 		"effectif",
 		"sirene",
+		"interim",
+		"dmmo",
+		"dpae",
 	}
 
 	for _, dir := range directories {

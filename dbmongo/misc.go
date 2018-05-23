@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"encoding/csv"
 	"errors"
 	"io"
 	"log"
+	"os"
 	"strconv"
 	"time"
 )
@@ -54,4 +57,35 @@ func InitLogger(
 	logerror = log.New(errorHandle,
 		"ERROR: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+func getCompteSiretMapping(path []string) map[string]string {
+	compteSiretMapping := make(map[string]string)
+
+	for _, p := range path {
+		file, _ := os.Open(p)
+
+		reader := csv.NewReader(bufio.NewReader(file))
+		reader.Comma = ';'
+
+		// discard header row
+		reader.Read()
+
+		siretIndex := 3
+		compteIndex := 0
+
+		for {
+			row, error := reader.Read()
+			if error == io.EOF {
+				break
+			} else if error != nil {
+				log.Fatal(error)
+			}
+			if _, err := strconv.Atoi(row[siretIndex]); err == nil && len(row[siretIndex]) == 14 {
+				compteSiretMapping[row[compteIndex]] = row[siretIndex]
+			}
+		}
+		file.Close()
+	}
+	return compteSiretMapping
 }
