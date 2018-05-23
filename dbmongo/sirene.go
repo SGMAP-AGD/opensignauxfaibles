@@ -40,6 +40,8 @@ type Sirene struct {
 	TrancheCA          int       `json,omitempty:"tranche_ca" bson,omitempty:"tranche_ca"`
 	Sigle              string    `json,omitempty:"sigle" bson,omitempty:"sigle"`
 	DebutActivite      time.Time `json:"debut_activite" bson:"debut_activite"`
+	Longitude          float64   `json,omitempty:"longitude" bson:"longitude"`
+	Lattitude          float64   `json,omitempty:"lattitude" bson:"lattitude"`
 }
 
 func parseSirene(paths []string, batch string) chan Sirene {
@@ -52,7 +54,7 @@ func parseSirene(paths []string, batch string) chan Sirene {
 			}
 
 			reader := csv.NewReader(bufio.NewReader(file))
-			reader.Comma = ';'
+			reader.Comma = ','
 
 			for {
 				row, error := reader.Read()
@@ -86,6 +88,8 @@ func parseSirene(paths []string, batch string) chan Sirene {
 				sirene.TrancheCA, _ = strconv.Atoi(row[89])
 				sirene.Sigle = row[61]
 				sirene.DebutActivite, _ = time.Parse("20060102", row[51])
+				sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
+				sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
 
 				outputChannel <- sirene
 			}
