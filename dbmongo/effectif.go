@@ -11,10 +11,13 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Effectif Urssaf
 type Effectif struct {
+	Siret        string    `json:"-" bson:"-"`
 	NumeroCompte string    `json:"numero_compte" bson:"numero_compte"`
 	Periode      time.Time `json:"periode" bson:"periode"`
 	Effectif     int       `json:"effectif" bson:"effectif"`
@@ -62,8 +65,8 @@ func getCompteSiretMapping(path []string) map[string]string {
 	return compteSiretMapping
 }
 
-func parseEffectif(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseEffectif(paths []string) chan map[string]Effectif {
+	outputChannel := make(chan map[string]Effectif)
 
 	go func() {
 		for _, path := range paths {
@@ -108,6 +111,7 @@ func parseEffectif(paths []string, batch string) chan Etablissement {
 					e, _ := strconv.Atoi(row[i])
 					if e > 0 {
 						eff := Effectif{
+							Siret:        row[siretIndex],
 							NumeroCompte: row[compteIndex],
 							Periode:      periods[i],
 							Effectif:     e}
@@ -118,21 +122,50 @@ func parseEffectif(paths []string, batch string) chan Etablissement {
 				}
 
 				if len(row[siretIndex]) == 14 {
-					outputChannel <- Etablissement{
-						Siret: row[siretIndex],
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								Effectif: effectif,
-							},
-						},
-					}
+					outputChannel <- effectif
 				}
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()
 	return outputChannel
+}
+
+func importEffectif(c *gin.Context) {
+	insertWorker := c.Keys["DBW"].(chan Value)
+	batch := c.Params.ByName("batch")
+
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
+
+	effectif := files["effectif"]
+	for effectif := range parseEffectif(effectif) {
+
+		randomKey := ""
+		for randomKey = range effectif {
+			break
+		}
+
+		if randomKey != "" {
+			siret := effectif[randomKey].Siret
+
+			value := Value{
+				Value: Entreprise{
+					Siren: siret[0:9],
+					Etablissement: map[string]Etablissement{
+						siret: Etablissement{
+							Siret: siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									Effectif: effectif,
+								}}}}}}
+			insertWorker <- value
+		}
+	}
+
+	insertWorker <- Value{}
+
 }

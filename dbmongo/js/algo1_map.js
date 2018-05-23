@@ -1,3 +1,3 @@
 function map() { 
-    emit(this.value.siret, this.value) 
+    emit(this.value.siren, this.value) 
     }

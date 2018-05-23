@@ -22,7 +22,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(DB())
-	r.Use(Kanboard())
+	// r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	r.Use(cors.Default())
 
@@ -34,31 +34,31 @@ func main() {
 		api.GET("/admin/region", AdminRegion)
 		api.POST("/admin/region", AdminRegionAdd)
 		api.DELETE("/admin/region", AdminRegionDelete)
-		api.GET("/repo/create/:region/:periode", createRepo)
 		api.GET("/purge", purge)
 
 		//api.GET("/kanboard/task/create/:siret", createKBProject)
 		api.GET("/kanboard/listprojects", listProjects)
 
-		api.GET("/import/bdf/:region/:batch", importBDF)
+		api.GET("/import/all/:batch", importAll)
+		api.GET("/import/apdemande/:batch", importAPDemande)
+		api.GET("/import/apconso/:batch", importAPConso)
+		api.GET("/import/cotisation/:batch", importCotisation)
+		api.GET("/import/ccsf/:batch", importCCSF)
+		api.GET("/import/debit/:batch", importDebit)
+		api.GET("/import/effectif/:batch", importEffectif)
+		api.GET("/import/altares/:batch", importAltares)
+		api.GET("/import/delai/:batch", importDelai)
+		api.GET("/import/sirene/:batch", importSirene)
+		api.GET("/import/bdf/:batch", importBDF)
 
-		api.GET("/import/all/:region/:batch", importAll)
-		api.GET("/import/apdemande/:region/:batch", importAPDemande)
-		api.GET("/import/apconso/:region/:batch", importAPConso)
-		api.GET("/import/cotisation/:region/:batch", importCotisation)
-		api.GET("/import/debit/:region/:batch", importDebit)
-		api.GET("/import/effectif/:region/:batch", importEffectif)
-		api.GET("/import/altares/:region/:batch", importAltares)
-		api.GET("/import/delai/:region/:batch", importDelai)
-		api.GET("/import/sirene/:region/:batch", importSirene)
+		api.GET("/repo/create/:batch", createRepo)
 
-		api.GET("/compact/etablissement/:siret", compact)
-		api.GET("/compact/etablissement", compactAll)
-		api.GET("/compact/entreprise/:siren", compactEntreprise)
-		api.GET("/compact/entreprise", compactAllEntreprise)
+		api.GET("/compact/:siren", compact)
+		api.GET("/compact/", compactAll)
 
-		api.GET("/prediction/inject/:region/:batch", injectPrediction)
-		api.GET("/reduce/:siret", reduce)
+		// api.GET("/prediction/inject/:region/:batch", injectPrediction)
+
+		api.GET("/reduce/:siren", reduce)
 
 		api.GET("/reduce", reduceAll)
 		api.GET("/etablissement/:siret", browseEtablissement)

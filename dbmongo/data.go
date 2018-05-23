@@ -39,25 +39,9 @@ func reduce(c *gin.Context) {
 		Finalize: string(finalizeFct),
 	}
 
-	// var etablissement []struct {
-	// 	ID    string      `json:"id" bson:"_id"`
-	// 	Value interface{} `json:"value" bson:"value"`
-	// }
 	var etablissement []interface{}
 
-	// db.C("Etablissement").Pipe(
-	// 	[]bson.M{
-	// 		{"$match": bson.M{"value.siret": c.Params.ByName("siret")}},
-	// 		{"$addFields": bson.M{"value.siren": bson.M{"$substr": []interface{}{"$value.siret", 0, 9}}}},
-	// 		{"$lookup": bson.M{"from": "Entreprise",
-	// 			"localField":   "value.siren",
-	// 			"foreignField": "value.siren",
-	// 			"as":           "value.entreprise",
-	// 		},
-	// 		},
-	// 	}).Batch
-
-	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -81,7 +65,7 @@ func reduceAll(c *gin.Context) {
 		Value interface{} `json:"value" bson:"value"`
 	}
 
-	db.C("Etablissement").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
+	db.C("Entreprise").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -117,7 +101,7 @@ func compact(c *gin.Context) {
 
 	var etablissement []interface{}
 
-	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	db.C("Entreprise").Find(bson.M{"_id": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
 
 	c.JSON(200, etablissement)
 }
@@ -133,7 +117,7 @@ func compactAll(c *gin.Context) {
 		Map:      string(mapFct),
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
-		Out:      bson.M{"replace": "Etablissement"},
+		Out:      bson.M{"replace": "Entreprise"},
 	}
 
 	var etablissement []struct {
@@ -141,46 +125,7 @@ func compactAll(c *gin.Context) {
 		Value Etablissement `json:"value" bson:"value"`
 	}
 
-	db.C("Etablissement").Find(nil).MapReduce(job, nil)
-
-	c.JSON(200, etablissement)
-}
-
-func compactEntreprise(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	mapFct, _ := ioutil.ReadFile("js/compact_map_entreprise.js")
-	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
-
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
-	}
-
-	var entreprise []interface{}
-
-	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).MapReduce(job, &entreprise)
-
-	c.JSON(200, entreprise)
-}
-
-func compactAllEntreprise(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	mapFct, _ := ioutil.ReadFile("js/compact_map_entreprise.js")
-	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
-
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
-		Out:      bson.M{"replace": "Entreprise"},
-	}
-
 	db.C("Entreprise").Find(nil).MapReduce(job, nil)
 
-	c.JSON(200, "OK dude")
+	c.JSON(200, etablissement)
 }

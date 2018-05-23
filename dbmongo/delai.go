@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Delai tuple fichier ursaff
@@ -29,8 +31,8 @@ type Delai struct {
 	Action            string    `json:"action" bson:"action"`
 }
 
-func parseDelai(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseDelai(paths []string) chan Delai {
+	outputChannel := make(chan Delai)
 
 	field := map[string]int{
 		"NumeroCompte":      0,
@@ -81,26 +83,45 @@ func parseDelai(paths []string, batch string) chan Etablissement {
 				delai.Stade = row[field["Stade"]]
 				delai.Action = row[field["Action"]]
 
-				hash := fmt.Sprintf("%x", structhash.Md5(delai, 1))
-
-				outputChannel <- Etablissement{
-					Key: row[field["NumeroCompte"]],
-					Batch: map[string]Batch{
-						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
-							Delai: map[string]Delai{
-								hash: delai,
-							},
-						},
-					},
-				}
+				outputChannel <- delai
 
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()
 
 	return outputChannel
+}
+
+func importDelai(c *gin.Context) {
+	insertWorker := c.Keys["DBW"].(chan Value)
+
+	batch := c.Params.ByName("batch")
+
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
+	dataSource := files["delai"]
+	mapping := getCompteSiretMapping(files["admin_urssaf"])
+
+	for delai := range parseDelai(dataSource) {
+		if siret, ok := mapping[delai.NumeroCompte]; ok {
+			hash := fmt.Sprintf("%x", structhash.Md5(delai, 1))
+
+			value := Value{
+				Value: Entreprise{
+					Siren: siret[0:9],
+					Etablissement: map[string]Etablissement{
+						siret: Etablissement{
+							Siret: siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									Delai: map[string]Delai{
+										hash: delai,
+									}}}}}}}
+			insertWorker <- value
+		}
+	}
 }

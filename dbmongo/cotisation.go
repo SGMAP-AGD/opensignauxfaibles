@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/cnf/structhash"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Cotisation Cotisation – fichier Urssaf
@@ -24,8 +26,8 @@ type Cotisation struct {
 	Ecriture     string  `json:"ecriture" bson:"ecriture"`
 }
 
-func parseCotisation(paths []string, batch string) chan Etablissement {
-	outputChannel := make(chan Etablissement)
+func parseCotisation(paths []string) chan Cotisation {
+	outputChannel := make(chan Cotisation)
 
 	field := map[string]int{
 		"NumeroCompte": 0,
@@ -68,24 +70,44 @@ func parseCotisation(paths []string, batch string) chan Etablissement {
 				cotisation.Du, err = strconv.ParseFloat(strings.Replace(row[field["Du"]], ",", ".", -1), 64)
 				cotisation.Ecriture = row[field["Ecriture"]]
 
-				hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
-
-				outputChannel <- Etablissement{
-					Key: row[field["NumeroCompte"]],
-					Batch: map[string]Batch{
-						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
-							Cotisation: map[string]Cotisation{
-								hash: cotisation,
-							},
-						},
-					},
-				}
+				outputChannel <- cotisation
 			}
+			file.Close()
 		}
+
 		close(outputChannel)
 	}()
 	return outputChannel
+}
+
+func importCotisation(c *gin.Context) {
+	insertWorker := c.Keys["DBW"].(chan Value)
+
+	batch := c.Params.ByName("batch")
+
+	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
+	dataSource := files["cotisation"]
+	mapping := getCompteSiretMapping(files["admin_urssaf"])
+
+	for cotisation := range parseCotisation(dataSource) {
+		if siret, ok := mapping[cotisation.NumeroCompte]; ok {
+			hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
+
+			value := Value{
+				Value: Entreprise{
+					Siren: siret[0:9],
+					Etablissement: map[string]Etablissement{
+						siret: Etablissement{
+							Siret: siret,
+							Batch: map[string]Batch{
+								batch: Batch{
+									Compact: map[string]bool{
+										"status": false,
+									},
+									Cotisation: map[string]Cotisation{
+										hash: cotisation,
+									}}}}}}}
+			insertWorker <- value
+		}
+	}
 }
