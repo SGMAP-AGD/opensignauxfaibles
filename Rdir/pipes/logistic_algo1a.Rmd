@@ -113,10 +113,10 @@ samples <-
     frac_eyeball = 0.05
   )
 
-sample_train <- tw_complete %>%
-      semi_join(samples$train, by = c('siret','periode'))
-
-cv_folds <- groupKFold(sample_train$siret, k = 5) #samples$cv_fold
+sample_train <- samples$train %>% 
+  left_join(tw_complete, by = c('siret','periode'))
+  
+cv_folds <- samples$cv_fold
 
 sample_eyeball <- table_wholesample_sel %>%
   semi_join(samples$eyeball, by = c('siret','periode'))
