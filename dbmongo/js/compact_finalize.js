@@ -36,6 +36,24 @@ function finalize(k, o) {
             return m
         }, {})
     })
+
+    o.index = {"algo1": Object.keys(o.etablissement).map(etablissement => {
+        Object.keys(o.etablissement[etablissement].batch).map(batch => {
+            Object.keys((o.etablissement[etablissement].batch[batch].effectif||{})).some(function() {return true})
+        }).some(function() {return true})
+    }).some(function() {return true})}
     
+    o.region = []
+    Object.keys(o.etablissement).forEach(etablissement => {
+        Object.keys(o.etablissement[etablissement].batch).forEach(batch => {
+            Object.keys((o.etablissement[etablissement].batch[batch].sirene||{})).forEach(hash => {
+                r = o.etablissement[etablissement].batch[batch].sirene[hash].region
+                if (o.region.indexOf(r) == -1 && r != "") {
+                    o.region.push(r)
+                }
+            })
+        })
+    })
+
  return o
 }
