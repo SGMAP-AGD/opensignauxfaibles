@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
@@ -71,9 +72,12 @@ func GetFileList(basePath string, period string) (map[string][]string, map[strin
 	}
 
 	for _, dir := range directories {
-		l, err[dir] = ioutil.ReadDir(fmt.Sprintf("%s/%s/%s", basePath, period, dir))
+		path := fmt.Sprintf("%s/%s/%s", basePath, period, dir)
+		l, err[dir] = ioutil.ReadDir(path)
 		for _, f := range l {
-			list[dir] = append(list[dir], fmt.Sprintf("%s/%s/%s/%s", basePath, period, dir, f.Name()))
+			if match, _ := regexp.MatchString("\\.(csv|xls|xlsx)$", f.Name()); match {
+				list[dir] = append(list[dir], fmt.Sprintf("%s/%s", path, f.Name()))
+			}
 		}
 	}
 	return list, err
