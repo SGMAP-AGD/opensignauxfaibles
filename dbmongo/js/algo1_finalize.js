@@ -314,12 +314,8 @@ function finalize(k, v) {
 
             var optbdf = bdfHashes.reduce((accu, hash) => {
                 if (v.entreprise.bdf[hash].arrete_bilan.getTime() < val.periode.getTime() && v.entreprise.bdf[hash].arrete_bilan.getTime() > accu.arrete_bilan.getTime()) {
-                    print("trouve")
-                    print(hash)
-                    print(tojson(v.entreprise.bdf[hash]))
                     accu = v.entreprise.bdf[hash]
                 }
-                print(tojson(accu))
                 return accu
 
             },
@@ -343,9 +339,6 @@ function finalize(k, v) {
             val.dette_fiscale = optbdf.dette_fiscale
             val.financier_court_terme = optbdf.financier_court_terme
             val.frais_financier = optbdf.frais_financier
-
-
-            print(tojson(val))
 
             delete val.effectif_history
             delete val.cotisation_array
