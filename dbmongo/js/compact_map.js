@@ -1,3 +1,7 @@
 function map() { 
-    emit(this.value.siren, this.value) 
-    }
+    try{
+        emit(this.value.siren, this.value) 
+    } catch(error) {
+        print(this.value.siren)
+    }    
+}
