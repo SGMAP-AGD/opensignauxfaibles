@@ -37,12 +37,13 @@ function finalize(k, o) {
         }, {})
     })
 
-    o.index = {"algo1": Object.keys(o.etablissement).map(etablissement => {
-        Object.keys(o.etablissement[etablissement].batch).map(batch => {
-            Object.keys((o.etablissement[etablissement].batch[batch].effectif||{})).some(function() {return true})
-        }).some(function() {return true})
-    }).some(function() {return true})}
-    
+    o.index = {"algo1": false}
+    Object.keys(o.etablissement).forEach(etablissement => {
+        Object.keys(o.etablissement[etablissement].batch).forEach(batch => {
+            Object.keys((o.etablissement[etablissement].batch[batch].effectif||{})).forEach(effectif => o.index.algo1 = true)      
+        })
+    })
+
     o.region = []
     Object.keys(o.etablissement).forEach(etablissement => {
         Object.keys(o.etablissement[etablissement].batch).forEach(batch => {
@@ -55,5 +56,5 @@ function finalize(k, o) {
         })
     })
 
- return o
+    return o
 }
