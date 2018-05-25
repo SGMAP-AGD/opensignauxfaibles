@@ -295,7 +295,7 @@ function finalize(k, v) {
             val.apart_last12_months = (val.apart_last12_months?1:0)
             val.apart_consommee = (val.apart_heures_consommees>0?1:0)
             
-            var sireneHashes = Object.keys(v.sirene)
+            var sireneHashes = Object.keys(v.sirene||{})
             if (sireneHashes.length != 0) {
                 v.sirene = v.sirene[sireneHashes[0]]
             }
