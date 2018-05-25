@@ -297,11 +297,11 @@ function finalize(k, v) {
             
             var sireneHashes = Object.keys(v.sirene||{})
             if (sireneHashes.length != 0) {
-                v.sirene = v.sirene[sireneHashes[0]]
+                sirene = v.sirene[sireneHashes[0]]
             }
             
-            val.lattitude = (v.sirene||{"lattitude": null}).lattitude
-            val.longitude = (v.sirene||{"longitude": null}).longitude
+            val.lattitude = (sirene||{"lattitude": null}).lattitude
+            val.longitude = (sirene||{"longitude": null}).longitude
             
             delete val.effectif_history
             delete val.cotisation_array
