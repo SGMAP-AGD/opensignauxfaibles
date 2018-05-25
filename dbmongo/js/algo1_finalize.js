@@ -123,7 +123,6 @@ function finalize(k, v) {
 
         Object.keys(v.apconso).forEach(hash => {
             var valueap = v.apconso[hash]
-            print(valueap)
             if (valueap.id_conso.substring(0,10) in apart) {
                 apart[valueap.id_conso.substring(0,10)].consommation.push(hash)
             }
