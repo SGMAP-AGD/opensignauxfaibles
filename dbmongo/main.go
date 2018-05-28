@@ -23,7 +23,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(DB())
-	// r.Use(Kanboard())
+	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	r.Use(cors.Default())
 
@@ -32,13 +32,12 @@ func main() {
 	api := r.Group("api")
 	{
 		api.OPTIONS("/auth", auth)
-		api.GET("/admin/region", AdminRegion)
-		api.POST("/admin/region", AdminRegionAdd)
-		api.DELETE("/admin/region", AdminRegionDelete)
+
 		api.GET("/purge", purge)
 
 		//api.GET("/kanboard/task/create/:siret", createKBProject)
-		api.GET("/kanboard/listprojects", listProjects)
+		api.GET("/kanboard/get/projects", listProjects)
+		api.GET("/kanboard/get/tasks", getKBTasks)
 
 		api.GET("/import/all/:batch", importAll)
 		api.GET("/import/apdemande/:batch", importAPDemande)

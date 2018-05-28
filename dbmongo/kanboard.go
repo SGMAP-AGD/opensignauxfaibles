@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/chrnin/ganboard"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -58,8 +59,15 @@ func Kanboard() gin.HandlerFunc {
 	}
 }
 
-func debugalgo1(c *gin.Context) {
-
+func getKBTasks(c *gin.Context) {
+	kb := c.Keys["KBCLIENT"].(*ganboard.Client)
+	allTasks, err := kb.GetAllTasks(1, 1)
+	if err == nil {
+		c.JSON(200, allTasks)
+	} else {
+		spew.Dump(err)
+		c.JSON(500, err)
+	}
 }
 
 func listProjects(c *gin.Context) {

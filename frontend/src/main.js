@@ -17,13 +17,15 @@ Vue.config.productionTip = false
 /* eslint-disable no-new */
 
 Vue.prototype.$api = 'http://localhost:3000/api'
-Vue.prototype.$generatePeriodSerie = function (date_debut, date_fin) {
-  var date_next = new Date(date_debut.getTime())
+
+Vue.prototype.$generatePeriodSerie = function (dateDebut, dateFin) {
+  var dateNext = new Date(dateDebut.getTime())
   var serie = []
-  while (date_next.getTime() < date_fin.getTime()) {
-    serie.push(new Date(date_next.getTime()))
-    date_next.setUTCMonth(date_next.getUTCMonth() + 1)
-  }return serie
+  while (dateNext.getTime() < dateFin.getTime()) {
+    serie.push(new Date(dateNext.getTime()))
+    dateNext.setUTCMonth(dateNext.getUTCMonth() + 1)
+  }
+  return serie
 }
 
 new Vue({
