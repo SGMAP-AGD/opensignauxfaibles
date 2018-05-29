@@ -104,7 +104,7 @@ func parseSirene(paths []string, batch string) chan Sirene {
 // hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 func importSirene(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -113,24 +113,20 @@ func importSirene(c *gin.Context) {
 	for sirene := range parseSirene(sirene, batch) {
 		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
-		value := Value{
-			Value: Entreprise{
-				Siren:  sirene.Siren,
-				Region: sirene.Region,
-				Etablissement: map[string]Etablissement{
-					sirene.Siren + sirene.Nic: Etablissement{
-						Siret: sirene.Siren + sirene.Nic,
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								Sirene: map[string]Sirene{
-									hash: sirene,
-								}}}}}}}
+		value := ValueEtablissement{
+			Value: Etablissement{
+				Siret: sirene.Siren + sirene.Nic,
+				Batch: map[string]Batch{
+					batch: Batch{
+						Compact: map[string]bool{
+							"status": false,
+						},
+						Sirene: map[string]Sirene{
+							hash: sirene,
+						}}}}}
 		insertWorker <- value
 	}
 
-	insertWorker <- Value{}
+	insertWorker <- ValueEtablissement{}
 
 }

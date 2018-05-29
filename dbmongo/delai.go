@@ -95,7 +95,7 @@ func parseDelai(paths []string) chan Delai {
 }
 
 func importDelai(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -107,20 +107,17 @@ func importDelai(c *gin.Context) {
 		if siret, ok := mapping[delai.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(delai, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Delai: map[string]Delai{
-										hash: delai,
-									}}}}}}}
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
+							Delai: map[string]Delai{
+								hash: delai,
+							}}}}}
 			insertWorker <- value
 		}
 	}

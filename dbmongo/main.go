@@ -54,8 +54,8 @@ func main() {
 
 		api.GET("/repo/create/:batch", createRepo)
 
-		api.GET("/compact/:siren", compact)
-		api.GET("/compact/", compactAll)
+		api.GET("/compact/:siren", compactEtablissement)
+		api.GET("/compact", compactEtablissement)
 
 		// api.GET("/prediction/inject/:region/:batch", injectPrediction)
 

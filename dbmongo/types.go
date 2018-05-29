@@ -14,10 +14,16 @@ import (
 // 	Value Etablissement `json:"value" bson:"value"`
 // }
 
-// Value permet de stocker une entreprise dans un objet Bson
-type Value struct {
+// ValueEntreprise permet de stocker une entreprise dans un objet Bson
+type ValueEntreprise struct {
 	ID    bson.ObjectId `json:"id" bson:"_id"`
 	Value Entreprise    `json:"value" bson:"value"`
+}
+
+// ValueEtablissement structure pour un établissement
+type ValueEtablissement struct {
+	ID    bson.ObjectId `json:"id" bson:"_id"`
+	Value Etablissement `json:"value" bson:"value"`
 }
 
 // Etablissement objet établissement (/entreprise/)
@@ -31,11 +37,9 @@ type Etablissement struct {
 
 // Entreprise object Entreprise
 type Entreprise struct {
-	Siren         string                   `json:"siren" bson:"siren"`
-	Region        string                   `json:"region,omitempty" bson:"region,omitempty"`
-	Key           string                   `json:"-" bson:"-"`
-	Batch         map[string]Batch         `json:"batch,omitempty" bson:"batch,omitempty"`
-	Etablissement map[string]Etablissement `json:"etablissement,omitempty" bson:"etablissement,omitempty"`
+	Siren string           `json:"siren" bson:"siren"`
+	Key   string           `json:"-" bson:"-"`
+	Batch map[string]Batch `json:"batch,omitempty" bson:"batch,omitempty"`
 }
 
 // Batch lot de data

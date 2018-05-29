@@ -91,7 +91,7 @@ func parseDebit(paths []string) chan Debit {
 }
 
 func importDebit(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -103,20 +103,17 @@ func importDebit(c *gin.Context) {
 		if siret, ok := mapping[debit.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Debit: map[string]Debit{
-										hash: debit,
-									}}}}}}}
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
+							Debit: map[string]Debit{
+								hash: debit,
+							}}}}}
 			insertWorker <- value
 		}
 	}

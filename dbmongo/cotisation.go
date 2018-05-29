@@ -81,7 +81,7 @@ func parseCotisation(paths []string) chan Cotisation {
 }
 
 func importCotisation(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -93,20 +93,17 @@ func importCotisation(c *gin.Context) {
 		if siret, ok := mapping[cotisation.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Cotisation: map[string]Cotisation{
-										hash: cotisation,
-									}}}}}}}
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
+							Cotisation: map[string]Cotisation{
+								hash: cotisation,
+							}}}}}
 			insertWorker <- value
 		}
 	}

@@ -64,7 +64,7 @@ func parseCCSF(path string) chan CCSF {
 }
 
 func importCCSF(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["DBW"].(chan ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -77,20 +77,17 @@ func importCCSF(c *gin.Context) {
 			if siret, ok := mapping[ccsf.NumeroCompte]; ok {
 				hash := fmt.Sprintf("%x", structhash.Md5(ccsf, 1))
 
-				value := Value{
-					Value: Entreprise{
-						Siren: siret[0:9],
-						Etablissement: map[string]Etablissement{
-							siret: Etablissement{
-								Siret: siret,
-								Batch: map[string]Batch{
-									batch: Batch{
-										Compact: map[string]bool{
-											"status": false,
-										},
-										CCSF: map[string]CCSF{
-											hash: ccsf,
-										}}}}}}}
+				value := ValueEtablissement{
+					Value: Etablissement{
+						Siret: siret,
+						Batch: map[string]Batch{
+							batch: Batch{
+								Compact: map[string]bool{
+									"status": false,
+								},
+								CCSF: map[string]CCSF{
+									hash: ccsf,
+								}}}}}
 				insertWorker <- value
 			}
 		}

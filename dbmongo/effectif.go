@@ -103,7 +103,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 }
 
 func importEffectif(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -119,23 +119,19 @@ func importEffectif(c *gin.Context) {
 		if randomKey != "" {
 			siret := effectif[randomKey].Siret
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Effectif: effectif,
-								}}}}}}
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
+							Effectif: effectif,
+						}}}}
 			insertWorker <- value
 		}
 	}
 
-	insertWorker <- Value{}
-
+	insertWorker <- ValueEtablissement{}
 }
