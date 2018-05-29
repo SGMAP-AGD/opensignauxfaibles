@@ -12,6 +12,7 @@ library(caret)
 library(broom)
 library(randomForest)
 library(MLmetrics)
+library(tibbletime)
 
 # Sources
 source("./tools/interface/connect_to_database.R")
@@ -124,7 +125,9 @@ randomForest <- train(formula,
 
 tw_complete_long <- mice::complete(mids,'long')
 #provisoire: retrait NA et inf
-tw_complete_long <- tw_complete_long %>% filter(!is.infinite(log_cotisationdue_effectif))
+tw_complete_long <- tw_complete_long %>%
+  filter(!is.infinite(log_cotisationdue_effectif)) %>%
+  filter(!is.na(log_cotisationdue_effectif))
 
 sample_actual <- tw_complete_long %>%
   filter(periode == actual_period |

@@ -55,7 +55,7 @@ function finalize(k, v) {
         })
 
         var date_debut = new Date("2014-01-01");
-        var date_fin = new Date("2018-03-01");
+        var date_fin = new Date("2018-05-01");
         var date_fin_effectif = new Date("2018-01-01")
 
         var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()

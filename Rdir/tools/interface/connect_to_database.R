@@ -17,4 +17,10 @@ connect_to_database <- function(collection){
            mutate(periode = as.Date(periode)) %>%
            arrange(periode) %>%
            as_tbl_time(periode))
+
+  table_wholesample  <- table_wholesample %>%
+    group_by(siret) %>%
+    mutate(toDelete = all(effectif<20)) %>%
+    filter(!toDelete) %>%
+    select(-toDelete)
 }
