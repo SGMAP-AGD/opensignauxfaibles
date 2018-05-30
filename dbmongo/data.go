@@ -120,7 +120,21 @@ func compactEtablissement(c *gin.Context) {
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
 		Out:      output,
-		Scope:    bson.M{"test": "test"},
+		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805"},
+			"types": []string{
+				"altares",
+				"apconso",
+				"apdemande",
+				"ccsf",
+				"cotisation",
+				"debit",
+				"delai",
+				"effectif",
+				"sirene",
+				"dpae",
+			},
+			"deleteOld": []string{"effectif", "apdemande", "apconso", "altares"},
+		},
 	}
 
 	err := errors.New("")

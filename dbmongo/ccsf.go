@@ -71,6 +71,7 @@ func importCCSF(c *gin.Context) {
 	batch := c.Params.ByName("batch")
 
 	files, err := GetFileList(viper.GetString("APP_DATA"), batch)
+
 	if err != nil {
 		c.JSON(500, err)
 		return
