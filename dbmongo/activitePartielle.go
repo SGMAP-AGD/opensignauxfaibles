@@ -217,9 +217,9 @@ func importAPConso(c *gin.Context) {
 					Siret: apconso.Siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
+							// Compact: map[string]bool{
+							// 	"status": false,
+							// },
 							APConso: map[string]APConso{
 								hash: apconso,
 							}}}}}

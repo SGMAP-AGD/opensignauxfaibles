@@ -44,7 +44,7 @@ type Entreprise struct {
 
 // Batch lot de data
 type Batch struct {
-	Compact    map[string]bool       `json:"compact" bson:"compact"`
+	Compact    map[string]bool       `json:"compact,omitempty" bson:"compact,omitempty"`
 	Effectif   map[string]Effectif   `json:"effectif,omitempty" bson:"effectif,omitempty"`
 	Delai      map[string]Delai      `json:"delai,omitempty" bson:"delai,omitempty"`
 	Debit      map[string]Debit      `json:"debit,omitempty" bson:"debit,omitempty"`

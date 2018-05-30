@@ -75,9 +75,9 @@ func importBDF(c *gin.Context) {
 				Siren: bdf.Siren,
 				Batch: map[string]Batch{
 					batch: Batch{
-						Compact: map[string]bool{
-							"status": false,
-						},
+						// Compact: map[string]bool{
+						// 	"status": false,
+						// },
 						BDF: map[string]BDF{
 							hash: bdf,
 						}}}}}

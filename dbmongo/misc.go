@@ -39,6 +39,17 @@ func sliceIndexArray(target []string, data []string) []int {
 	return idx
 }
 
+type stringSlice []string
+
+func (arr stringSlice) contains(str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
+}
+
 func excelToTime(excel string) (time.Time, error) {
 	excelInt, err := strconv.ParseInt(excel, 10, 64)
 	if err != nil {
@@ -121,4 +132,20 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// batchToTime calcule la date de référence à partir de la référence de batch
+func batchToTime(batch string) (time.Time, error) {
+	year, err := strconv.Atoi(batch[0:2])
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	month, err := strconv.Atoi(batch[2:4])
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	date := time.Date(2000+year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	return date, err
 }

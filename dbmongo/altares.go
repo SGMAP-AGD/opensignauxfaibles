@@ -86,9 +86,9 @@ func importAltares(c *gin.Context) {
 				Siret: altares.Siret,
 				Batch: map[string]Batch{
 					batch: Batch{
-						Compact: map[string]bool{
-							"status": false,
-						},
+						// Compact: map[string]bool{
+						// 	"status": false,
+						// },
 						Altares: map[string]Altares{
 							hash: altares,
 						}}}}}

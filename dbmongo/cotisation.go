@@ -98,9 +98,9 @@ func importCotisation(c *gin.Context) {
 					Siret: siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
+							// Compact: map[string]bool{
+							// 	"status": false,
+							// },
 							Cotisation: map[string]Cotisation{
 								hash: cotisation,
 							}}}}}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
@@ -88,49 +88,52 @@ func browseOrig(c *gin.Context) {
 }
 
 func compactEtablissement(c *gin.Context) {
-	// db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["DB"].(*mgo.Database)
 
-	siren := c.Params.ByName("siren")
+	// Détermination scope traitement
+	var query interface{}
+	var output interface{}
+	var etablissement []interface{}
 
-	fmt.Println(siren + "tagada")
+	siren := c.Params.ByName("siret")
+	if siren == "" {
+		query = nil
+		output = bson.M{"replace": "Etablissement"}
+		etablissement = nil
+	} else {
+		query = bson.M{"value.siret": c.Params.ByName("siret")}
+		output = nil
+	}
 
-	// mapFct, _ := ioutil.ReadFile("js/compactEtablissementMap.js")
-	// reduceFct, _ := ioutil.ReadFile("js/compactEtablissementReduce.js")
-	// finalizeFct, _ := ioutil.ReadFile("js/compactFinalizeReduce.js")
+	// Ressources JS
+	mapFct, errMap := ioutil.ReadFile("js/compactEtablissementMap.js")
+	reduceFct, errReduce := ioutil.ReadFile("js/compactEtablissementReduce.js")
+	finalizeFct, errFinalize := ioutil.ReadFile("js/compactEtablissementFinalize.js")
+	if errMap != nil || errReduce != nil || errFinalize != nil {
+		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
+		return
+	}
 
-	// job := &mgo.MapReduce{
-	// 	Map:      string(mapFct),
-	// 	Reduce:   string(reduceFct),
-	// 	Finalize: string(finalizeFct),
-	// }
+	// Traitement MR
+	job := &mgo.MapReduce{
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+		Out:      output,
+		Scope:    bson.M{"test": "test"},
+	}
 
-	// var etablissement []interface{}
+	err := errors.New("")
+	if output == nil {
+		_, err = db.C("Etablissement").Find(query).MapReduce(job, &etablissement)
+	} else {
+		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
+	}
 
-	// db.C("Entreprise").Find(bson.M{"_id": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
+	if err != nil {
+		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
+	} else {
+		c.JSON(200, etablissement)
+	}
 
-	// c.JSON(200, etablissement)
 }
-
-// func compactAll(c *gin.Context) {
-// 	db, _ := c.Keys["DB"].(*mgo.Database)
-
-// 	mapFct, _ := ioutil.ReadFile("js/compact_map.js")
-// 	reduceFct, _ := ioutil.ReadFile("js/compact_reduce.js")
-// 	finalizeFct, _ := ioutil.ReadFile("js/compact_finalize.js")
-
-// 	job := &mgo.MapReduce{
-// 		Map:      string(mapFct),
-// 		Reduce:   string(reduceFct),
-// 		Finalize: string(finalizeFct),
-// 		Out:      bson.M{"replace": "Entreprise"},
-// 	}
-
-// 	var etablissement []struct {
-// 		ID    string        `json:"id" bson:"_id"`
-// 		Value Etablissement `json:"value" bson:"value"`
-// 	}
-
-// 	db.C("Entreprise").Find(nil).MapReduce(job, nil)
-
-// 	c.JSON(200, etablissement)
-// }

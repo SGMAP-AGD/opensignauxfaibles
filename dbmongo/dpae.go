@@ -81,9 +81,9 @@ func importDPAE(c *gin.Context) {
 					Siret: dpae.Siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							Compact: map[string]bool{
-								"status": false,
-							},
+							// Compact: map[string]bool{
+							// 	"status": false,
+							// },
 							DPAE: map[string]DPAE{
 								hash: dpae,
 							}}}}}

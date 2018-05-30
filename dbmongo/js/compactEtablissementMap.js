@@ -1,7 +1,7 @@
 function map() { 
     try{
-        emit(this.value.siren, this.value) 
+        emit(this.value.siret, this.value) 
     } catch(error) {
-        print(this.value.siren)
-    }    
+        print(this.value.siret)
+    }
 }

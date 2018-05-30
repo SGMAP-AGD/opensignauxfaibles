@@ -35,7 +35,6 @@ function finalize(k, v) {
         m.push(v)
         return m
     }, [])
-      
-      
+
     return array_dette
 }

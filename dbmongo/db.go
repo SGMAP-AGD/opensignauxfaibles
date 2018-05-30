@@ -18,6 +18,7 @@ func DB() gin.HandlerFunc {
 	dbDatabase := viper.GetString("DB")
 
 	mongodb, err := mgo.Dial(dbDial)
+	mongodb.SetSocketTimeout(3600 * time.Second)
 	db := mongodb.DB(dbDatabase)
 
 	// pousse les fonctions partagées JS
