@@ -13,14 +13,17 @@ connect_to_database <- function(collection){
       )
     )
 
-  return(data %>%
+  table_wholesample <- data %>%
            mutate(periode = as.Date(periode)) %>%
            arrange(periode) %>%
-           as_tbl_time(periode))
+           as_tbl_time(periode)
 
   table_wholesample  <- table_wholesample %>%
     group_by(siret) %>%
-    mutate(toDelete = all(effectif<20)) %>%
-    filter(!toDelete) %>%
-    select(-toDelete)
+    mutate(toKeep = max(effectif)>20) %>%
+    filter(toKeep) %>%
+    select(-toKeep)
+
+  return(table_wholesample)
 }
+
