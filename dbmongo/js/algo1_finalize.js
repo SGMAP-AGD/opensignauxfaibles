@@ -74,8 +74,17 @@ function finalize(k, v) {
                 "effectif_history": {},
                 "outcome_0_12": "non_default",
                 "date_defaillance": null,
+                "date_ccsf": null,
                 "cotisation_due_periode": {},
-                "debit_array": []
+                "debit_array": [],
+                "arrete_bilan": null,
+                "secteur": null,
+                "poids_frng": null,
+                "taux_marge": null,
+                "delai_fournisseur": null,
+                "dette_fiscale": null,
+                "financier_court_terme": null,
+                "frais_financier": null
             }
         });
 
@@ -172,6 +181,7 @@ function finalize(k, v) {
                 )
             }
         )
+
 
         // Cotisation
         var value_cotisation = {}
@@ -305,12 +315,15 @@ function finalize(k, v) {
 
             val.lattitude = (sirene || { "lattitude": null }).lattitude
             val.longitude = (sirene || { "longitude": null }).longitude
+            //autres donnees sirene
+            val.raison_sociale = (sirene || {"raison_sociale": null}).raisonsociale
+            val.departement = (sirene || {"departement": null}).departement
+            val.region = (sirene || {"region": null}).region
+            val.code_ape = (sirene || {"ape": null}).ape
 
-            
+
             // ratios bdf
             var bdfHashes = Object.keys(v.entreprise.bdf || {})
-
-            // selectionner le bon hash
 
             var optbdf = bdfHashes.reduce((accu, hash) => {
                 if (v.entreprise.bdf[hash].arrete_bilan.getTime() < val.periode.getTime() && v.entreprise.bdf[hash].arrete_bilan.getTime() > accu.arrete_bilan.getTime()) {
@@ -331,14 +344,37 @@ function finalize(k, v) {
                 }
             )
 
-            val.arrete_bilan = optbdf.arrete_bilan
-            val.secteur = optbdf.secteur
-            val.poids_frng = optbdf.poids_frng
-            val.taux_marge = optbdf.taux_marge
-            val.delai_fournisseur = optbdf.delai_fournisseur
-            val.dette_fiscale = optbdf.dette_fiscale
-            val.financier_court_terme = optbdf.financier_court_terme
-            val.frais_financier = optbdf.frais_financier
+            if (optbdf.arrete_bilan.getTime() != 0) {
+                val.arrete_bilan = optbdf.arrete_bilan
+                val.secteur = optbdf.secteur
+                val.poids_frng = optbdf.poids_frng
+                val.taux_marge = optbdf.taux_marge
+                val.delai_fournisseur = optbdf.delai_fournisseur
+                val.dette_fiscale = optbdf.dette_fiscale
+                val.financier_court_terme = optbdf.financier_court_terme
+                val.frais_financier = optbdf.frais_financier
+            }
+
+
+
+            // CCSF
+            var ccsfHashes = Object.keys(v.entreprise.ccsf || {})
+
+            var optccsf = ccsfHashes.reduce(
+                function (accu, hash) {
+                    ccsf = v.ccsf[hash]
+                    if (ccsf.date_traitement.getTime() < val.periode.getTime() && ccsf.date_traitement.getTime() > accu.date_traitement.getTime()) {
+                        accu = ccsf
+                    }
+                },
+                {
+                    date_traitement: new Date(0)
+                }
+            )
+            if (optccsf.date_traitement.getTime() != 0) {
+                val.date_ccsf = optccsf.date_traitement
+            }
+           
 
             delete val.effectif_history
             delete val.cotisation_array
@@ -347,10 +383,10 @@ function finalize(k, v) {
             delete val.apart_heures_consommees_array
             delete val.cotisation_due_periode
             // delete val.date_defaillance
-            delete val.montant_part_ouvriere
-            delete val.montant_part_patronale
+            //delete val.montant_part_ouvriere
+            //delete val.montant_part_patronale
             delete val.ratio_dettecumulee_cotisation_12m
-            delete val.mean_cotisation_due
+            //delete val.mean_cotisation_due
             delete val.effectif_date
             delete val.effectif_average
             delete val.lag_effectif

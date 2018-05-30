@@ -46,11 +46,8 @@ generator <-
                         log_ratio_dettecumulee_cotisation_12m = -100
                       )) %>%
       arrange(siret,periode) %>%
+      group_by(siret) %>%
       spread(key = nested(siret,periode), value = effectif)
-
-
-
-
 
 
   }
