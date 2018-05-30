@@ -87,12 +87,12 @@ func parseAPDemande(path string) chan APDemande {
 		}
 		minLength := 0
 		for _, field := range fields {
-			if i, err := f[field]; !err {
+			if i, err := f[field]; err {
+				minLength = max(minLength, i)
+			} else {
 				fmt.Println("parseAPDemande: Avorté, " + field + " non trouvé.")
 				close(outputChannel)
 				return
-			} else {
-				minLength = max(minLength, i)
 			}
 		}
 

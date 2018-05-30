@@ -39,16 +39,16 @@ export default {
       }
     }
   },
-  watch: { 
-   	siret: function(newVal, oldVal) { // watch it
-      if (newVal.length == 14 && !isNaN(newVal)) {
+  watch: {
+    siret: function (newVal, oldVal) { // watch it
+      if (newVal.length === 14 && !isNaN(newVal)) {
         this.draw()
       }
     }
   },
   mounted: {
     function () {
-      if (this.siret.length == 14 && !isNaN(this.siret)) {
+      if (this.siret.length === 14 && !isNaN(this.siret)) {
         this.draw()
       }
     }
@@ -57,10 +57,10 @@ export default {
     draw () {
       var self = this
       self.datacollection.datasets = []
-      axios.get(self.$api + '/data/debit/' + this.siret ).then(function (response) {
+      axios.get(self.$api + '/data/debit/' + this.siret).then(function (response) {
         console.log(response.data)
-        var debit = (response.data.value.batch["1802"].debit || {})
-        var cotisation = (response.data.value.batch["1802"].cotisation || {})
+        var debit = (response.data.value.batch['1802'].debit || {})
+        var cotisation = (response.data.value.batch['1802'].cotisation || {})
         console.log(debit)
         // Mise en forme de la cotisation
         var calCot = Object.keys(cotisation).reduce(function (m, k) {
@@ -69,7 +69,7 @@ export default {
           var end = new Date(c.periode.end)
           var periods = self.$generatePeriodSerie(start, end)
           periods.map(function (date) {
-            m[date] = (m[date] || 0) + c.du/periods.length
+            m[date] = (m[date] || 0) + c.du / periods.length
           })
           return m
         }, {})
@@ -90,7 +90,6 @@ export default {
           steppedLine: true,
           backgroundColor: 'rgba(0,0,128,0.4)',
           data: datasetCot})
-      
 
         // Mise en forme de la dette cumulée
         var calDette = {}
@@ -114,9 +113,7 @@ export default {
           b = new Date(b)
           return a > b ? 1 : a < b ? -1 : 0
         })
-
         var detteCumulee = []
-        
         keys.reduce(function (m, k) {
           Object.keys(calDette[k]).map(function (key) {
             m[key] = calDette[k][key]
@@ -135,7 +132,7 @@ export default {
           radius: 2,
           borderWidth: 3,
           steppedLine: true,
-          backgroundColor:  'rgba(128,0,0,0.4)',
+          backgroundColor: 'rgba(128,0,0,0.4)',
           data: dataset})
         self.renderChart(self.datacollection, self.options)
       })
