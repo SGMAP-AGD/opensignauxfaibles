@@ -24,8 +24,8 @@ type DPAE struct {
 	CDDCourt float64   `json:"cdd_court" bson:"cdd_court"`
 }
 
-func parseDPAE(path string) chan DPAE {
-	outputChannel := make(chan DPAE)
+func parseDPAE(path string) chan *DPAE {
+	outputChannel := make(chan *DPAE)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -56,7 +56,7 @@ func parseDPAE(path string) chan DPAE {
 			dpae.CDDCourt, _ = strconv.ParseFloat(row[5], 64)
 
 			if err == nil {
-				outputChannel <- dpae
+				outputChannel <- &dpae
 
 			}
 		}
@@ -81,10 +81,7 @@ func importDPAE(c *gin.Context) {
 					Siret: dpae.Siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							// Compact: map[string]bool{
-							// 	"status": false,
-							// },
-							DPAE: map[string]DPAE{
+							DPAE: map[string]*DPAE{
 								hash: dpae,
 							}}}}}
 			insertWorker <- value

@@ -44,8 +44,8 @@ type Sirene struct {
 	Lattitude          float64   `json,omitempty:"lattitude" bson:"lattitude"`
 }
 
-func parseSirene(paths []string, batch string) chan Sirene {
-	outputChannel := make(chan Sirene)
+func parseSirene(paths []string, batch string) chan *Sirene {
+	outputChannel := make(chan *Sirene)
 	ignoreSirene := stringSlice(viper.GetStringSlice("SIRENE_IGNORE"))
 
 	go func() {
@@ -94,7 +94,7 @@ func parseSirene(paths []string, batch string) chan Sirene {
 					sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
 					sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
 
-					outputChannel <- sirene
+					outputChannel <- &sirene
 				}
 			}
 			file.Close()
@@ -122,10 +122,7 @@ func importSirene(c *gin.Context) {
 				Siret: sirene.Siren + sirene.Nic,
 				Batch: map[string]Batch{
 					batch: Batch{
-						Compact: map[string]bool{
-							"status": false,
-						},
-						Sirene: map[string]Sirene{
+						Sirene: map[string]*Sirene{
 							hash: sirene,
 						}}}}}
 		insertWorker <- value

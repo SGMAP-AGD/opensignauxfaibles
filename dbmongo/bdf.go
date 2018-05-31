@@ -27,8 +27,8 @@ type BDF struct {
 	FraisFinancier      float64   `json:"frais_financier" bson:"frais_financier"`
 }
 
-func parseBDF(path []string) chan BDF {
-	outputChannel := make(chan BDF)
+func parseBDF(path []string) chan *BDF {
+	outputChannel := make(chan *BDF)
 
 	go func() {
 		for _, file := range path {
@@ -52,7 +52,7 @@ func parseBDF(path []string) chan BDF {
 					bdf.FinancierCourtTerme, err = strconv.ParseFloat(row.Cells[9].Value, 64)
 					bdf.FraisFinancier, err = strconv.ParseFloat(row.Cells[10].Value, 64)
 
-					outputChannel <- bdf
+					outputChannel <- &bdf
 				}
 			}
 		}
@@ -75,10 +75,7 @@ func importBDF(c *gin.Context) {
 				Siren: bdf.Siren,
 				Batch: map[string]Batch{
 					batch: Batch{
-						// Compact: map[string]bool{
-						// 	"status": false,
-						// },
-						BDF: map[string]BDF{
+						BDF: map[string]*BDF{
 							hash: bdf,
 						}}}}}
 		insertWorker <- value

@@ -10,6 +10,5 @@ function reduce(key, values) {
         })
 
         return m
-    },{"siret": key})
-
+    },{"siren": key})
 }

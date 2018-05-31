@@ -23,8 +23,8 @@ type Altares struct {
 	Siret         string    `json:"-" bson:"-"`
 }
 
-func parseAltares(path string, batch string) chan Altares {
-	outputChannel := make(chan Altares)
+func parseAltares(path string, batch string) chan *Altares {
+	outputChannel := make(chan *Altares)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -62,7 +62,7 @@ func parseAltares(path string, batch string) chan Altares {
 				CodeEvenement: row[codeEvenementIndex],
 			}
 			if err == nil {
-				outputChannel <- altares
+				outputChannel <- &altares
 
 			}
 		}
@@ -86,10 +86,7 @@ func importAltares(c *gin.Context) {
 				Siret: altares.Siret,
 				Batch: map[string]Batch{
 					batch: Batch{
-						// Compact: map[string]bool{
-						// 	"status": false,
-						// },
-						Altares: map[string]Altares{
+						Altares: map[string]*Altares{
 							hash: altares,
 						}}}}}
 		insertWorker <- value

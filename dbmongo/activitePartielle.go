@@ -45,8 +45,8 @@ type APConso struct {
 	Periode        time.Time `json:"periode" bson:"periode"`
 }
 
-func parseAPDemande(path string) chan APDemande {
-	outputChannel := make(chan APDemande)
+func parseAPDemande(path string) chan *APDemande {
+	outputChannel := make(chan *APDemande)
 
 	go func() {
 		xlFile, err := xlsx.OpenFile(path)
@@ -126,7 +126,7 @@ func parseAPDemande(path string) chan APDemande {
 				// apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[f["S_MONTANT_CONSOM_TOT"]].Value, 64)
 				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
 
-				outputChannel <- apdemande
+				outputChannel <- &apdemande
 			}
 
 		}
@@ -155,7 +155,7 @@ func importAPDemande(c *gin.Context) {
 							Compact: map[string]bool{
 								"status": false,
 							},
-							APDemande: map[string]APDemande{
+							APDemande: map[string]*APDemande{
 								hash: apdemande,
 							}}}}}
 			insertWorker <- value
@@ -163,8 +163,8 @@ func importAPDemande(c *gin.Context) {
 	}
 }
 
-func parseAPConso(path string) chan APConso {
-	outputChannel := make(chan APConso)
+func parseAPConso(path string) chan *APConso {
+	outputChannel := make(chan *APConso)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -193,7 +193,7 @@ func parseAPConso(path string) chan APConso {
 					if err != nil {
 						fmt.Println(err)
 					}
-					outputChannel <- apconso
+					outputChannel <- &apconso
 				}
 			}
 		}
@@ -217,10 +217,7 @@ func importAPConso(c *gin.Context) {
 					Siret: apconso.Siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							// Compact: map[string]bool{
-							// 	"status": false,
-							// },
-							APConso: map[string]APConso{
+							APConso: map[string]*APConso{
 								hash: apconso,
 							}}}}}
 			insertWorker <- value

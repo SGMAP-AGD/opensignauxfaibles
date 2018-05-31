@@ -9,6 +9,22 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+func (value1 ValueEtablissement) merge(value2 ValueEtablissement) (ValueEtablissement, error) {
+	if value1.Value.Siret != value2.Value.Siret {
+		return ValueEtablissement{},
+			errors.New("Valeurs non missibles: sirets '" +
+				value1.Value.Siret + "' et '" +
+				value2.Value.Siret + "'")
+	}
+	for idBatch := range value2.Value.Batch {
+		if value1.Value.Batch == nil {
+			value1.Value.Batch = make(map[string]Batch)
+		}
+		value1.Value.Batch[idBatch].merge(value2.Value.Batch[idBatch])
+	}
+	return value1, nil
+}
+
 func dataDebit(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
 	var data interface{}
@@ -95,13 +111,13 @@ func compactEtablissement(c *gin.Context) {
 	var output interface{}
 	var etablissement []interface{}
 
-	siren := c.Params.ByName("siret")
-	if siren == "" {
+	siret := c.Params.ByName("siret")
+	if siret == "" {
 		query = nil
 		output = bson.M{"replace": "Etablissement"}
 		etablissement = nil
 	} else {
-		query = bson.M{"value.siret": c.Params.ByName("siret")}
+		query = bson.M{"value.siret": siret}
 		output = nil
 	}
 
@@ -142,6 +158,62 @@ func compactEtablissement(c *gin.Context) {
 		_, err = db.C("Etablissement").Find(query).MapReduce(job, &etablissement)
 	} else {
 		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
+	}
+
+	if err != nil {
+		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
+	} else {
+		c.JSON(200, etablissement)
+	}
+
+}
+
+func compactEntreprise(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	// Détermination scope traitement
+	var query interface{}
+	var output interface{}
+	var etablissement []interface{}
+
+	siren := c.Params.ByName("siren")
+	if siren == "" {
+		query = nil
+		output = bson.M{"replace": "Entreprise"}
+		etablissement = nil
+	} else {
+		query = bson.M{"value.siren": siren}
+		output = nil
+	}
+
+	// Ressources JS
+	mapFct, errMap := ioutil.ReadFile("js/compactEntrepriseMap.js")
+	reduceFct, errReduce := ioutil.ReadFile("js/compactEntrepriseReduce.js")
+	finalizeFct, errFinalize := ioutil.ReadFile("js/compactEntrepriseFinalize.js")
+	if errMap != nil || errReduce != nil || errFinalize != nil {
+		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
+		return
+	}
+
+	// Traitement MR
+	job := &mgo.MapReduce{
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+		Out:      output,
+		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805"},
+			"types": []string{
+				"bdf",
+			},
+			"deleteOld": []string{"bdf"},
+		},
+	}
+
+	err := errors.New("")
+	if output == nil {
+		_, err = db.C("Entreprise").Find(query).MapReduce(job, &etablissement)
+	} else {
+		_, err = db.C("Entreprise").Find(query).MapReduce(job, nil)
 	}
 
 	if err != nil {

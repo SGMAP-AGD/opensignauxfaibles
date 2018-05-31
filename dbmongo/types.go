@@ -44,19 +44,34 @@ type Entreprise struct {
 
 // Batch lot de data
 type Batch struct {
-	Compact    map[string]bool       `json:"compact,omitempty" bson:"compact,omitempty"`
-	Effectif   map[string]Effectif   `json:"effectif,omitempty" bson:"effectif,omitempty"`
-	Delai      map[string]Delai      `json:"delai,omitempty" bson:"delai,omitempty"`
-	Debit      map[string]Debit      `json:"debit,omitempty" bson:"debit,omitempty"`
-	CCSF       map[string]CCSF       `json:"ccsf,omitempty" bson:"ccsf,omitempty"`
-	Cotisation map[string]Cotisation `json:"cotisation,omitempty" bson:"cotisation,omitempty"`
-	Altares    map[string]Altares    `json:"altares,omitempty" bson:"altares,omitempty"`
-	APDemande  map[string]APDemande  `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
-	APConso    map[string]APConso    `json:"apconso,omitempty" bson:"apconso,omitempty"`
-	Sirene     map[string]Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
-	BDF        map[string]BDF        `json:"bdf,omitempty" bson:"bdf,omitempty"`
-	Prediction map[string]Prediction `json:"prediction,omitempty" bson:"prediction,omitempty"`
-	DPAE       map[string]DPAE       `json:"dpae,omitempty" bson:"dpae,omitempty"`
+	Compact    map[string]bool        `json:"compact,omitempty" bson:"compact,omitempty"`
+	Effectif   map[string]*Effectif   `json:"effectif,omitempty" bson:"effectif,omitempty"`
+	Delai      map[string]*Delai      `json:"delai,omitempty" bson:"delai,omitempty"`
+	Debit      map[string]*Debit      `json:"debit,omitempty" bson:"debit,omitempty"`
+	CCSF       map[string]*CCSF       `json:"ccsf,omitempty" bson:"ccsf,omitempty"`
+	Cotisation map[string]*Cotisation `json:"cotisation,omitempty" bson:"cotisation,omitempty"`
+	Altares    map[string]*Altares    `json:"altares,omitempty" bson:"altares,omitempty"`
+	APDemande  map[string]*APDemande  `json:"apdemande,omitempty" bson:"apdemande,omitempty"`
+	APConso    map[string]*APConso    `json:"apconso,omitempty" bson:"apconso,omitempty"`
+	Sirene     map[string]*Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
+	BDF        map[string]*BDF        `json:"bdf,omitempty" bson:"bdf,omitempty"`
+	Prediction map[string]*Prediction `json:"prediction,omitempty" bson:"prediction,omitempty"`
+	DPAE       map[string]*DPAE       `json:"dpae,omitempty" bson:"dpae,omitempty"`
+}
+
+func (batch1 Batch) merge(batch2 Batch) {
+	for hash, altares := range batch2.Altares {
+		if batch1.Altares == nil {
+			batch1.Altares = make(map[string]*Altares)
+		}
+		batch1.Altares[hash] = altares
+	}
+	for hash, effectif := range batch2.Effectif {
+		if batch1.Effectif == nil {
+			batch1.Effectif = make(map[string]*Effectif)
+		}
+		batch1.Effectif[hash] = effectif
+	}
 }
 
 // Periode Période de temps avec un début et une fin

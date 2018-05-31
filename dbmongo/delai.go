@@ -31,8 +31,8 @@ type Delai struct {
 	Action            string    `json:"action" bson:"action"`
 }
 
-func parseDelai(paths []string) chan Delai {
-	outputChannel := make(chan Delai)
+func parseDelai(paths []string) chan *Delai {
+	outputChannel := make(chan *Delai)
 
 	field := map[string]int{
 		"NumeroCompte":      0,
@@ -83,7 +83,7 @@ func parseDelai(paths []string) chan Delai {
 				delai.Stade = row[field["Stade"]]
 				delai.Action = row[field["Action"]]
 
-				outputChannel <- delai
+				outputChannel <- &delai
 
 			}
 			file.Close()
@@ -112,10 +112,7 @@ func importDelai(c *gin.Context) {
 					Siret: siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							// Compact: map[string]bool{
-							// 	"status": false,
-							// },
-							Delai: map[string]Delai{
+							Delai: map[string]*Delai{
 								hash: delai,
 							}}}}}
 			insertWorker <- value

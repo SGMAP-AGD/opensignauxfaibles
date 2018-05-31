@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -54,8 +53,11 @@ func main() {
 
 		api.GET("/repo/create/:batch", createRepo)
 
-		api.GET("/compact/:siret", compactEtablissement)
-		api.GET("/compact", compactEtablissement)
+		api.GET("/compact/etablissement/:siret", compactEtablissement)
+		api.GET("/compact/etablissement", compactEtablissement)
+		api.GET("/compact/entreprise/:siren", compactEntreprise)
+		api.GET("/compact/entreprise", compactEntreprise)
+		// api.GET("/compact", compact)
 
 		api.GET("/reduce/:siren", reduce)
 
@@ -72,8 +74,31 @@ func main() {
 }
 
 func debug(c *gin.Context) {
-	param := c.Params.ByName("param")
-	spew.Dump(batchToTime(param))
+	value1 := ValueEtablissement{
+		Value: Etablissement{
+			Siret: "toto",
+			Batch: map[string]Batch{
+				"1010": Batch{
+					Altares: map[string]*Altares{
+						"bli": &Altares{},
+					},
+				},
+			},
+		},
+	}
+	value2 := ValueEtablissement{
+		Value: Etablissement{
+			Siret: "toto",
+			Batch: map[string]Batch{
+				"1010": Batch{
+					Altares: map[string]*Altares{
+						"bla": &Altares{},
+					},
+				},
+			},
+		},
+	}
+	spew.Dump(value1.merge(value2))
 }
 
 func loadConfig() {

@@ -31,8 +31,8 @@ type Debit struct {
 	DebitSuivant                 string    `json:"debit_suivant,omitempty" bson:"debit_suivant,omitempty"`
 }
 
-func parseDebit(paths []string) chan Debit {
-	outputChannel := make(chan Debit)
+func parseDebit(paths []string) chan *Debit {
+	outputChannel := make(chan *Debit)
 
 	go func() {
 		for _, path := range paths {
@@ -80,7 +80,7 @@ func parseDebit(paths []string) chan Debit {
 				debit.CodeOperationEcartNegatif = row[codeOperationEcartNegatifIndex]
 				debit.CodeMotifEcartNegatif = row[codeMotifEcartNegatifIndex]
 
-				outputChannel <- debit
+				outputChannel <- &debit
 			}
 			file.Close()
 		}
@@ -111,7 +111,7 @@ func importDebit(c *gin.Context) {
 							// Compact: map[string]bool{
 							// 	"status": false,
 							// },
-							Debit: map[string]Debit{
+							Debit: map[string]*Debit{
 								hash: debit,
 							}}}}}
 			insertWorker <- value

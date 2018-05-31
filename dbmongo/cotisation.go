@@ -26,8 +26,8 @@ type Cotisation struct {
 	Ecriture     string  `json:"ecriture" bson:"ecriture"`
 }
 
-func parseCotisation(paths []string) chan Cotisation {
-	outputChannel := make(chan Cotisation)
+func parseCotisation(paths []string) chan *Cotisation {
+	outputChannel := make(chan *Cotisation)
 
 	field := map[string]int{
 		"NumeroCompte": 0,
@@ -50,8 +50,6 @@ func parseCotisation(paths []string) chan Cotisation {
 			reader.Comma = ';'
 			reader.Read()
 
-			cotisation := Cotisation{}
-
 			for {
 
 				row, error := reader.Read()
@@ -61,7 +59,7 @@ func parseCotisation(paths []string) chan Cotisation {
 					log.Fatal(error)
 				}
 
-				cotisation = Cotisation{}
+				cotisation := Cotisation{}
 				cotisation.NumeroCompte = row[field["NumeroCompte"]]
 				cotisation.Periode, err = UrssafToPeriod(row[field["Periode"]])
 				cotisation.PeriodeDebit = row[field["PeriodeDebit"]]
@@ -70,7 +68,7 @@ func parseCotisation(paths []string) chan Cotisation {
 				cotisation.Du, err = strconv.ParseFloat(strings.Replace(row[field["Du"]], ",", ".", -1), 64)
 				cotisation.Ecriture = row[field["Ecriture"]]
 
-				outputChannel <- cotisation
+				outputChannel <- &cotisation
 			}
 			file.Close()
 		}
@@ -91,17 +89,14 @@ func importCotisation(c *gin.Context) {
 
 	for cotisation := range parseCotisation(dataSource) {
 		if siret, ok := mapping[cotisation.NumeroCompte]; ok {
-			hash := fmt.Sprintf("%x", structhash.Md5(cotisation, 1))
+			hash := fmt.Sprintf("%x", structhash.Md5(*cotisation, 1))
 
 			value := ValueEtablissement{
 				Value: Etablissement{
 					Siret: siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							// Compact: map[string]bool{
-							// 	"status": false,
-							// },
-							Cotisation: map[string]Cotisation{
+							Cotisation: map[string]*Cotisation{
 								hash: cotisation,
 							}}}}}
 			insertWorker <- value

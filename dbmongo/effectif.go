@@ -35,8 +35,8 @@ func parseEffectifPeriod(effectifPeriods []string) ([]time.Time, error) {
 	return periods, nil
 }
 
-func parseEffectif(paths []string) chan map[string]Effectif {
-	outputChannel := make(chan map[string]Effectif)
+func parseEffectif(paths []string) chan map[string]*Effectif {
+	outputChannel := make(chan map[string]*Effectif)
 
 	go func() {
 		for _, path := range paths {
@@ -75,7 +75,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 				}
 
 				i := 0
-				effectif := make(map[string]Effectif)
+				effectif := make(map[string]*Effectif)
 
 				for i < boundaryIndex {
 					e, _ := strconv.Atoi(row[i])
@@ -86,7 +86,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 							Periode:      periods[i],
 							Effectif:     e}
 						hash := fmt.Sprintf("%x", structhash.Md5(eff, 1))
-						effectif[hash] = eff
+						effectif[hash] = &eff
 					}
 					i++
 				}
@@ -124,9 +124,6 @@ func importEffectif(c *gin.Context) {
 					Siret: siret,
 					Batch: map[string]Batch{
 						batch: Batch{
-							// Compact: map[string]bool{
-							// 	"status": false,
-							// },
 							Effectif: effectif,
 						}}}}
 			insertWorker <- value

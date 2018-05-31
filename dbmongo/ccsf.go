@@ -23,8 +23,8 @@ type CCSF struct {
 	DateBatch      time.Time `json:"date_batch" bson:"date_batch"`
 }
 
-func parseCCSF(path string, dateBatch time.Time) chan CCSF {
-	outputChannel := make(chan CCSF)
+func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
+	outputChannel := make(chan *CCSF)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -57,7 +57,7 @@ func parseCCSF(path string, dateBatch time.Time) chan CCSF {
 			ccsf.DateTraitement, err = UrssafToDate(r[f["DateTraitement"]])
 			ccsf.NumeroCompte = r[f["NumeroCompte"]]
 			ccsf.DateBatch = dateBatch
-			outputChannel <- ccsf
+			outputChannel <- &ccsf
 		}
 		close(outputChannel)
 		file.Close()
@@ -99,7 +99,7 @@ func importCCSF(c *gin.Context) {
 								// Compact: map[string]bool{
 								// 	"status": false,
 								// },
-								CCSF: map[string]CCSF{
+								CCSF: map[string]*CCSF{
 									hash: ccsf,
 								}}}}}
 				insertWorker <- value
