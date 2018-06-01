@@ -355,10 +355,9 @@ function finalize(k, v) {
                 val.frais_financier = optbdf.frais_financier
             }
 
-
-
             // CCSF
-            var ccsfHashes = Object.keys(v.entreprise.ccsf || {})
+            
+            var ccsfHashes = Object.keys(v.ccsf || {})
 
             var optccsf = ccsfHashes.reduce(
                 function (accu, hash) {
@@ -366,6 +365,7 @@ function finalize(k, v) {
                     if (ccsf.date_traitement.getTime() < val.periode.getTime() && ccsf.date_traitement.getTime() > accu.date_traitement.getTime()) {
                         accu = ccsf
                     }
+                    return accu
                 },
                 {
                     date_traitement: new Date(0)
@@ -383,10 +383,10 @@ function finalize(k, v) {
             delete val.apart_heures_consommees_array
             delete val.cotisation_due_periode
             // delete val.date_defaillance
-            //delete val.montant_part_ouvriere
-            //delete val.montant_part_patronale
-            delete val.ratio_dettecumulee_cotisation_12m
-            //delete val.mean_cotisation_due
+            // delete val.montant_part_ouvriere
+            // delete val.montant_part_patronale
+            // delete val.ratio_dettecumulee_cotisation_12m
+            // delete val.mean_cotisation_due
             delete val.effectif_date
             delete val.effectif_average
             delete val.lag_effectif
