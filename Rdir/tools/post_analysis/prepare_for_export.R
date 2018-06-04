@@ -25,7 +25,6 @@ prepare_for_export <- function(data){
         -dette_fiscale
       ) %>%
       left_join(derniers_bilans_connus, by = 'siret') %>%
-      dplyr::mutate(proc_collective = date_defaillance) %>%
       dplyr::mutate(CCSF = date_ccsf ) %>%
       dplyr::arrange(dplyr::desc(prob))
 
@@ -74,7 +73,7 @@ prepare_for_export <- function(data){
         region,
         prob,
         date_ccsf,
-        date_defaillance,
+        proc_collective,
         cut_effectif,
         libelle_naf_niveau1,
         libelle_naf_niveau5,

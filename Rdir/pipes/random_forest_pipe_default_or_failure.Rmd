@@ -29,7 +29,7 @@ library(rprojroot)
 
 source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
 source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
-source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
+source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
 source(find_rstudio_root_file('tools','split','split_snapshot_each_month.R'))
 source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
 source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
@@ -51,7 +51,7 @@ table_wholesample <- connect_to_database('algo1')
 
 ## Definition de l'objectif
 ```{r}
-table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
+table_wholesample <- objective_default_or_failure(table_wholesample,n_months = 3, threshold = 1, lookback = 24)
 table_wholesample <- table_wholesample %>%
   mutate(outcome = factor(outcome)) %>% 
   mutate(outcome = fct_recode(
@@ -126,7 +126,7 @@ sample_test <- tw_complete %>%
 Avec foret aleatoire
 
 ```{r}
-set.seed(1900)
+set.seed(1900)r
 formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
   log_cotisationdue_effectif +

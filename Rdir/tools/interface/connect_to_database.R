@@ -18,11 +18,14 @@ connect_to_database <- function(collection){
            arrange(periode) %>%
            as_tbl_time(periode)
 
+
   table_wholesample  <- table_wholesample %>%
     group_by(siret) %>%
     mutate(toKeep = max(effectif)>20) %>%
     filter(toKeep) %>%
-    select(-toKeep)
+    select(-toKeep) %>%
+   dplyr::mutate(proc_collective = if_else(any(!is.na(date_defaillance)),max(date_defaillance,na.rm =TRUE),as.POSIXct(NA))) %>%
+    ungroup()
 
   return(table_wholesample)
 }
