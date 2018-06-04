@@ -23,14 +23,16 @@ library(MLmetrics)
 library(tibbletime)
 library(PRROC)
 library(broom)
+library(rprojroot)
 
 # Sources
-source("../tools/interface/connect_to_database.R")
-source("../tools/data_prep/impute_missing_data_BdF.R")
-source("../tools/objective/objective_RJ_LJ_PS.R")
-source("../tools/split/split_snapshot_each_month.R")
-source("../tools/utilities/elapsed_months.R")
-source("../tools/post_analysis/export_top.R")
+source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
+source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
+source(find_rstudio_root_file('tools','split','split_snapshot_each_month.R'))
+source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
+source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
+source(find_rstudio_root_file('tools','post_analysis','export.R'))
 
 ```
 
