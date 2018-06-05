@@ -45,8 +45,8 @@ type APConso struct {
 	Periode        time.Time `json:"periode" bson:"periode"`
 }
 
-func parseAPDemande(path string) chan APDemande {
-	outputChannel := make(chan APDemande)
+func parseAPDemande(path string) chan *APDemande {
+	outputChannel := make(chan *APDemande)
 
 	go func() {
 		xlFile, err := xlsx.OpenFile(path)
@@ -126,7 +126,7 @@ func parseAPDemande(path string) chan APDemande {
 				// apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[f["S_MONTANT_CONSOM_TOT"]].Value, 64)
 				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
 
-				outputChannel <- apdemande
+				outputChannel <- &apdemande
 			}
 
 		}
@@ -138,7 +138,7 @@ func parseAPDemande(path string) chan APDemande {
 }
 
 func importAPDemande(c *gin.Context) {
-	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apdemande"]
@@ -147,27 +147,24 @@ func importAPDemande(c *gin.Context) {
 		for apdemande := range parseAPDemande(file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: apdemande.Siret[0:9],
-					Etablissement: map[string]Etablissement{
-						apdemande.Siret: Etablissement{
-							Siret: apdemande.Siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									APDemande: map[string]APDemande{
-										hash: apdemande,
-									}}}}}}}
-			insertWorker <- value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: apdemande.Siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Compact: map[string]bool{
+								"status": false,
+							},
+							APDemande: map[string]*APDemande{
+								hash: apdemande,
+							}}}}}
+			insertWorker <- &value
 		}
 	}
 }
 
-func parseAPConso(path string) chan APConso {
-	outputChannel := make(chan APConso)
+func parseAPConso(path string) chan *APConso {
+	outputChannel := make(chan *APConso)
 
 	xlFile, err := xlsx.OpenFile(path)
 	if err != nil {
@@ -196,7 +193,7 @@ func parseAPConso(path string) chan APConso {
 					if err != nil {
 						fmt.Println(err)
 					}
-					outputChannel <- apconso
+					outputChannel <- &apconso
 				}
 			}
 		}
@@ -207,7 +204,7 @@ func parseAPConso(path string) chan APConso {
 }
 
 func importAPConso(c *gin.Context) {
-	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apconso"]
@@ -215,21 +212,16 @@ func importAPConso(c *gin.Context) {
 	for _, file := range files {
 		for apconso := range parseAPConso(file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apconso, 1))
-			value := Value{
-				Value: Entreprise{
-					Siren: apconso.Siret[0:9],
-					Etablissement: map[string]Etablissement{
-						apconso.Siret: Etablissement{
-							Siret: apconso.Siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									APConso: map[string]APConso{
-										hash: apconso,
-									}}}}}}}
-			insertWorker <- value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: apconso.Siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							APConso: map[string]*APConso{
+								hash: apconso,
+							}}}}}
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
 }

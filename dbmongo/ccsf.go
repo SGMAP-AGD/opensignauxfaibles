@@ -20,10 +20,11 @@ type CCSF struct {
 	DateTraitement time.Time `json:"date_traitement" bson:"date_traitement"`
 	Stade          string    `json:"stade" bson:"stade"`
 	Action         string    `json:"action" json:"action"`
+	DateBatch      time.Time `json:"date_batch" bson:"date_batch"`
 }
 
-func parseCCSF(path string) chan CCSF {
-	outputChannel := make(chan CCSF)
+func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
+	outputChannel := make(chan *CCSF)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -55,7 +56,8 @@ func parseCCSF(path string) chan CCSF {
 			ccsf.Stade = r[f["Stade"]]
 			ccsf.DateTraitement, err = UrssafToDate(r[f["DateTraitement"]])
 			ccsf.NumeroCompte = r[f["NumeroCompte"]]
-			outputChannel <- ccsf
+			ccsf.DateBatch = dateBatch
+			outputChannel <- &ccsf
 		}
 		close(outputChannel)
 		file.Close()
@@ -64,35 +66,45 @@ func parseCCSF(path string) chan CCSF {
 }
 
 func importCCSF(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
+	files, err := GetFileList(viper.GetString("APP_DATA"), batch)
+
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+
 	dataSource := files["ccsf"]
 	mapping := getCompteSiretMapping(files["admin_urssaf"])
 
+	dateBatch, errDate := batchToTime(batch)
+	if errDate != nil {
+		c.JSON(500, errDate)
+		return
+	}
+
 	for _, data := range dataSource {
-		for ccsf := range parseCCSF(data) {
+		for ccsf := range parseCCSF(data, dateBatch) {
 			if siret, ok := mapping[ccsf.NumeroCompte]; ok {
 				hash := fmt.Sprintf("%x", structhash.Md5(ccsf, 1))
 
-				value := Value{
-					Value: Entreprise{
-						Siren: siret[0:9],
-						Etablissement: map[string]Etablissement{
-							siret: Etablissement{
-								Siret: siret,
-								Batch: map[string]Batch{
-									batch: Batch{
-										Compact: map[string]bool{
-											"status": false,
-										},
-										CCSF: map[string]CCSF{
-											hash: ccsf,
-										}}}}}}}
-				insertWorker <- value
+				value := ValueEtablissement{
+					Value: Etablissement{
+						Siret: siret,
+						Batch: map[string]Batch{
+							batch: Batch{
+								// Compact: map[string]bool{
+								// 	"status": false,
+								// },
+								CCSF: map[string]*CCSF{
+									hash: ccsf,
+								}}}}}
+				insertWorker <- &value
 			}
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
 }

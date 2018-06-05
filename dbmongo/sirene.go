@@ -44,8 +44,10 @@ type Sirene struct {
 	Lattitude          float64   `json,omitempty:"lattitude" bson:"lattitude"`
 }
 
-func parseSirene(paths []string, batch string) chan Sirene {
-	outputChannel := make(chan Sirene)
+func parseSirene(paths []string, batch string) chan *Sirene {
+	outputChannel := make(chan *Sirene)
+	ignoreSirene := stringSlice(viper.GetStringSlice("SIRENE_IGNORE"))
+
 	go func() {
 		for _, path := range paths {
 			file, err := os.Open(path)
@@ -64,34 +66,36 @@ func parseSirene(paths []string, batch string) chan Sirene {
 					log.Fatal(error)
 				}
 
-				sirene := Sirene{}
-				sirene.Siren = row[0]
-				sirene.Nic = row[1]
-				sirene.RaisonSociale = row[36]
-				sirene.NumVoie = row[16]
-				sirene.IndRep = row[17]
-				sirene.TypeVoie = row[19]
-				sirene.CodePostal = row[20]
-				sirene.Cedex = row[21]
-				sirene.Region = row[23]
-				sirene.Departement = row[24]
-				sirene.Commune = row[28]
-				sirene.APE = row[42]
-				sirene.NatureActivite = row[52]
-				sirene.ActiviteSaisoniere = row[55]
-				sirene.ModaliteActivite = row[56]
-				sirene.Productif = row[57]
-				sirene.NatureJuridique = row[71]
-				sirene.Categorie = row[82]
-				sirene.Creation, _ = time.Parse("20060102", row[50])
-				sirene.IndiceMonoactivite, _ = strconv.Atoi(row[85])
-				sirene.TrancheCA, _ = strconv.Atoi(row[89])
-				sirene.Sigle = row[61]
-				sirene.DebutActivite, _ = time.Parse("20060102", row[51])
-				sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
-				sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
+				if !(ignoreSirene.contains(row[71])) {
+					sirene := Sirene{}
+					sirene.Siren = row[0]
+					sirene.Nic = row[1]
+					sirene.RaisonSociale = row[2]
+					sirene.NumVoie = row[16]
+					sirene.IndRep = row[17]
+					sirene.TypeVoie = row[19]
+					sirene.CodePostal = row[20]
+					sirene.Cedex = row[21]
+					sirene.Region = row[23]
+					sirene.Departement = row[24]
+					sirene.Commune = row[28]
+					sirene.APE = row[42]
+					sirene.NatureActivite = row[52]
+					sirene.ActiviteSaisoniere = row[55]
+					sirene.ModaliteActivite = row[56]
+					sirene.Productif = row[57]
+					sirene.NatureJuridique = row[71]
+					sirene.Categorie = row[82]
+					sirene.Creation, _ = time.Parse("20060102", row[50])
+					sirene.IndiceMonoactivite, _ = strconv.Atoi(row[85])
+					sirene.TrancheCA, _ = strconv.Atoi(row[89])
+					sirene.Sigle = row[61]
+					sirene.DebutActivite, _ = time.Parse("20060102", row[51])
+					sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
+					sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
 
-				outputChannel <- sirene
+					outputChannel <- &sirene
+				}
 			}
 			file.Close()
 		}
@@ -104,7 +108,7 @@ func parseSirene(paths []string, batch string) chan Sirene {
 // hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 func importSirene(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -113,24 +117,17 @@ func importSirene(c *gin.Context) {
 	for sirene := range parseSirene(sirene, batch) {
 		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
-		value := Value{
-			Value: Entreprise{
-				Siren:  sirene.Siren,
-				Region: sirene.Region,
-				Etablissement: map[string]Etablissement{
-					sirene.Siren + sirene.Nic: Etablissement{
-						Siret: sirene.Siren + sirene.Nic,
-						Batch: map[string]Batch{
-							batch: Batch{
-								Compact: map[string]bool{
-									"status": false,
-								},
-								Sirene: map[string]Sirene{
-									hash: sirene,
-								}}}}}}}
-		insertWorker <- value
+		value := ValueEtablissement{
+			Value: Etablissement{
+				Siret: sirene.Siren + sirene.Nic,
+				Batch: map[string]Batch{
+					batch: Batch{
+						Sirene: map[string]*Sirene{
+							hash: sirene,
+						}}}}}
+		insertWorker <- &value
 	}
 
-	insertWorker <- Value{}
+	insertWorker <- &ValueEtablissement{}
 
 }

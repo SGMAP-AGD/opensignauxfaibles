@@ -35,8 +35,8 @@ func parseEffectifPeriod(effectifPeriods []string) ([]time.Time, error) {
 	return periods, nil
 }
 
-func parseEffectif(paths []string) chan map[string]Effectif {
-	outputChannel := make(chan map[string]Effectif)
+func parseEffectif(paths []string) chan map[string]*Effectif {
+	outputChannel := make(chan map[string]*Effectif)
 
 	go func() {
 		for _, path := range paths {
@@ -75,7 +75,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 				}
 
 				i := 0
-				effectif := make(map[string]Effectif)
+				effectif := make(map[string]*Effectif)
 
 				for i < boundaryIndex {
 					e, _ := strconv.Atoi(row[i])
@@ -86,7 +86,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 							Periode:      periods[i],
 							Effectif:     e}
 						hash := fmt.Sprintf("%x", structhash.Md5(eff, 1))
-						effectif[hash] = eff
+						effectif[hash] = &eff
 					}
 					i++
 				}
@@ -103,7 +103,7 @@ func parseEffectif(paths []string) chan map[string]Effectif {
 }
 
 func importEffectif(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -119,23 +119,16 @@ func importEffectif(c *gin.Context) {
 		if randomKey != "" {
 			siret := effectif[randomKey].Siret
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Effectif: effectif,
-								}}}}}}
-			insertWorker <- value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Effectif: effectif,
+						}}}}
+			insertWorker <- &value
 		}
 	}
 
-	insertWorker <- Value{}
-
+	insertWorker <- &ValueEtablissement{}
 }

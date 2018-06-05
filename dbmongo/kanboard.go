@@ -75,5 +75,4 @@ func listProjects(c *gin.Context) {
 
 	project, _ := kb.GetAllProjects()
 	c.JSON(200, project)
-
 }

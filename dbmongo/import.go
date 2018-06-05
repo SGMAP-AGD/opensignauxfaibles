@@ -50,10 +50,8 @@ func createRepo(c *gin.Context) {
 }
 
 // GetFileList construit la liste des fichiers à traiter
-func GetFileList(basePath string, period string) (map[string][]string, map[string]error) {
+func GetFileList(basePath string, period string) (map[string][]string, error) {
 	list := make(map[string][]string)
-	var l []os.FileInfo
-	err := make(map[string]error)
 	directories := []string{
 		"admin_urssaf",
 		"altares",
@@ -72,15 +70,22 @@ func GetFileList(basePath string, period string) (map[string][]string, map[strin
 	}
 
 	for _, dir := range directories {
+
 		path := fmt.Sprintf("%s/%s/%s", basePath, period, dir)
-		l, err[dir] = ioutil.ReadDir(path)
+		l, err := ioutil.ReadDir(path)
+
+		if err != nil {
+			return nil, err
+		}
+
 		for _, f := range l {
 			if match, _ := regexp.MatchString("\\.(csv|xls|xlsx)$", f.Name()); match {
 				list[dir] = append(list[dir], fmt.Sprintf("%s/%s", path, f.Name()))
 			}
 		}
 	}
-	return list, err
+
+	return list, nil
 }
 
 func importAll(c *gin.Context) {

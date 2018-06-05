@@ -27,8 +27,8 @@ type BDF struct {
 	FraisFinancier      float64   `json:"frais_financier" bson:"frais_financier"`
 }
 
-func parseBDF(path []string) chan BDF {
-	outputChannel := make(chan BDF)
+func parseBDF(path []string) chan *BDF {
+	outputChannel := make(chan *BDF)
 
 	go func() {
 		for _, file := range path {
@@ -52,7 +52,7 @@ func parseBDF(path []string) chan BDF {
 					bdf.FinancierCourtTerme, err = strconv.ParseFloat(row.Cells[9].Value, 64)
 					bdf.FraisFinancier, err = strconv.ParseFloat(row.Cells[10].Value, 64)
 
-					outputChannel <- bdf
+					outputChannel <- &bdf
 				}
 			}
 		}
@@ -63,24 +63,22 @@ func parseBDF(path []string) chan BDF {
 }
 
 func importBDF(c *gin.Context) {
-	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	insertWorker, _ := c.Keys["insertEntreprise"].(chan *ValueEntreprise)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["bdf"]
 	for bdf := range parseBDF(files) {
 		hash := fmt.Sprintf("%x", structhash.Md5(bdf, 1))
 
-		value := Value{
+		value := ValueEntreprise{
 			Value: Entreprise{
 				Siren: bdf.Siren,
 				Batch: map[string]Batch{
 					batch: Batch{
-						Compact: map[string]bool{
-							"status": false,
-						},
-						BDF: map[string]BDF{
+						BDF: map[string]*BDF{
 							hash: bdf,
 						}}}}}
-		insertWorker <- value
+		insertWorker <- &value
 	}
+	insertWorker <- &ValueEntreprise{}
 }

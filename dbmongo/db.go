@@ -18,6 +18,7 @@ func DB() gin.HandlerFunc {
 	dbDatabase := viper.GetString("DB")
 
 	mongodb, err := mgo.Dial(dbDial)
+	mongodb.SetSocketTimeout(3600 * time.Second)
 	db := mongodb.DB(dbDatabase)
 
 	// pousse les fonctions partagées JS
@@ -27,39 +28,51 @@ func DB() gin.HandlerFunc {
 		log.Panic(err)
 	}
 
-	dbWorker := insertWorker(db)
+	dbInsertEntreprise := insertEntreprise(db)
+	dbInsertEtablissement := insertEtablissement(db)
 
 	go func() {
-		for range time.Tick(2 * time.Second) {
-			dbWorker <- Value{}
+		for range time.Tick(30 * time.Second) {
+			dbInsertEntreprise <- &ValueEntreprise{}
+			dbInsertEtablissement <- &ValueEtablissement{}
 		}
 	}()
 
 	return func(c *gin.Context) {
-		c.Set("DBW", dbWorker)
+		c.Set("insertEntreprise", dbInsertEntreprise)
+		c.Set("insertEtablissement", dbInsertEtablissement)
 		c.Set("DB", db)
 		c.Next()
 	}
 }
 
-func insertWorker(db *mgo.Database) chan Value {
-	source := make(chan Value)
+func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
+	source := make(chan *ValueEntreprise, 1000)
 
-	go func(chan Value) {
-		buffer := make([]interface{}, 0)
+	go func(chan *ValueEntreprise) {
+		buffer := make(map[string]*ValueEntreprise)
+		objects := make([]interface{}, 0)
 		i := 0
 
 		for value := range source {
-			if value.Value.Siren == "" || len(buffer) >= 1000 {
-				if i > 0 {
-					db.C("Entreprise").Insert(buffer...)
-					buffer = make([]interface{}, 0)
-					i = 0
+			if value.Value.Siren == "" || i >= 100 {
+				for _, v := range buffer {
+					objects = append(objects, *v)
 				}
+				db.C("Entreprise").Insert(objects...)
+
+				buffer = make(map[string]*ValueEntreprise)
+				objects = make([]interface{}, 0)
+				i = 0
 			} else {
-				value.ID = bson.NewObjectId()
-				buffer = append(buffer, value)
-				i++
+				if knowValue, ok := buffer[value.Value.Siren]; ok {
+					newValue, _ := (*knowValue).merge(*value)
+					buffer[value.Value.Siren] = &newValue
+				} else {
+					value.ID = bson.NewObjectId()
+					buffer[value.Value.Siren] = value
+					i++
+				}
 			}
 
 		}
@@ -68,20 +81,37 @@ func insertWorker(db *mgo.Database) chan Value {
 	return source
 }
 
-// func insertValue(db *mgo.Database, value Value) error {
-// 	if value.Value.Siret != "" {
-// 		value.ID = bson.NewObjectId()
-// 		err := db.C("Etablissement").Insert(value)
-// 		return err
-// 	}
-// 	return nil
-// }
+func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
+	source := make(chan *ValueEtablissement, 1000)
 
-// func insertValueEntreprise(db *mgo.Database, value ValueEntreprise) error {
-// 	if value.Value.Siren != "" {
-// 		value.ID = bson.NewObjectId()
-// 		err := db.C("Entreprise").Insert(value)
-// 		return err
-// 	}
-// 	return nil
-// }
+	go func(chan *ValueEtablissement) {
+		buffer := make(map[string]*ValueEtablissement)
+		objects := make([]interface{}, 0)
+		i := 0
+
+		for value := range source {
+			if value.Value.Siret == "" || i >= 100 {
+				for _, v := range buffer {
+					objects = append(objects, *v)
+				}
+				go func(o []interface{}) { db.C("Etablissement").Insert(o...) }(objects)
+
+				buffer = make(map[string]*ValueEtablissement)
+				objects = make([]interface{}, 0)
+				i = 0
+			} else {
+				if knowValue, ok := buffer[value.Value.Siret]; ok {
+					newValue, _ := (*knowValue).merge(*value)
+					buffer[value.Value.Siret] = &newValue
+				} else {
+					value.ID = bson.NewObjectId()
+					buffer[value.Value.Siret] = value
+					i++
+				}
+			}
+
+		}
+	}(source)
+
+	return source
+}

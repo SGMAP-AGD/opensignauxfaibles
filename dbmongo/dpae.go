@@ -24,8 +24,8 @@ type DPAE struct {
 	CDDCourt float64   `json:"cdd_court" bson:"cdd_court"`
 }
 
-func parseDPAE(path string) chan DPAE {
-	outputChannel := make(chan DPAE)
+func parseDPAE(path string) chan *DPAE {
+	outputChannel := make(chan *DPAE)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -56,7 +56,7 @@ func parseDPAE(path string) chan DPAE {
 			dpae.CDDCourt, _ = strconv.ParseFloat(row[5], 64)
 
 			if err == nil {
-				outputChannel <- dpae
+				outputChannel <- &dpae
 
 			}
 		}
@@ -67,7 +67,7 @@ func parseDPAE(path string) chan DPAE {
 }
 
 func importDPAE(c *gin.Context) {
-	insertWorker, _ := c.Keys["DBW"].(chan Value)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	dpaes := files["dpae"]
@@ -76,21 +76,17 @@ func importDPAE(c *gin.Context) {
 		for dpae := range parseDPAE(dpaeFile) {
 			hash := fmt.Sprintf("%x", structhash.Md5(dpae, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: dpae.Siret[0:9],
-					Etablissement: map[string]Etablissement{
-						dpae.Siret: Etablissement{
-							Siret: dpae.Siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									DPAE: map[string]DPAE{
-										hash: dpae,
-									}}}}}}}
-			insertWorker <- value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: dpae.Siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							DPAE: map[string]*DPAE{
+								hash: dpae,
+							}}}}}
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
+
 }

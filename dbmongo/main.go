@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -35,7 +34,6 @@ func main() {
 
 		api.GET("/purge", purge)
 
-		//api.GET("/kanboard/task/create/:siret", createKBProject)
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
@@ -54,30 +52,23 @@ func main() {
 
 		api.GET("/repo/create/:batch", createRepo)
 
-		api.GET("/compact/:siren", compact)
-		api.GET("/compact/", compactAll)
+		api.GET("/compact/etablissement/:siret", compactEtablissement)
+		api.GET("/compact/etablissement", compactEtablissement)
+		api.GET("/compact/entreprise/:siren", compactEntreprise)
+		api.GET("/compact/entreprise", compactEntreprise)
+		api.GET("/reduce/:siret", reduce)
+		api.GET("/reduce", reduce)
 
-		// api.GET("/prediction/inject/:region/:batch", injectPrediction)
-
-		api.GET("/reduce/:siren", reduce)
-
-		api.GET("/reduce", reduceAll)
 		api.GET("/browse/:siren", browse)
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
 		api.GET("/data/debit/:siret", dataDebit)
 
-		api.GET("/debug", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
 }
 
-func debug(c *gin.Context) {
-	target := []string{"A", "B", "C", "Z"}
-	data := []string{"A", "B", "D", "E", "F", "Z"}
-	spew.Dump(sliceIndexArray(target, data))
-}
 func loadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")

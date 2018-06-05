@@ -31,8 +31,8 @@ type Delai struct {
 	Action            string    `json:"action" bson:"action"`
 }
 
-func parseDelai(paths []string) chan Delai {
-	outputChannel := make(chan Delai)
+func parseDelai(paths []string) chan *Delai {
+	outputChannel := make(chan *Delai)
 
 	field := map[string]int{
 		"NumeroCompte":      0,
@@ -83,8 +83,7 @@ func parseDelai(paths []string) chan Delai {
 				delai.Stade = row[field["Stade"]]
 				delai.Action = row[field["Action"]]
 
-				outputChannel <- delai
-
+				outputChannel <- &delai
 			}
 			file.Close()
 		}
@@ -95,7 +94,7 @@ func parseDelai(paths []string) chan Delai {
 }
 
 func importDelai(c *gin.Context) {
-	insertWorker := c.Keys["DBW"].(chan Value)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -107,21 +106,17 @@ func importDelai(c *gin.Context) {
 		if siret, ok := mapping[delai.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(delai, 1))
 
-			value := Value{
-				Value: Entreprise{
-					Siren: siret[0:9],
-					Etablissement: map[string]Etablissement{
-						siret: Etablissement{
-							Siret: siret,
-							Batch: map[string]Batch{
-								batch: Batch{
-									Compact: map[string]bool{
-										"status": false,
-									},
-									Delai: map[string]Delai{
-										hash: delai,
-									}}}}}}}
-			insertWorker <- value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: siret,
+					Batch: map[string]Batch{
+						batch: Batch{
+							Delai: map[string]*Delai{
+								hash: delai,
+							}}}}}
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
+
 }
