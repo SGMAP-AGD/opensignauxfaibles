@@ -35,10 +35,6 @@ function finalize(k, o) {
         return m
     }, {})
 
-    o.index = {"algo1": false}
-    Object.keys(o.batch).forEach(batch => {
-        Object.keys((o.batch[batch].effectif||{})).forEach(effectif => o.index.algo1 = true)      
-    })
 
     return o
 }

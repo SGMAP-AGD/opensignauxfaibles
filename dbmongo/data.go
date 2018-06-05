@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"io/ioutil"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
@@ -19,49 +20,70 @@ func dataDebit(c *gin.Context) {
 
 func reduce(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
+	siret := c.Params.ByName("siret")
 
-	mapFct, _ := ioutil.ReadFile("js/algo1_map.js")
-	reduceFct, _ := ioutil.ReadFile("js/algo1_reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("js/algo1_finalize.js")
+	mapFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementMap.js")
+	reduceFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementReduce.js")
+	finalizeFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementFinalize.js")
 
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
+	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-05-01")
+	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-01-01")
+
+	scope := bson.M{"date_debut": dateDebut,
+		"date_fin":          dateFin,
+		"date_fin_effectif": dateFinEffectif}
+
+	jobEtablissement := &mgo.MapReduce{
+		Map:      string(mapFctEtablissement),
+		Reduce:   string(reduceFctEtablissement),
+		Finalize: string(finalizeFctEtablissement),
+		Out:      bson.M{"replace": "MRWorkspace"},
+		Scope:    scope,
 	}
 
-	var etablissement []interface{}
+	_, err := db.C("Etablissement").Find(bson.M{"value.siret": siret}).MapReduce(jobEtablissement, nil)
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
 
-	_, err := db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	mapFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseMap.js")
+	reduceFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseReduce.js")
+	finalizeFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseFinalize.js")
+
+	jobEntreprise := &mgo.MapReduce{
+		Map:      string(mapFctEntreprise),
+		Reduce:   string(reduceFctEntreprise),
+		Finalize: string(finalizeFctEntreprise),
+		Out:      bson.M{"merge": "MRWorkspace"},
+		Scope:    scope,
+	}
+
+	_, err = db.C("Entreprise").Find(bson.M{"value.siren": siret[0:9]}).MapReduce(jobEntreprise, nil)
+	if err != nil {
+		c.JSON(500, err)
+	}
+
+	mapFctUnion, _ := ioutil.ReadFile("js/algo1UnionMap.js")
+	reduceFctUnion, _ := ioutil.ReadFile("js/algo1UnionReduce.js")
+	finalizeFctUnion, _ := ioutil.ReadFile("js/algo1UnionFinalize.js")
+
+	var result interface{}
+	jobUnion := &mgo.MapReduce{
+		Map:      string(mapFctUnion),
+		Reduce:   string(reduceFctUnion),
+		Finalize: string(finalizeFctUnion),
+		// Out:      bson.M{"replace": "algo1"},
+		Scope: scope,
+	}
+
+	_, err = db.C("MRWorkspace").Find(bson.M{"value.siren": siret[0:9]}).MapReduce(jobUnion, &result)
 	if err != nil {
 		c.JSON(500, err)
 	} else {
-		c.JSON(200, etablissement)
+		c.JSON(200, result)
 	}
-}
-
-func reduceAll(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	mapFct, _ := ioutil.ReadFile("js/algo1_map.js")
-	reduceFct, _ := ioutil.ReadFile("js/algo1_reduce.js")
-	finalizeFct, _ := ioutil.ReadFile("js/algo1_finalize.js")
-
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
-		Out:      bson.M{"replace": "algo1"},
-	}
-
-	var etablissement []struct {
-		ID    string      `json:"id" bson:"_id"`
-		Value interface{} `json:"value" bson:"value"`
-	}
-
-	db.C("Entreprise").Find(bson.M{"value.index.algo1": true}).MapReduce(job, &etablissement)
-
-	c.JSON(200, etablissement)
 }
 
 func browse(c *gin.Context) {

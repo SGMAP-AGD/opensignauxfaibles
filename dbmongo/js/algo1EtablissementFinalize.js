@@ -1,13 +1,15 @@
 function finalize(k, v) {
 
+    var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()
+    liste_periodes = generatePeriodSerie(date_debut, date_fin)
+
     v = Object.keys((v.batch || {})).sort().reduce((m, batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
             Object.assign(m[type], v.batch[batch][type])
         })
         return m
-    }, {"siret": v.siret})
-
+    }, { "siret": k })
 
     v.apconso = (v.apconso || {})
     v.apdemande = (v.apdemande || {})
@@ -32,26 +34,14 @@ function finalize(k, v) {
         return m
     }, {})
     Object.keys(ecn).forEach(i => {
-
         ecn[i].sort(compareDebit)
         var l = ecn[i].length
         ecn[i].forEach((e, idx) => {
-
             if (idx <= l - 2) {
                 v.debit[e.hash].debit_suivant = ecn[i][idx + 1].hash;
             }
         })
     })
-
-    var date_debut = new Date("2014-01-01");
-    var date_fin = new Date("2018-03-01");
-    var date_fin_effectif = new Date("2018-01-01")
-
-    var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()
-    liste_periodes = generatePeriodSerie(date_debut, date_fin)
-
-    //liste_periodes = [new Date('2015-01-01'),new Date('2016-01-01'),new Date('2018-02-01')]
-    //liste_periodes = [new Date("2015-01-01"), new Date("2016-01-01"), new Date("2018-04-01")]
 
     var value_array = liste_periodes.map(function (e) {
         return {
@@ -68,7 +58,6 @@ function finalize(k, v) {
         }
     });
 
-
     var value = value_array.reduce(function (periode, val, index) {
         periode[val.periode.getTime()] = val
         return periode
@@ -84,7 +73,6 @@ function finalize(k, v) {
         return map_effectif
     }, {})
 
-
     // inscription des effectifs dans les périodes
     value_array.map(function (val) {
         var currentTime = val.periode.getTime()
@@ -93,14 +81,11 @@ function finalize(k, v) {
         var historyPeriods = generatePeriodSerie(historyDate, effectifDate)
         val.effectif_date = effectifDate
         val.effectif = map_effectif[effectifDate.getTime()]
-
         val.lag_effectif = map_effectif[historyDate.getTime()]
         historyPeriods.map(function (p) {
             val.effectif_history[p.getTime()] = map_effectif[p.getTime()]
         })
     })
-
-
 
     // activite partielle    
     var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
@@ -129,7 +114,6 @@ function finalize(k, v) {
         function (h) {
             var conso = v.apconso[h]
             if (conso.hash_demande && v.apdemande[conso.hash_demande].motif_recours_se != 3) {
-
                 var currentTime = conso.periode.getTime()
                 var beforeTime = new Date(conso.periode.getTime()).setFullYear(conso.periode.getFullYear() + 1)
                 var pastYearTimes = generatePeriodSerie(new Date(currentTime), new Date(beforeTime)).map(function (date) { return date.getTime() })
@@ -139,10 +123,8 @@ function finalize(k, v) {
                         value[time].apart_heures_consommees_array.push(conso.heure_consomme);
                     }
                 })
-
             }
         })
-
 
     // defaillance - On prend la date de l'évènement le plus proche dans l'avenir par rapport à period
     Object.keys(v.altares).map(
@@ -209,7 +191,6 @@ function finalize(k, v) {
         if (time in value_dette) {
             value[time].debit_array = value_dette[time]
         }
-
     })
 
     value_array.map(function (val, index) {
@@ -219,13 +200,9 @@ function finalize(k, v) {
         }
     })
 
-
     value_array.map(function (val, index) {
-
         val.lag_effectif_missing = (val.lag_effectif ? false : true)
-
         val.growthrate_effectif = (val.lag_effectif_missing ? 0 : val.effectif / val.lag_effectif)
-
 
         if (val.lag_effectif_missing) {
             val.cut_growthrate = "manquant"
@@ -291,43 +268,8 @@ function finalize(k, v) {
             sirene = v.sirene[sireneHashes[0]]
         }
 
-
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
-
-
-        // // ratios bdf
-        // var bdfHashes = Object.keys(v.entreprise.bdf || {})
-
-        // // selectionner le bon hash
-
-        // var optbdf = bdfHashes.reduce((accu, hash) => {
-        //     if (v.entreprise.bdf[hash].arrete_bilan.getTime() < val.periode.getTime() && v.entreprise.bdf[hash].arrete_bilan.getTime() > accu.arrete_bilan.getTime()) {
-        //         accu = v.entreprise.bdf[hash]
-        //     }
-        //     return accu
-
-        // },
-        //     {
-        //         arrete_bilan: new Date(0),
-        //         secteur: "inconnu",
-        //         poids_frng: null,
-        //         taux_marge: null,
-        //         delai_fournisseur: null,
-        //         dette_fiscale: null,
-        //         financier_court_terme: null,
-        //         frais_financier: null
-        //     }
-        // )
-
-        // val.arrete_bilan = optbdf.arrete_bilan
-        // val.secteur = optbdf.secteur
-        // val.poids_frng = optbdf.poids_frng
-        // val.taux_marge = optbdf.taux_marge
-        // val.delai_fournisseur = optbdf.delai_fournisseur
-        // val.dette_fiscale = optbdf.dette_fiscale
-        // val.financier_court_terme = optbdf.financier_court_terme
-        // val.frais_financier = optbdf.frais_financier
 
         delete val.effectif_history
         delete val.cotisation_array
@@ -335,7 +277,6 @@ function finalize(k, v) {
         delete val.montant_dette
         delete val.apart_heures_consommees_array
         delete val.cotisation_due_periode
-        // delete val.date_defaillance
         delete val.montant_part_ouvriere
         delete val.montant_part_patronale
         delete val.ratio_dettecumulee_cotisation_12m
@@ -345,6 +286,7 @@ function finalize(k, v) {
         delete val.lag_effectif
 
     })
-
-    return value_array
+    return_value = { "siren": k.substring(0, 9)}
+    return_value[k] = value_array
+    return return_value
 }

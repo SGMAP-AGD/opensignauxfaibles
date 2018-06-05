@@ -59,8 +59,6 @@ func main() {
 		// api.GET("/compact", compact)
 
 		api.GET("/reduce/:siret", reduce)
-
-		api.GET("/reduce", reduceAll)
 		api.GET("/browse/:siren", browse)
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
