@@ -1,0 +1,191 @@
+---
+title: "Random forest pipe"
+author: "Pierre Camilleri"
+date: "1 juin 2018"
+output: html_document
+---
+
+## Imports
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Libraries
+library(tidyverse)
+library(tricky)
+library(lubridate)
+library(assertthat)
+library(mongolite)
+library(mice)
+library(caret)
+library(broom)
+library(randomForest)
+library(MLmetrics)
+library(tibbletime)
+library(PRROC)
+library(broom)
+library(rprojroot)
+
+# Sources
+
+source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
+source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
+source(find_rstudio_root_file('tools','split','split_snapshot_each_month.R'))
+source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
+source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
+source(find_rstudio_root_file('tools','post_analysis','export.R'))
+
+
+```
+
+## Definition periode actuelle
+```{r}
+actual_period <- as.Date("2018-04-01")
+```
+
+
+## Recuperation des données dans MongoDB
+```{r}
+table_wholesample <- connect_to_database('algo1')
+```
+
+## Definition de l'objectif
+```{r}
+table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
+table_wholesample <- table_wholesample %>%
+  mutate(outcome = factor(outcome)) %>% 
+  mutate(outcome = fct_recode(
+    outcome,
+    default = "TRUE",
+    non_default = "FALSE"
+  ) %>%
+    fct_relevel(c("default","non_default")))
+
+```
+
+## Selection des features 
+```{r}
+table_wholesample_sel <- table_wholesample %>%
+  select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
+         apart_last12_months, apart_consommee, apart_share_heuresconsommees,
+         log_cotisationdue_effectif,
+         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m,
+         #indicatrice_croissance_dettecumulee,
+         #nb_debits,
+         #delai, delai_sup_6mois,
+         taux_marge, financier_court_terme, frais_financier, delai_fournisseur, poids_frng, dette_fiscale)
+```
+## Imputation des données manquantes
+
+Uniquement si les données Banque de France ont été importées
+
+```{r}
+seed <- 1234
+mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
+tw_complete <- mice::complete(mids,1) %>% as_tbl_time(periode)
+```
+
+sinon 
+```{r}
+#tw_complete <- table_wholesample_sel
+```
+
+
+## Split train test 
+
+Avec suréchantillonnage. Les suréchantillons seront supprimés à la main dans les échantillons d'entraînement pour s'assurer une évaluation sur le même échantillon de validation croisé. 
+
+```{r}
+seed <- 10011
+set.seed(seed)
+
+samples <-
+  split_snapshot_each_month(
+    tw_complete,
+    date_inf = as.Date("2015-01-01"),
+    date_sup = as.Date("2016-12-01"),
+    frac_train = 0.6,
+    frac_cross = 0.2,
+    frac_eyeball = 0.05
+  )
+
+sample_train <- samples$train %>% 
+  left_join(tw_complete, by = c('siret','periode'))
+  
+cv_folds <- samples$cv_fold
+
+sample_eyeball <- samples$eyeball  %>%
+  left_join(table_wholesample_sel, by = c('siret','periode'))
+
+sample_test <- tw_complete %>%
+      semi_join(samples$test, by = c('siret','periode'))
+```
+
+## Model
+
+Avec foret aleatoire
+
+```{r}
+set.seed(1900)
+formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+  taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
+
+ctrl <- 
+  trainControl( 
+    method = "cv", 
+    classProbs = TRUE, 
+    summaryFunction = prSummary, 
+    savePredictions = "all", 
+    index = cv_folds 
+  ) 
+ 
+attr(sample_train$outcome,'contrasts') <- NULL
+randomForest <- train(formula, 
+                 data =  sample_train %>% 
+                   mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
+                 method = 'ranger', 
+                 metric = 'AUC', 
+                 trControl = ctrl, 
+                 tuneLength = 10, 
+                 na.action = "na.omit") 
+
+algo2a_AUC <- max(randomForest$results$AUC)
+
+```
+
+
+## Prediction
+```{r}
+
+tw_complete_long <- mice::complete(mids,'long')
+#provisoire: retrait NA et inf
+tw_complete_long <- tw_complete_long %>%
+  filter(!is.infinite(log_cotisationdue_effectif)) %>%
+  filter(!is.na(log_cotisationdue_effectif))
+
+sample_actual <- tw_complete_long %>%
+  filter(periode == actual_period |
+        periode == actual_period %m-% months(1) |
+        periode == actual_period %m-% months(2))
+
+prob <- predict(randomForest, newdata = sample_actual,type = "prob")
+
+prediction <- sample_actual %>%
+  cbind(prob = prob$default) %>%
+  group_by(siret) %>%
+  summarize(prob = mean(prob), periode =actual_period) %>%
+  arrange(desc(prob)) %>%
+  as.data.frame()
+
+# Export
+prediction %>% 
+  left_join(table_wholesample, by = c("siret","periode")) %>%
+  prepare_for_export() %>% 
+  export(batch = "1805")
+
+```
+
+
