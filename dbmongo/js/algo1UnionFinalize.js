@@ -1,5 +1,5 @@
 function finalize(k, v) {
-    var entreprise = v.entreprise.reduce((m, periode) => {
+    var entreprise = (v.entreprise||[]).reduce((m, periode) => {
         if (periode) {
             m[periode.periode.getTime()] = periode
         }

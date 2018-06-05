@@ -20,7 +20,24 @@ func dataDebit(c *gin.Context) {
 
 func reduce(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	// Détermination scope traitement
+	var queryEtablissement interface{}
+	var queryEntreprise interface{}
+	var output interface{}
+	var result interface{}
+
 	siret := c.Params.ByName("siret")
+	if siret == "" {
+		queryEtablissement = bson.M{"value.index.algo1": true}
+		queryEntreprise = nil
+		output = bson.M{"replace": "algo1"}
+	} else {
+		queryEtablissement = bson.M{"value.siret": siret,
+			"value.index.algo1": true}
+		queryEntreprise = bson.M{"value.siren": siret[0:9]}
+		output = nil
+	}
 
 	mapFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementMap.js")
 	reduceFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementReduce.js")
@@ -42,7 +59,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err := db.C("Etablissement").Find(bson.M{"value.siret": siret}).MapReduce(jobEtablissement, nil)
+	_, err := db.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -60,7 +77,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err = db.C("Entreprise").Find(bson.M{"value.siren": siret[0:9]}).MapReduce(jobEntreprise, nil)
+	_, err = db.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
 	if err != nil {
 		c.JSON(500, err)
 	}
@@ -69,16 +86,20 @@ func reduce(c *gin.Context) {
 	reduceFctUnion, _ := ioutil.ReadFile("js/algo1UnionReduce.js")
 	finalizeFctUnion, _ := ioutil.ReadFile("js/algo1UnionFinalize.js")
 
-	var result interface{}
 	jobUnion := &mgo.MapReduce{
 		Map:      string(mapFctUnion),
 		Reduce:   string(reduceFctUnion),
 		Finalize: string(finalizeFctUnion),
-		// Out:      bson.M{"replace": "algo1"},
-		Scope: scope,
+		Out:      output,
+		Scope:    scope,
 	}
 
-	_, err = db.C("MRWorkspace").Find(bson.M{"value.siren": siret[0:9]}).MapReduce(jobUnion, &result)
+	if output == nil {
+		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, &result)
+	} else {
+		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, nil)
+	}
+
 	if err != nil {
 		c.JSON(500, err)
 	} else {

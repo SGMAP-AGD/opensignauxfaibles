@@ -56,9 +56,9 @@ func main() {
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactEntreprise)
-		// api.GET("/compact", compact)
-
 		api.GET("/reduce/:siret", reduce)
+		api.GET("/reduce", reduce)
+
 		api.GET("/browse/:siren", browse)
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
