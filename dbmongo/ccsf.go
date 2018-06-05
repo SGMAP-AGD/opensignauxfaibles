@@ -66,7 +66,7 @@ func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
 }
 
 func importCCSF(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -102,8 +102,9 @@ func importCCSF(c *gin.Context) {
 								CCSF: map[string]*CCSF{
 									hash: ccsf,
 								}}}}}
-				insertWorker <- value
+				insertWorker <- &value
 			}
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
 }

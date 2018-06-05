@@ -63,7 +63,7 @@ func parseBDF(path []string) chan *BDF {
 }
 
 func importBDF(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEntreprise"].(chan ValueEntreprise)
+	insertWorker, _ := c.Keys["insertEntreprise"].(chan *ValueEntreprise)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["bdf"]
@@ -78,6 +78,7 @@ func importBDF(c *gin.Context) {
 						BDF: map[string]*BDF{
 							hash: bdf,
 						}}}}}
-		insertWorker <- value
+		insertWorker <- &value
 	}
+	insertWorker <- &ValueEntreprise{}
 }

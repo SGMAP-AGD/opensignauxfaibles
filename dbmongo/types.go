@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
@@ -60,18 +61,107 @@ type Batch struct {
 }
 
 func (batch1 Batch) merge(batch2 Batch) {
+	if batch1.Altares == nil {
+		batch1.Altares = make(map[string]*Altares)
+	}
 	for hash, altares := range batch2.Altares {
-		if batch1.Altares == nil {
-			batch1.Altares = make(map[string]*Altares)
-		}
 		batch1.Altares[hash] = altares
 	}
+
+	if batch1.Cotisation == nil {
+		batch1.Cotisation = make(map[string]*Cotisation)
+	}
+	for hash, cotisation := range batch2.Cotisation {
+		batch1.Cotisation[hash] = cotisation
+	}
+
+	if batch1.Debit == nil {
+		batch1.Debit = make(map[string]*Debit)
+	}
+	for hash, debit := range batch2.Debit {
+		batch1.Debit[hash] = debit
+	}
+
+	if batch1.Delai == nil {
+		batch1.Delai = make(map[string]*Delai)
+	}
+	for hash, delai := range batch2.Delai {
+		batch1.Delai[hash] = delai
+	}
+
+	if batch1.Effectif == nil {
+		batch1.Effectif = make(map[string]*Effectif)
+	}
 	for hash, effectif := range batch2.Effectif {
-		if batch1.Effectif == nil {
-			batch1.Effectif = make(map[string]*Effectif)
-		}
 		batch1.Effectif[hash] = effectif
 	}
+
+	if batch1.APDemande == nil {
+		batch1.APDemande = make(map[string]*APDemande)
+	}
+	for hash, apdemande := range batch2.APDemande {
+		batch1.APDemande[hash] = apdemande
+	}
+
+	if batch1.APConso == nil {
+		batch1.APConso = make(map[string]*APConso)
+	}
+	for hash, apconso := range batch2.APConso {
+		batch1.APConso[hash] = apconso
+	}
+
+	if batch1.Sirene == nil {
+		batch1.Sirene = make(map[string]*Sirene)
+	}
+	for hash, sirene := range batch2.Sirene {
+		batch1.Sirene[hash] = sirene
+	}
+
+	if batch1.BDF == nil {
+		batch1.BDF = make(map[string]*BDF)
+	}
+	for hash, bdf := range batch2.BDF {
+		batch1.BDF[hash] = bdf
+	}
+
+	if batch1.DPAE == nil {
+		batch1.DPAE = make(map[string]*DPAE)
+	}
+	for hash, dpae := range batch2.DPAE {
+		batch1.DPAE[hash] = dpae
+	}
+}
+
+func (value1 ValueEtablissement) merge(value2 ValueEtablissement) (ValueEtablissement, error) {
+	if value1.Value.Siret != value2.Value.Siret {
+		return ValueEtablissement{},
+			errors.New("Valeurs non missibles: sirets '" +
+				value1.Value.Siret + "' et '" +
+				value2.Value.Siret + "'")
+	}
+	for idBatch := range value2.Value.Batch {
+		if value1.Value.Batch == nil {
+			value1.Value.Batch = make(map[string]Batch)
+		}
+		value1.Value.Batch[idBatch].merge(value2.Value.Batch[idBatch])
+	}
+	return value1, nil
+}
+
+func (value1 ValueEntreprise) merge(value2 ValueEntreprise) (ValueEntreprise, error) {
+	if value1.Value.Siren != value2.Value.Siren {
+		return ValueEntreprise{},
+			errors.New("Valeurs non missibles: sirens '" +
+				value1.Value.Siren + "' et '" +
+				value2.Value.Siren + "'")
+	}
+	for idBatch := range value2.Value.Batch {
+		if value1.Value.Batch == nil {
+			value1.Value.Batch = make(map[string]Batch)
+		}
+		value1.Value.Batch[idBatch].merge(value2.Value.Batch[idBatch])
+	}
+	return value1, nil
 }
 
 // Periode Période de temps avec un début et une fin

@@ -103,7 +103,7 @@ func parseEffectif(paths []string) chan map[string]*Effectif {
 }
 
 func importEffectif(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -126,9 +126,9 @@ func importEffectif(c *gin.Context) {
 						batch: Batch{
 							Effectif: effectif,
 						}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
 
-	insertWorker <- ValueEtablissement{}
+	insertWorker <- &ValueEtablissement{}
 }

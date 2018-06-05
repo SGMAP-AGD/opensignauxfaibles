@@ -108,7 +108,7 @@ func parseSirene(paths []string, batch string) chan *Sirene {
 // hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 func importSirene(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
@@ -125,9 +125,9 @@ func importSirene(c *gin.Context) {
 						Sirene: map[string]*Sirene{
 							hash: sirene,
 						}}}}}
-		insertWorker <- value
+		insertWorker <- &value
 	}
 
-	insertWorker <- ValueEtablissement{}
+	insertWorker <- &ValueEtablissement{}
 
 }

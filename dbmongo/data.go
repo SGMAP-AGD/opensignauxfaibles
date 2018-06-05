@@ -9,35 +9,9 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-func (value1 ValueEtablissement) merge(value2 ValueEtablissement) (ValueEtablissement, error) {
-	if value1.Value.Siret != value2.Value.Siret {
-		return ValueEtablissement{},
-			errors.New("Valeurs non missibles: sirets '" +
-				value1.Value.Siret + "' et '" +
-				value2.Value.Siret + "'")
-	}
-	for idBatch := range value2.Value.Batch {
-		if value1.Value.Batch == nil {
-			value1.Value.Batch = make(map[string]Batch)
-		}
-		value1.Value.Batch[idBatch].merge(value2.Value.Batch[idBatch])
-	}
-	return value1, nil
-}
-
 func dataDebit(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
 	var data interface{}
-
-	// mapFct, _ := ioutil.ReadFile("js/dataDebit_map.js")
-	// reduceFct, _ := ioutil.ReadFile("js/dataDebit_reduce.js")
-	// finalizeFct, _ := ioutil.ReadFile("js/dataDebit_finalize.js")
-
-	// job := &mgo.MapReduce{
-	// 	Map:      string(mapFct),
-	// 	Reduce:   string(reduceFct),
-	// 	Finalize: string(finalizeFct),
-	// }
 
 	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).One(&data)
 	c.JSON(200, data)
@@ -58,9 +32,12 @@ func reduce(c *gin.Context) {
 
 	var etablissement []interface{}
 
-	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).MapReduce(job, &etablissement)
-
-	c.JSON(200, etablissement)
+	_, err := db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).MapReduce(job, &etablissement)
+	if err != nil {
+		c.JSON(500, err)
+	} else {
+		c.JSON(200, etablissement)
+	}
 }
 
 func reduceAll(c *gin.Context) {

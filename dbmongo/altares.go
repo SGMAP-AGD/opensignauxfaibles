@@ -73,7 +73,7 @@ func parseAltares(path string, batch string) chan *Altares {
 }
 
 func importAltares(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	altares := files["altares"][0]
@@ -89,6 +89,7 @@ func importAltares(c *gin.Context) {
 						Altares: map[string]*Altares{
 							hash: altares,
 						}}}}}
-		insertWorker <- value
+		insertWorker <- &value
 	}
+	insertWorker <- &ValueEtablissement{}
 }

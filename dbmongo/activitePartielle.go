@@ -138,7 +138,7 @@ func parseAPDemande(path string) chan *APDemande {
 }
 
 func importAPDemande(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apdemande"]
@@ -158,7 +158,7 @@ func importAPDemande(c *gin.Context) {
 							APDemande: map[string]*APDemande{
 								hash: apdemande,
 							}}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
 }
@@ -204,7 +204,7 @@ func parseAPConso(path string) chan *APConso {
 }
 
 func importAPConso(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	files := allFiles["apconso"]
@@ -220,7 +220,8 @@ func importAPConso(c *gin.Context) {
 							APConso: map[string]*APConso{
 								hash: apconso,
 							}}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
 }

@@ -79,7 +79,7 @@ func parseCotisation(paths []string) chan *Cotisation {
 }
 
 func importCotisation(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -99,7 +99,8 @@ func importCotisation(c *gin.Context) {
 							Cotisation: map[string]*Cotisation{
 								hash: cotisation,
 							}}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
 }

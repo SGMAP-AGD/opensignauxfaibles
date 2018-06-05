@@ -84,7 +84,6 @@ func parseDelai(paths []string) chan *Delai {
 				delai.Action = row[field["Action"]]
 
 				outputChannel <- &delai
-
 			}
 			file.Close()
 		}
@@ -95,7 +94,7 @@ func parseDelai(paths []string) chan *Delai {
 }
 
 func importDelai(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 
 	batch := c.Params.ByName("batch")
 
@@ -115,7 +114,9 @@ func importDelai(c *gin.Context) {
 							Delai: map[string]*Delai{
 								hash: delai,
 							}}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
+
 }

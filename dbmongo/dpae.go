@@ -67,7 +67,7 @@ func parseDPAE(path string) chan *DPAE {
 }
 
 func importDPAE(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan ValueEtablissement)
+	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
 	batch := c.Params.ByName("batch")
 	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
 	dpaes := files["dpae"]
@@ -84,7 +84,9 @@ func importDPAE(c *gin.Context) {
 							DPAE: map[string]*DPAE{
 								hash: dpae,
 							}}}}}
-			insertWorker <- value
+			insertWorker <- &value
 		}
 	}
+	insertWorker <- &ValueEtablissement{}
+
 }

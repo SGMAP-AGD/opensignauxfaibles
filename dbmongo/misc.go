@@ -149,3 +149,11 @@ func batchToTime(batch string) (time.Time, error) {
 	date := time.Date(2000+year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	return date, err
 }
+
+func timeToBatch(date time.Time) string {
+	return date.Format("0602")
+}
+
+func batchList(first string, last string) ([]string, error) {
+	return nil, nil
+}

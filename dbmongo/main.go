@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -59,7 +58,7 @@ func main() {
 		api.GET("/compact/entreprise", compactEntreprise)
 		// api.GET("/compact", compact)
 
-		api.GET("/reduce/:siren", reduce)
+		api.GET("/reduce/:siret", reduce)
 
 		api.GET("/reduce", reduceAll)
 		api.GET("/browse/:siren", browse)
@@ -67,38 +66,9 @@ func main() {
 		api.POST("/R/algo1", algo1)
 		api.GET("/data/debit/:siret", dataDebit)
 
-		api.GET("/debug/:param", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
-}
-
-func debug(c *gin.Context) {
-	value1 := ValueEtablissement{
-		Value: Etablissement{
-			Siret: "toto",
-			Batch: map[string]Batch{
-				"1010": Batch{
-					Altares: map[string]*Altares{
-						"bli": &Altares{},
-					},
-				},
-			},
-		},
-	}
-	value2 := ValueEtablissement{
-		Value: Etablissement{
-			Siret: "toto",
-			Batch: map[string]Batch{
-				"1010": Batch{
-					Altares: map[string]*Altares{
-						"bla": &Altares{},
-					},
-				},
-			},
-		},
-	}
-	spew.Dump(value1.merge(value2))
 }
 
 func loadConfig() {
