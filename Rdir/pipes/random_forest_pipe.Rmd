@@ -176,7 +176,8 @@ prob <- predict(randomForest, newdata = sample_actual,type = "prob")
 prediction <- sample_actual %>%
   cbind(prob = prob$default) %>%
   group_by(siret) %>%
-  summarize(prob = mean(prob), periode =actual_period) %>%
+  summarize(prob = mean(prob), periode = max(periode)) %>%
+  filter(periode != actual_period %m-% months(2)) %>% 
   arrange(desc(prob)) %>%
   as.data.frame()
 
