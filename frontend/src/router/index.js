@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import DataDebit from '@/components/DataDebit'
+import DataView from '@/components/DataView'
 import Region from '@/components/Region'
 import Landing from '@/components/Landing'
 import Tasks from '@/components/Tasks'
@@ -28,6 +29,11 @@ export default new Router({
       path: '/data/debit',
       name: 'DataDebit',
       component: DataDebit
+    },
+    {
+      path: '/data/view',
+      name: 'DataView',
+      component: DataView
     }
 
   ]

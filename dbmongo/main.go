@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
@@ -56,19 +57,27 @@ func main() {
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactEntreprise)
-		api.GET("/reduce/:siret", reduce)
-		api.GET("/reduce", reduce)
+		api.GET("/reduce/:algo/:siret", reduce)
+		api.GET("/reduce/:algo", reduce)
 
 		api.GET("/browse/:siren", browse)
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
-		api.GET("/data/debit/:siret", dataDebit)
 
+		api.GET("/data/:siret", data)
+		api.GET("/data", data)
+
+		api.GET("/debug", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
 }
 
+func debug(c *gin.Context) {
+	debut, _ := time.Parse("20060102", "20140101")
+	fin, _ := time.Parse("20060102", "20180501")
+	c.JSON(200, genereSeriePeriode(debut, fin))
+}
 func loadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")

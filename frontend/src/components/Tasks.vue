@@ -31,9 +31,6 @@ export default {
     axios.get(this.$api + '/kanboard/get/tasks').then(function (response) {
       self.tasks = response.data
     })
-  },
-  methods: {
-    onSort () {console.log("sorted")}
   }
 }
 
@@ -56,5 +53,3 @@ a {
   color: #42b983;
 }
 </style>
-
-

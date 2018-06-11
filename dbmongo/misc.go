@@ -157,3 +157,21 @@ func timeToBatch(date time.Time) string {
 func batchList(first string, last string) ([]string, error) {
 	return nil, nil
 }
+
+func genereSeriePeriode(debut time.Time, fin time.Time) []time.Time {
+	var serie []time.Time
+	for fin.After(debut) {
+		debut = debut.AddDate(0, 1, 0)
+		serie = append(serie, debut)
+	}
+	return serie
+}
+
+func genereSeriePeriodeAnnuelle(debut time.Time, fin time.Time) []int {
+	var serie []int
+	for debut.Year() <= fin.Year() {
+		serie = append(serie, debut.Year())
+		debut = debut.AddDate(1, 0, 0)
+	}
+	return serie
+}

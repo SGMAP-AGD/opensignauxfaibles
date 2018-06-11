@@ -10,46 +10,172 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-func dataDebit(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
-	var data interface{}
-
-	db.C("Etablissement").Find(bson.M{"value.siret": c.Params.ByName("siret")}).One(&data)
-	c.JSON(200, data)
-}
-
-func reduce(c *gin.Context) {
+func data(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	// Détermination scope traitement
-	var queryEtablissement interface{}
-	var queryEntreprise interface{}
-	var output interface{}
-	var result interface{}
-
 	siret := c.Params.ByName("siret")
+	var query interface{}
+	var output interface{}
+
 	if siret == "" {
-		queryEtablissement = bson.M{"value.index.algo1": true}
-		queryEntreprise = nil
-		output = bson.M{"replace": "algo1"}
+		query = nil
+		output = bson.M{"replace": data}
 	} else {
-		queryEtablissement = bson.M{"value.siret": siret,
-			"value.index.algo1": true}
-		queryEntreprise = bson.M{"value.siren": siret[0:9]}
+		query = bson.M{"value.siret": bson.M{"$in": []string{"31039150300029",
+			"32280493100044",
+			"32411592200043",
+			"32412727300013",
+			"32905885300022",
+			"33050826800019",
+			"33468704300052",
+			"33973099600024",
+			"34285177100010",
+			"34763185500017",
+			"34853799400017",
+			"35137354300039",
+			"37908891700016",
+			"37944138900028",
+			"38062893300034",
+			"38165327800089",
+			"38389828500010",
+			"38900298100030",
+			"39020638100019",
+			"39359780200064",
+			"39361400300050",
+			"39385363500026",
+			"39749044200050",
+			"39829078300024",
+			"40069600100058",
+			"40197001700026",
+			"40843381100036",
+			"40848145500017",
+			"41034282800036",
+			"41091104400056",
+			"41221709300019",
+			"41484267400015",
+			"41809276300030",
+			"41827199500056",
+			"41873205300024",
+			"41902272800010",
+			"42054736600047",
+			"42072807300016",
+			"42269962900024",
+			"43008570400012",
+			"44030310500025",
+			"44829364700013",
+			"45136355000018",
+			"45277190000027",
+			"48322898700010",
+			"49310588600011",
+			"49501449000017",
+			"50695021100025",
+			"62558027900127",
+			"65715007400026",
+			"67725020100022",
+			"68282031100038",
+			"70558010800011",
+			"72262116600049",
+			"77829308400068",
+			"77857784100019",
+			"79712014400010"}}}
 		output = nil
 	}
-
-	mapFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementMap.js")
-	reduceFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementReduce.js")
-	finalizeFctEtablissement, _ := ioutil.ReadFile("js/algo1EtablissementFinalize.js")
 
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
 	dateFin, _ := time.Parse("2006-01-02", "2018-05-01")
 	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-01-01")
 
 	scope := bson.M{"date_debut": dateDebut,
-		"date_fin":          dateFin,
-		"date_fin_effectif": dateFinEffectif}
+		"date_fin":               dateFin,
+		"date_fin_effectif":      dateFinEffectif,
+		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
+		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
+	}
+
+	mapFct, errM := ioutil.ReadFile("js/dataMap.js")
+	reduceFct, errR := ioutil.ReadFile("js/dataReduce.js")
+	finalizeFct, errF := ioutil.ReadFile("js/dataFinalize.js")
+
+	if errM != nil || errR != nil || errF != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
+		return
+	}
+
+	job := &mgo.MapReduce{
+		Map:      string(mapFct),
+		Reduce:   string(reduceFct),
+		Finalize: string(finalizeFct),
+		Out:      nil,
+		Scope:    scope,
+	}
+
+	var result interface{}
+	var err error
+
+	if output == nil {
+		_, err = db.C("Etablissement").Find(query).MapReduce(job, &result)
+	} else {
+		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
+	}
+
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+
+	c.JSON(200, result)
+}
+
+func reduce(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	// Détermination scope traitement
+	algo := c.Params.ByName("algo")
+	siret := c.Params.ByName("siret")
+
+	var queryEtablissement interface{}
+	var queryEntreprise interface{}
+	var output interface{}
+	var result interface{}
+
+	if siret == "" {
+		queryEtablissement = bson.M{"value.index." + algo: true}
+		queryEntreprise = nil
+		output = bson.M{"replace": algo}
+	} else {
+		queryEtablissement = bson.M{"value.siret": siret}
+		queryEntreprise = bson.M{"value.siren": siret[0:9]}
+		output = nil
+	}
+
+	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-05-01")
+	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-01-01")
+
+	mapFctEtablissement, errEtabM := ioutil.ReadFile("js/" + algo + "EtablissementMap.js")
+	reduceFctEtablissement, errEtabR := ioutil.ReadFile("js/" + algo + "EtablissementReduce.js")
+	finalizeFctEtablissement, errEtabF := ioutil.ReadFile("js/" + algo + "EtablissementFinalize.js")
+
+	mapFctEntreprise, errEntM := ioutil.ReadFile("js/" + algo + "EntrepriseMap.js")
+	reduceFctEntreprise, errEntR := ioutil.ReadFile("js/" + algo + "EntrepriseReduce.js")
+	finalizeFctEntreprise, errEntF := ioutil.ReadFile("js/" + algo + "EntrepriseFinalize.js")
+
+	mapFctUnion, errUnM := ioutil.ReadFile("js/" + algo + "UnionMap.js")
+	reduceFctUnion, errUnR := ioutil.ReadFile("js/" + algo + "UnionReduce.js")
+	finalizeFctUnion, errUnF := ioutil.ReadFile("js/" + algo + "UnionFinalize.js")
+
+	if errEtabM != nil || errEtabR != nil || errEtabF != nil ||
+		errEntM != nil || errEntR != nil || errEntF != nil ||
+		errUnM != nil || errUnR != nil || errUnF != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
+		return
+	}
+
+	scope := bson.M{"date_debut": dateDebut,
+		"date_fin":               dateFin,
+		"date_fin_effectif":      dateFinEffectif,
+		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
+		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
+	}
 
 	jobEtablissement := &mgo.MapReduce{
 		Map:      string(mapFctEtablissement),
@@ -65,10 +191,6 @@ func reduce(c *gin.Context) {
 		return
 	}
 
-	mapFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseMap.js")
-	reduceFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseReduce.js")
-	finalizeFctEntreprise, _ := ioutil.ReadFile("js/algo1EntrepriseFinalize.js")
-
 	jobEntreprise := &mgo.MapReduce{
 		Map:      string(mapFctEntreprise),
 		Reduce:   string(reduceFctEntreprise),
@@ -80,11 +202,8 @@ func reduce(c *gin.Context) {
 	_, err = db.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
 	if err != nil {
 		c.JSON(500, err)
+		return
 	}
-
-	mapFctUnion, _ := ioutil.ReadFile("js/algo1UnionMap.js")
-	reduceFctUnion, _ := ioutil.ReadFile("js/algo1UnionReduce.js")
-	finalizeFctUnion, _ := ioutil.ReadFile("js/algo1UnionFinalize.js")
 
 	jobUnion := &mgo.MapReduce{
 		Map:      string(mapFctUnion),
@@ -229,7 +348,8 @@ func compactEntreprise(c *gin.Context) {
 		},
 	}
 
-	err := errors.New("")
+	var err error
+
 	if output == nil {
 		_, err = db.C("Entreprise").Find(query).MapReduce(job, &etablissement)
 	} else {
