@@ -2,12 +2,12 @@
 <div>
     <md-card>
       <md-card-header>
-        <div class="md-title">Visualisation des données entreprises</div>
+        <div class="md-title">Téléchargement des données entreprises</div>
 
       </md-card-header>
       <md-card-content>
 
-          <label>Siret</label>
+          <label>Insérer les siret souhaités:</label>
           <md-chips v-model="sirets" md-placeholder="Ajouter siret..."></md-chips>
 
         <md-button class='md-raised md-primary' v-on:click='getCotisation()'>Télécharger</md-button>
@@ -35,7 +35,7 @@ export default {
   methods: {
     getCotisation () {
       var self = this
-      axios.post(this.$api + '/data/view', this.siret).then(function (response) {
+      axios.post(this.$api + '/data', this.sirets).then(function (response) {
         self.data = response.data
 
         self.data.forEach(dt => {

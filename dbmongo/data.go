@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -10,75 +11,47 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+func dataBatch(c *gin.Context) {
+	list, err := batchList("1802", "1805")
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+	c.JSON(200, list)
+}
+
+func dataAlgo(c *gin.Context) {
+	c.JSON(200, []string{"algo1", "algo2"})
+}
+
+func dataPrediction(c *gin.Context) {
+	var prediction []Prediction
+	var etablissement []ValueEtablissement
+	var siret []string
+
+	db, _ := c.Keys["DB"].(*mgo.Database)
+	db.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
+	for _, r := range prediction {
+		siret = append(siret, r.Siret)
+	}
+
+	query := bson.M{"_id": bson.M{"$in": siret}}
+	db.C("Etablissement").Find(query).All(&etablissement)
+	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
+
+}
+
 func data(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
-	siret := c.Params.ByName("siret")
+	siret := []string{}
+	c.Bind(&siret)
+	fmt.Println(siret)
+
 	var query interface{}
 	var output interface{}
 
-	if siret == "" {
-		query = nil
-		output = bson.M{"replace": data}
-	} else {
-		query = bson.M{"value.siret": bson.M{"$in": []string{"31039150300029",
-			"32280493100044",
-			"32411592200043",
-			"32412727300013",
-			"32905885300022",
-			"33050826800019",
-			"33468704300052",
-			"33973099600024",
-			"34285177100010",
-			"34763185500017",
-			"34853799400017",
-			"35137354300039",
-			"37908891700016",
-			"37944138900028",
-			"38062893300034",
-			"38165327800089",
-			"38389828500010",
-			"38900298100030",
-			"39020638100019",
-			"39359780200064",
-			"39361400300050",
-			"39385363500026",
-			"39749044200050",
-			"39829078300024",
-			"40069600100058",
-			"40197001700026",
-			"40843381100036",
-			"40848145500017",
-			"41034282800036",
-			"41091104400056",
-			"41221709300019",
-			"41484267400015",
-			"41809276300030",
-			"41827199500056",
-			"41873205300024",
-			"41902272800010",
-			"42054736600047",
-			"42072807300016",
-			"42269962900024",
-			"43008570400012",
-			"44030310500025",
-			"44829364700013",
-			"45136355000018",
-			"45277190000027",
-			"48322898700010",
-			"49310588600011",
-			"49501449000017",
-			"50695021100025",
-			"62558027900127",
-			"65715007400026",
-			"67725020100022",
-			"68282031100038",
-			"70558010800011",
-			"72262116600049",
-			"77829308400068",
-			"77857784100019",
-			"79712014400010"}}}
-		output = nil
-	}
+	query = bson.M{"value.siret": bson.M{"$in": siret}}
+	output = nil
 
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
 	dateFin, _ := time.Parse("2006-01-02", "2018-05-01")

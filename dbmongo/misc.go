@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -155,7 +156,29 @@ func timeToBatch(date time.Time) string {
 }
 
 func batchList(first string, last string) ([]string, error) {
-	return nil, nil
+	var list []string
+
+	if len(first) != 4 || len(last) != 4 {
+		return nil, errors.New("valeurs non autorisées, batch = YYMM")
+	}
+	year1, errY1 := strconv.Atoi(first[0:2])
+	year2, errY2 := strconv.Atoi(last[0:2])
+	month1, errM1 := strconv.Atoi(first[2:4])
+	month2, errM2 := strconv.Atoi(last[2:4])
+
+	fmt.Println(year1, year2, month1, month2)
+	if errY1 != nil || errY2 != nil || errM1 != nil || errM2 != nil || month1 > 12 || month2 > 12 || 100*year2+month2 < 100*year1+month1 {
+		return nil, errors.New("Valeurs non autorisées, batch = YYMM")
+	}
+	dateBatch1 := time.Date(2000+year1, time.Month(month1), 1, 0, 0, 0, 0, time.UTC)
+	dateBatch2 := time.Date(2000+year2, time.Month(month2), 1, 0, 0, 0, 0, time.UTC)
+
+	list = append(list, dateBatch1.Format("0601"))
+	for dateBatch1.Before(dateBatch2) {
+		dateBatch1 = dateBatch1.AddDate(0, 1, 0)
+		list = append(list, dateBatch1.Format("0601"))
+	}
+	return list, nil
 }
 
 func genereSeriePeriode(debut time.Time, fin time.Time) []time.Time {

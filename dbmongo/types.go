@@ -15,6 +15,13 @@ import (
 // 	Value Etablissement `json:"value" bson:"value"`
 // }
 
+// Prediction prediction
+type Prediction struct {
+	Siret      string  `json:"siret" bson:"siret"`
+	Probabilty float64 `json:"prob" bson:"prob"`
+	Periode    float64 `json:"periode" bson:"periode"`
+}
+
 // ValueEntreprise permet de stocker une entreprise dans un objet Bson
 type ValueEntreprise struct {
 	ID    bson.ObjectId `json:"id" bson:"_id"`

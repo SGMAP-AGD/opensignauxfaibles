@@ -1,49 +1,52 @@
 package main
 
-// Prediction type pour stocker les prédictions période par période
-type Prediction struct {
-	RandomForest float64 `json:"random_forest" bson:"random_forest"`
+import (
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+)
+
+func predictionBrowse(c *gin.Context) {
+	db, _ := c.Keys["DB"].(*mgo.Database)
+
+	batch := c.Params.ByName("batch")
+	algo := c.Params.ByName("algo")
+	paramPage := c.Params.ByName("page")
+
+	page, err := strconv.Atoi(paramPage)
+
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+
+	//siret := c.Params.ByName("siret")
+	var pipeline []bson.M
+
+	pipeline = append(pipeline, bson.M{"$match": bson.M{"_id.batch": batch, "_id.algo": algo}})
+	pipeline = append(pipeline, bson.M{"$sort": bson.M{"score": -1}})
+	pipeline = append(pipeline, bson.M{"$skip": 50 * page})
+	pipeline = append(pipeline, bson.M{"$limit": 50})
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
+		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
+	}})
+	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
+		"from":         "Etablissement",
+		"localField":   "_id.siret",
+		"foreignField": "_id",
+		"as":           "etablissement"}})
+	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
+		"from":         "Entreprise",
+		"localField":   "siren",
+		"foreignField": "_id",
+		"as":           "entreprise"}})
+	var result []interface{}
+	err = db.C("Prediction").Pipe(pipeline).All(&result)
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+	c.JSON(200, result)
 }
-
-// func injectPrediction(c *gin.Context) {
-// 	db, _ := c.Keys["DB"].(*mgo.Database)
-// 	batch := c.Params.ByName("batch")
-// 	region := c.Params.ByName("region")
-
-// 	predictions := []struct {
-// 		ID          string    `json:"id" bson:"_id"`
-// 		Periode     time.Time `json:"periode" bson:"periode"`
-// 		Probabilite float64   `json:"prob" bson:"prob"`
-// 		Siret       string    `json:"Siret"`
-// 	}{}
-
-// 	db.C("prediction").Find(nil).All(&predictions)
-
-// 	for _, p := range predictions {
-// 		prediction := Prediction{
-// 			RandomForest: p.Probabilite,
-// 		}
-
-// 		hash := fmt.Sprintf("%x", structhash.Md5(prediction, 1))
-
-// 		etablissement := Value{
-// 			Value: Etablissement{
-// 				Siret:  p.Siret,
-// 				Region: region,
-// 				Batch: map[string]Batch{
-// 					batch: Batch{
-// 						Compact: map[string]bool{
-// 							"status": false,
-// 						},
-// 						Prediction: map[string]Prediction{
-// 							hash: prediction,
-// 						},
-// 					},
-// 				},
-// 			},
-// 		}
-
-// 		db.C("Etablissement").Insert(&etablissement)
-// 	}
-// 	c.JSON(200, nil)
-// }

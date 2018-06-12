@@ -64,8 +64,12 @@ func main() {
 		api.GET("/orig/:siret", browseOrig)
 		api.POST("/R/algo1", algo1)
 
-		api.GET("/data/:siret", data)
-		api.GET("/data", data)
+		api.POST("/data", data)
+		api.GET("/data/batch", dataBatch)
+		api.GET("/data/algo", dataAlgo)
+		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
+
+		//api.GET("/data", data)
 
 		api.GET("/debug", debug)
 	}
