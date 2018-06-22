@@ -57,19 +57,16 @@ func main() {
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactEntreprise)
-		api.GET("/reduce/:algo/:siret", reduce)
-		api.GET("/reduce/:algo", reduce)
+		api.GET("/reduce/:algo/:batch/:siret", reduce)
+		api.GET("/reduce/:algo/:batch", reduce)
 
-		api.GET("/browse/:siren", browse)
-		api.GET("/orig/:siret", browseOrig)
+		api.POST("/data/browse", browse)
 		api.POST("/R/algo1", algo1)
 
 		api.POST("/data", data)
 		api.GET("/data/batch", dataBatch)
 		api.GET("/data/algo", dataAlgo)
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-
-		//api.GET("/data", data)
 
 		api.GET("/debug", debug)
 	}

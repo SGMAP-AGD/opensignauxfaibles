@@ -1,17 +1,6 @@
 <template>
-<div>
-  Sample view of Landing Page
-
-</div>
+  <div>nianiania</div>
 </template>
-
-<script>
-
-export default {
-  name: 'landing'
-}
-
-</script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>

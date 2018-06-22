@@ -1,11 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import DataDebit from '@/components/DataDebit'
-import DataView from '@/components/DataView'
-import Prediction from '@/components/Prediction'
-import Region from '@/components/Region'
-import Landing from '@/components/Landing'
-import Tasks from '@/components/Tasks'
+import HelloWorld from '@/components/HelloWorld'
+import Data from '@/components/Data'
 
 Vue.use(Router)
 
@@ -13,33 +9,13 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Landing',
-      component: Landing
+      name: 'HelloWorld',
+      component: HelloWorld
     },
     {
-      path: '/region',
-      name: 'Region',
-      component: Region
-    },
-    {
-      path: '/tasks',
-      name: 'Tasks',
-      component: Tasks
-    },
-    {
-      path: '/data/debit',
-      name: 'DataDebit',
-      component: DataDebit
-    },
-    {
-      path: '/data/view',
-      name: 'DataView',
-      component: DataView
-    },
-    {
-      path: '/prediction',
-      name: 'Prediction',
-      component: Prediction
+      path: '/data',
+      name: 'Data',
+      component: Data
     }
   ]
 })

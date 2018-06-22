@@ -1,6 +1,6 @@
 # signauxfaibles
 
-> Signaux-Faibles™
+> Signaux Faibles
 
 ## Build Setup
 

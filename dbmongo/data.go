@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -103,7 +104,10 @@ func reduce(c *gin.Context) {
 
 	// Détermination scope traitement
 	algo := c.Params.ByName("algo")
+	batch := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
+
+	db.C("Features").RemoveAll(bson.M{"_id.batch": batch, "_id.algo": algo})
 
 	var queryEtablissement interface{}
 	var queryEntreprise interface{}
@@ -113,7 +117,7 @@ func reduce(c *gin.Context) {
 	if siret == "" {
 		queryEtablissement = bson.M{"value.index." + algo: true}
 		queryEntreprise = nil
-		output = bson.M{"replace": algo}
+		output = bson.M{"replace": "Features"}
 	} else {
 		queryEtablissement = bson.M{"value.siret": siret}
 		queryEntreprise = bson.M{"value.siren": siret[0:9]}
@@ -148,6 +152,7 @@ func reduce(c *gin.Context) {
 		"date_fin_effectif":      dateFinEffectif,
 		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
 		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
+		"actual_batch":           batch,
 	}
 
 	jobEtablissement := &mgo.MapReduce{
@@ -194,24 +199,27 @@ func reduce(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(500, err)
-	} else {
-		c.JSON(200, result)
+		return
 	}
+
+	err = db.C("MRWorkspace").DropCollection()
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
+
+	c.JSON(200, result)
+
 }
 
 func browse(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	var entreprise []interface{}
-	db.C("Entreprise").Find(bson.M{"value.siren": c.Params.ByName("siren")}).All(&entreprise)
-	c.JSON(200, entreprise)
-}
-
-func browseOrig(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	var siret []string
+	c.Bind(&siret)
 
 	var etablissement []interface{}
-	db.C("Etablissement").Find(bson.M{"siret": c.Params.ByName("siret")}).All(&etablissement)
+	db.C("Etablissement").Find(bson.M{"value.siret": "41191670300019"}).All(&etablissement)
+	spew.Dump(etablissement)
 	c.JSON(200, etablissement)
 }
 
