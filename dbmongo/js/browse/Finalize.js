@@ -70,7 +70,6 @@ function finalize(k, v) {
         val.effectif_date = effectifDate
         val.effectif = map_effectif[effectifDate.getTime()]
         val.lag_effectif = map_effectif[historyDate.getTime()]
-
     })
 
     result.map_effectif = map_effectif

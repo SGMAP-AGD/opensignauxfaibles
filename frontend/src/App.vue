@@ -57,15 +57,15 @@ export default {
       clipped: false,
       fixed: true,
       items: [{
-        icon: 'fas fa-stethoscope',
+        icon: 'fa-heartbeat',
         title: 'Prédictions',
         to: '/prediction'
       }, {
-        icon: 'fas fa-building',
+        icon: 'fa-building',
         title: 'Entreprises',
         to: '/'
       }, {
-        icon: 'fas fa-cogs',
+        icon: 'fa-cogs',
         title: 'Gestion des données',
         to: '/data'
       }, {
