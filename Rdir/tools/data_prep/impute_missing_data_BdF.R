@@ -1,4 +1,4 @@
-impute_missing_data_BdF <- function(df,seed = 1234){
+impute_missing_data_BdF <- function(df,number_imputations = 1, number_iterations = 5,seed = 1234){
 
   df <- df %>% as.data.frame()
   all_variables = colnames(df)
@@ -72,8 +72,8 @@ impute_missing_data_BdF <- function(df,seed = 1234){
 
   # imputing on a yearly basis
   temp_mids <- mice(df2,
-               m = 5,
-               maxit = 5,
+               m = number_imputations,
+               maxit = number_iterations,
                method = ini$meth,
                pred = ini$pred,
                printFlag = TRUE,

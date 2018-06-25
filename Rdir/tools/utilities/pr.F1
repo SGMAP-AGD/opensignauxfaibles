@@ -1,0 +1,3 @@
+pr.F1 <- function(PR){
+  return( max(2 * PR$curve[, 1] * PR$curve[, 2] / (PR$curve[, 1] + PR$curve[, 2]), na.rm = TRUE))
+}
