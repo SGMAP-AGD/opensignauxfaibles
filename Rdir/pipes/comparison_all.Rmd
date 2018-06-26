@@ -18,6 +18,7 @@ library(mongolite)
 library(mice)
 library(caret)
 library(broom)
+library(keras)
 library(randomForest)
 library(MLmetrics)
 library(tibbletime)
@@ -381,6 +382,8 @@ add_results(results,'random_forest_with_naf','default')
 
 ## réseau de neuronne
 
+Réseau de neuronnes nouvel objectif
+
 ```{r}
 
 monthly_input <- layer_input(shape = list(12,3), name = "monthly_input")
@@ -394,17 +397,18 @@ yearly_NN <- yearly_input %>%
   layer_simple_rnn(units = 32, recurrent_dropout = 0.5, dropout = 0.1)
 
 
-other_input <- layer_input(shape = list(1))
+other_input <- layer_input(shape = list(18), name = "other_input")
+other_NN <- other_input %>% 
+  layer_dense(units = 18, activation = 'relu')
 
-
-concatenated <- layer_concatenate(list(yearly_NN,monthly_NN,other_input))
+concatenated <- layer_concatenate(list(yearly_NN,monthly_NN, other_NN))#,other_input))
 
 output <-  concatenated %>% 
   layer_dense(units = 32, activation = 'relu') %>% 
   layer_dense(units = 1, activation = 'sigmoid')
 
 model <- keras_model(list(monthly_input,
-                   yearly_input), #, other_input),
+                   yearly_input, other_input),
             output)
 
 model %>% compile(
@@ -415,11 +419,7 @@ model %>% compile(
 ```
 
 ```{r}
-# FIX ME 
-# Ne pas prendre les imputed data
 
-cursor <- 7
-cat('Current model: ', model_names[cursor])
 seed2 = 2246
 AUCPR_aux_failure <- numeric(length = 5)
 

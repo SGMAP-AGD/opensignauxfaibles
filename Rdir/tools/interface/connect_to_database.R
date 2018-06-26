@@ -21,7 +21,7 @@ connect_to_database <- function(collection, min_effectif = 20){
   table_wholesample <- data %>%
     mutate(periode = as.Date(periode)) %>%
     arrange(periode) %>%
-    as_tbl_time(periode)
+    tibbletime::as_tbl_time(periode)
 
   n_eta <- table_wholesample$siret %>% n_distinct()
   n_ent <- table_wholesample$siret %>% str_sub(1,9) %>% n_distinct()
@@ -75,7 +75,8 @@ connect_to_database <- function(collection, min_effectif = 20){
     )
 
   table_wholesample <- table_wholesample %>%
-    left_join(libelle_naf, by = c('code_ape'= 'code_naf_niveau5'))
+    left_join(libelle_naf, by = c('code_ape'= 'code_naf_niveau5')) %>%
+    mutate(code_ape = as.factor(code_ape))
 
   cat(' Fini.','\n')
 

@@ -97,26 +97,21 @@ df_to_RNN_input <- function(siret_period_pairs,df,date_inf,date_sup,lookback_mon
   #
   vars <- c('siret','periode')
   vars <- c(vars,
-            #'code_ape_1',
-            'code_ape_2',
-            'code_ape_3',
-            'code_ape_4',
-            'code_ape_5'
-  )
+            'code_ape')#,
+  #           'code_ape_2',
+  #           'code_ape_3',
+  #           'code_ape_4',
+  #           'code_ape_5'
+  # )
 
   sample_other <- array(0,dim = c(n,length(vars)-2))
 
   for (ii in 1:n){
-
     aux_siret = siret_period_pairs$siret[ii]
 
     sample_other[ii,] <- df %>%
+      mutate(code_ape = as.numeric(code_ape)-1) %>%
       filter(siret == aux_siret) %>%
-      mutate(#code_ape_1 = FIX ME,
-        code_ape_2 = str_sub(code_ape,1,2),
-        code_ape_3 = str_sub(code_ape,1,3),
-        code_ape_4 = str_sub(code_ape,1,4),
-        code_ape_5 = str_sub(code_ape,1,5)) %>%
       select(vars) %>%
       summarize_all(first) %>%
       select(-siret, -periode) %>%
@@ -138,8 +133,8 @@ df_to_RNN_input <- function(siret_period_pairs,df,date_inf,date_sup,lookback_mon
   return(list(
     list(
       monthly_input = sample_monthly,
-      yearly_input = sample_yearly #,
-      #sample_other
+      yearly_input = sample_yearly,
+      other_input = sample_other
     ),
     list(target)
   ))

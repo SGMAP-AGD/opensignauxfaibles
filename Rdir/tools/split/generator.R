@@ -66,8 +66,6 @@ generator <-
       batch_sample <- possible_pairs %>%
         sample_n(size = batch_size,replace = TRUE, weight = .$prob)
 
-
-
       return(
         df_to_RNN_input(
           siret_period_pairs = batch_sample,

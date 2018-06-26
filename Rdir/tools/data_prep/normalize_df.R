@@ -10,7 +10,7 @@ normalize_df <- function(data, means = NULL, stds = NULL) {
     } else {
       assertthat::assert_that(length(means) == length(stds))
       assertthat::assert_that(setequal(names(means),names(stds)))
-      asserthat::assert_that(names(means) %in% names(data))
+      assertthat::assert_that(all(names(means) %in% names(data)))
 
       for (i in 1:length(means)){
         variable <- names(means)[i]
