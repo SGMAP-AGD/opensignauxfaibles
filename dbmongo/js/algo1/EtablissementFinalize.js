@@ -258,7 +258,7 @@ function finalize(k, v) {
         val.indicatrice_dettecumulee_12m = (val.montant_part_ouvriere + val.montant_part_patronale) > 0
 
         val.ratio_dettecumulee_cotisation_12m = (val.mean_cotisation_due > 0 ? (val.montant_part_ouvriere + val.montant_part_patronale) / val.mean_cotisation_due : 0)
-        val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1 || 1))
+        //val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1 || 1))
         val.apart_last12_months = (val.apart_last12_months ? 1 : 0)
         val.apart_consommee = (val.apart_heures_consommees > 0 ? 1 : 0)
 
@@ -270,6 +270,7 @@ function finalize(k, v) {
 
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
+        val.code_ape  = (sirene || { "ape": null}).ape
 
         delete val.effectif_history
         delete val.cotisation_array
@@ -279,7 +280,7 @@ function finalize(k, v) {
         delete val.cotisation_due_periode
         delete val.montant_part_ouvriere
         delete val.montant_part_patronale
-        delete val.ratio_dettecumulee_cotisation_12m
+        //delete val.ratio_dettecumulee_cotisation_12m
         delete val.mean_cotisation_due
         delete val.effectif_date
         delete val.effectif_average
