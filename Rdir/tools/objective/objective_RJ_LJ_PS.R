@@ -1,9 +1,10 @@
-objective_RJ_LJ_PS <- function(wholesample){
+objective_RJ_LJ_PS <- function(data){
 
-  wholesample <- wholesample %>%
-    mutate(outcome = outcome_0_12 == "default",
-           outcome_any = !is.na(date_defaillance))
+  data <- data %>%
+    mutate(failure = outcome_0_12 == "default",
+           failure_any = !is.na(date_defaillance))
 
-  return(wholesample)
+
+  return(data)
 
 }
