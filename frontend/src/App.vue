@@ -1,40 +1,24 @@
 <template>
   <v-app>
-    <v-navigation-drawer
-      persistent
-      :mini-variant="miniVariant"
-      clipped
-      v-model="drawer"
-      permanent
-      fixed
-      app
-    >
-      <v-list>
-        <v-list-tile
-          value="true"
-          v-bind:to="item.to"
-          v-for="(item, i) in items"
-          :key="i"
-        >
-          <v-list-tile-action>
-            <v-icon v-html="item.icon"></v-icon>
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title v-text="item.title"></v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
-      </v-list>
-    </v-navigation-drawer>
     <v-toolbar
       app
       :clipped-left="clipped"
     >
-      <v-btn icon @click.stop="miniVariant = !miniVariant">
-        <v-icon v-html="miniVariant ? 'chevron_right' : 'chevron_left'"></v-icon>
-      </v-btn>
+    <v-menu open-on-hover top offset-y>
+      <v-btn slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
+      <v-list>
+        <v-list-tile v-for="(item, index) in items" 
+        :key="index" 
+        @click="setMenu(index)"
+        :to="item.action"
+        :color="item.color">
+          <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+        </v-list-tile>
+      </v-list>
+    </v-menu>
 
 
-      <v-toolbar-title>Open <span id="blue">Signaux</span> <span id="red">Faibles</span></v-toolbar-title>
+      <v-toolbar-title><span id="gray">Open</span> <span id="blue">Signaux</span> <span id="red">Faibles</span></v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon>
         <v-icon>fa-user</v-icon>
@@ -45,37 +29,39 @@
     </v-content>
 
     <v-footer :fixed="fixed" app>
-      <span>&copy; 2017</span>
+      <span>v0.1  &copy; 2017</span>
     </v-footer>
   </v-app>
 </template>
 
 <script>
 export default {
+  methods: {
+    setMenu (key) {
+      this.menu.title = this.items[key].title
+      this.menu.color = this.items[key].color
+    }
+  },
   data () {
     return {
       clipped: false,
-      fixed: true,
-      items: [{
-        icon: 'fa-heartbeat',
-        title: 'Prédictions',
-        to: '/prediction'
-      }, {
-        icon: 'fa-building',
-        title: 'Entreprises',
-        to: '/'
-      }, {
-        icon: 'fa-cogs',
-        title: 'Gestion des données',
-        to: '/data'
-      }, {
-        icon: 'fa-bug',
-        title: 'Signaler un problème',
-        to: '/bug'
-      }],
-      miniVariant: false,
-      right: true,
-      rightDrawer: false
+      fixed: false,
+      drawer: false,
+      menu: {
+        title: 'Menu',
+        color: 'pink darken-1'
+      },
+      items: [
+        { title: 'Détection',
+          action: '/prediction',
+          color: 'indigo darken-4' },
+        { title: 'Données',
+          action: '/data',
+          color: 'grey darken-2' },
+        { title: 'Visites',
+          action: '/workflow',
+          color: 'red darken-4' }
+      ]
     }
   },
   name: 'App'
@@ -83,12 +69,22 @@ export default {
 </script>
 
 <style scoped>
-       #blue {
-         color: #20449a;
-       }
-      #red {
-         color: #e9222e;
-       }
+ @import url('https://fonts.googleapis.com/css?family=Quicksand');
+body {
+  font-family: 'Quicksand', sans-serif;
+}
+#gray {
+  color: #606060;
+  font-family: 'Quicksand', sans-serif;
+}
+#blue {
+  color: #20449a;
+  font-family: 'Quicksand', sans-serif;
+}
+#red {
+  color: #e9222e;
+  font-family: 'Quicksand', sans-serif;
+}
 ul {
   list-style-type: none;
   padding: 0;
@@ -99,6 +95,9 @@ li {
 }
 a {
   color: #42b983;
+}
+v-list {
+  font-family: 'Quicksand', sans-serif;
 }
 </style>
 

@@ -99,11 +99,6 @@ func data(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-// func index(c *gin.Context) {
-// 	db, _ := c.Keys["DB"].(*mgo.Database)
-
-// }
-
 func reduce(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
@@ -234,13 +229,13 @@ func indexEntreprise(c *gin.Context) {
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
-	var etablissement []interface{}
+	var entreprise []interface{}
 
-	siret := c.Params.ByName("siret")
+	siret := c.Params.ByName("siren")
 	if siret == "" {
 		query = nil
 		output = bson.M{"replace": "Etablissement"}
-		etablissement = nil
+		entreprise = nil
 	} else {
 		query = bson.M{"value.siret": siret}
 		output = nil
@@ -278,7 +273,7 @@ func indexEntreprise(c *gin.Context) {
 
 	err := errors.New("")
 	if output == nil {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, &etablissement)
+		_, err = db.C("Etablissement").Find(query).MapReduce(job, &entreprise)
 	} else {
 		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
 	}
@@ -286,7 +281,7 @@ func indexEntreprise(c *gin.Context) {
 	if err != nil {
 		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
 	} else {
-		c.JSON(200, etablissement)
+		c.JSON(200, entreprise)
 	}
 }
 
