@@ -14,8 +14,6 @@ library(tricky)
 library(lubridate)
 library(assertthat)
 library(mongolite)
-library(mice)
-library(caret)
 library(broom)
 library(randomForest)
 library(MLmetrics)
@@ -23,267 +21,267 @@ library(tibbletime)
 library(PRROC)
 library(broom)
 library(keras)
+library(reshape2)
+library(rprojroot)
 
-# Sources
-source("../tools/interface/connect_to_database.R")
-source("../tools/data_prep/impute_missing_data_BdF.R")
-source("../tools/objective/objective_RJ_LJ_PS.R")
-source("../tools/split/split_snapshot_each_month.R")
-source("../tools/utilities/elapsed_months.R")
-source("../tools/post_analysis/export_top.R")
+source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
+source(find_rstudio_root_file('tools','objective','set_objective.R'))
+source(find_rstudio_root_file('tools','split','generator.R'))
+source(find_rstudio_root_file('tools','data_prep','df_to_RNN_input.R'))
+source(find_rstudio_root_file('tools','data_prep','normalize_df.R'))
+source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
+source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
+source(find_rstudio_root_file('tools','post_analysis','export.R'))
+
 
 ```
 
 ## Definition periode actuelle
 ```{r}
-actual_period <- as.Date("2018-05-01")
+actual_period <- as.Date("2018-04-01")
 ```
 
 ## Recuperation des données dans MongoDB
 ```{r}
-table_wholesample <- connect_to_database('algo1')
+raw_data <- connect_to_database('algo1')
 ```
 
 ## Definition de l'objectif
 ```{r}
-table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
-
-# Peut-etre a integrer a objective_RJ_... 
-table_wholesample <- table_wholesample %>%
-  mutate(outcome = fct_recode(
-    as.factor(outcome),
-    default = "TRUE",
-    non_default = "FALSE"
-  ) %>%
-    fct_relevel(c("default","non_default")))
-
+raw_data <- raw_data %>% 
+  objective_default_or_failure(n_months = 3, threshold = 1, lookback = 24) %>%
+  set_objective('default')
 ```
-
-## Selection des features 
-```{r}
-table_wholesample_sel <- table_wholesample %>%
-  select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
-         apart_last12_months, apart_consommee, apart_share_heuresconsommees,
-         log_cotisationdue_effectif,
-         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m,
-         #indicatrice_croissance_dettecumulee,
-         #nb_debits,
-         #delai, delai_sup_6mois,
-         taux_marge, financier_court_terme, frais_financier, delai_fournisseur, poids_frng, dette_fiscale)
-```
-## Imputation des données manquantes
-
-Uniquement si les données Banque de France ont été importées
-
-```{r}
-
-```
-
-sinon 
-```{r}
-tw_complete <- table_wholesample_sel
-```
-
 
 ## Split train test 
 
 Avec suréchantillonnage. Les suréchantillons seront supprimés à la main dans les échantillons d'entraînement pour s'assurer une évaluation sur le même échantillon de validation croisé. 
+```{r}
+#generateur beaucoup TROP lent FIX ME
+
+set.seed(9496)
+all_sirets <- raw_data %>% 
+  group_by(siret) %>% 
+  summarize()
+
+train_siret <- all_sirets  %>%
+  sample_frac(0.6)
+
+validation_siret <- all_sirets %>% 
+  anti_join(train_siret, by = 'siret') %>% 
+  sample_frac(0.5)
+
+test_siret <- all_sirets %>% 
+  anti_join(train_siret, by = 'siret') %>% 
+  anti_join(validation_siret, by = 'siret')
+
+
+# Normalisation 
+
+aux_scale <- raw_data %>%
+  semi_join(train_siret, by = 'siret') %>%
+  normalize_df()
+
+aux2_scale <- raw_data %>% 
+  normalize_df(means = aux_scale[['means']], stds = aux_scale[['stds']])
+
+scaled_data <- aux2_scale[['data']]
+
+
+```
 
 ```{r}
-seed <- 10011
-set.seed(seed)
 
-# USE GENERATOR !!
+seed2 <- 10011
+train_gen <-
+  generator(
+  scaled_data,
+  3,
+  12,
+  unlist(train_siret),
+  '2014-01-01',
+  '2017-01-01',
+  seed2,
+  batch_size = 128
+  )
+
+validation_gen <-
+  generator(
+  scaled_data,
+  3,
+  12,
+  unlist(validation_siret),
+  '2014-01-01',
+  '2017-01-01',
+  seed2,
+  batch_size = 64
+)
+
+test_gen <-
+  generator(
+  scaled_data,
+  3,
+  12,
+  unlist(test_siret),
+  '2014-01-01',
+  '2017-01-01',
+  seed2,
+  batch_size = 64
+)
+
 ```
 
 ## Model
+### Reference
 
-Sans suréchantillonnage, cv à la mano comme un cochon 
+```{r}
+# df_for_glm <-  as.data.frame(cbind(train_aux[[1]], train_aux[[2]]))
+# names(df_for_glm) <- c('effectif',
+#                     'log_cotisationdue',
+#                     'log_ratio', 
+#                     'outcome')
+# 
+# df_for_glm <- df_for_glm %>% 
+#   mutate(outcome = as.factor(outcome))
+# 
+# model_simple <- glm(formula = 'outcome ~ effectif + log_cotisationdue + log_ratio',data =  df_for_glm ,family = binomial())
+# 
+# round(predict(object = model_simple, newdata = df_for_glm %>% select(-outcome), type = 'response'))
+# 
+# sum(.Last.value == df_for_glm$outcome) / length(df_for_glm$outcome)
+```
+
+### RNN
+first try
+
+model
+```{r}
+# monModel <- keras_model_sequential() %>%
+#   #layer_simple_rnn(units = 3, input_shape = c(12,3)) %>%
+#   layer_dense(units = 24, activation = 'relu', input_shape = c(3)) %>% 
+#   layer_dense(units = 1, activation = 'softmax')
+# 
+# # model %>% compile(
+# #   optimizer = optimizer_rmsprop(),
+# #   loss = "binary_crossentropy",
+# #   metrics = c('acc')
+# # )
+
+
+```
+
 ```{r}
 
-yearly_input <- layer_input(shape = list(4,6), name = "yearly_input")
-yearly_NN <- yearly_input %>% 
-  layer_simple_rnn(units = 32)
+# monthly_input <- layer_input(shape = c(12,3))
+# 
+# monthly_NN <- monthly_input #%>% 
+#   # layer_simple_rnn(units = 32) %>%
+#   #layer_dense(units = 36, activation = 'relu') %>% 
+#   #layer_dense(units = 18,activation = 'relu')
+# 
+# output <-  monthly_NN %>% 
+#   layer_simple_rnn(units = 16, activation = 'relu') %>% 
+#   layer_dense(units = 1, activation = 'sigmoid')
+# 
+# monModel <- keras_model(monthly_input, #, other_input),
+#             output)
 
-monthly_input <- layer_input(shape = list(24,12), name = "monthly_input")
+```
+
+entraînement
+
+```{r}
+# tensorboard('my_log_dir')
+# # callbacks = list(
+# #   callback_tensorboard(
+# #     log_dir = "my_log_dir",
+# #     histogram_freq = 1
+# #   )  
+# # )
+# 
+# monModel %>% compile(
+#   optimizer = optimizer_rmsprop(lr = 0.001),
+#   loss = "binary_crossentropy",
+#   metrics = c('acc')
+# )
+# 
+# train_aux <- train_gen();
+# 
+# 
+# history <- monModel %>% fit(
+#    x = train_aux[[1]],
+#    y = train_aux[[2]],
+#    batch_size = 1,
+#    epochs = 100,
+#    verbose = TRUE #,
+#   #callbacks = callbacks
+# )
+#  # history <- model %>% fit_generator(
+#  #   train_gen,
+#  #  steps_per_epoch = 20,
+#  #   epochs = 5,
+#  #   validation_data = validation_gen,
+#  #   validation_steps = 5,
+#  #   verbose = TRUE,
+#  #  callbacks = callbacks
+# # )
+```
+second try: incorporating yearly data
+model
+```{r}
+
+monthly_input <- layer_input(shape = list(12,3), name = "monthly_input")
+
 monthly_NN <- monthly_input %>% 
-  layer_lstm(units = 32)
+  layer_gru(units = 32, recurrent_dropout = 0.5, dropout = 0.1)
 
-other_input <- layer_input(shape = list(6))
+yearly_input <- layer_input(shape = list(3,6), name = "yearly_input")
+
+yearly_NN <- yearly_input %>% 
+  layer_simple_rnn(units = 32, recurrent_dropout = 0.5, dropout = 0.1)
+
+
+other_input <- layer_input(shape = list(1), name = "other_input")
+
 other_NN <- other_input %>% 
+  layer_embedding(input_dim = 514, output_dim = 16,name = 'embedding') %>% 
+  layer_flatten() %>%
   layer_dense(units = 16, activation = 'relu')
 
 concatenated <- layer_concatenate(list(yearly_NN,monthly_NN,other_NN))
 
 output <-  concatenated %>% 
   layer_dense(units = 32, activation = 'relu') %>% 
-  layer_dense(units = 1, activation = 'softmax')
+  layer_dense(units = 1, activation = 'sigmoid')
 
-keras_model(inputs = list(yearly_input, monthly_input, other_input), output)
+model <- keras_model(list(
+  monthly_input,
+  yearly_input,
+  other_input),
+            output)
 
 
 ```
 
-Avec suréchantillonnage
 ```{r}
-formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
-
-ctrl <-
-  trainControl(
-    method = "cv",
-    classProbs = TRUE,
-    summaryFunction = prSummary,
-    savePredictions = "all",
-    index = cv_folds
-  )
-
-glm1b_res <- train(formula,
-                      data = sample_train,
-                      method = 'glm',
-                      metric = 'AUC',
-                      trControl = ctrl,
-                      tuneLength = 10,
-                      na.action = "na.omit")
-
-algo1b_AUC <- glm1b_res$results$AUC
-```
-
-
-Avec donnees Banque de France
-```{r}
-formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
-  taux_marge + financier_ct + financier + delai_fournisseur + poids_frng + dette_fiscale
-
-ctrl <-
-  trainControl(
-    method = "cv",
-    classProbs = TRUE,
-    summaryFunction = prSummary,
-    savePredictions = "all",
-    index = cv_folds
-  )
-
-glm1c_res <- train(formula,
-                      data = sample_train,
-                      method = 'glm',
-                      metric = 'AUC',
-                      trControl = ctrl,
-                      tuneLength = 10,
-                      na.action = "na.omit")
-
-algo1c_AUC <- glm1c_res$results$AUC
-algo1c_F1 <- glm1c_res$results$F
-```
-
-Avec foret aleatoire
-
-```{r}
-set.seed(1900)
-formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation + indicatrice_dettecumulee + 
-  taux_marge + financier_ct + financier + delai_fournisseur + poids_frng + dette_fiscale
-
-ctrl <- 
-  trainControl( 
-    method = "cv", 
-    classProbs = TRUE, 
-    summaryFunction = prSummary, 
-    savePredictions = "all", 
-    index = cv_folds 
-  ) 
- 
-attr(sample_train$outcome,'contrasts') <- NULL
-randomForest <- train(formula, 
-                 data =  sample_train %>% 
-                   mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
-                 method = 'ranger', 
-                 metric = 'AUC', 
-                 trControl = ctrl, 
-                 tuneLength = 10, 
-                 na.action = "na.omit") 
-
-algo2a_AUC <- max(randomForest$results$AUC)
+model %>% compile(
+  optimizer = optimizer_rmsprop(lr = 0.0001),
+  loss = "binary_crossentropy",
+  metrics = c('acc')
+)
 
 ```
 
-VERIF Foret aleatoire
-```{r}
-AUCPR <- numeric(length = 5)
-F1 <- numeric(length = 5)
-for (i in 1:5) {
-    aux_train <- sample_train %>%
-      slice(cv_folds[[i]])
-
-    aux_train <- aux_train %>%
-      as.data.frame()
-    
-    ctrl <- 
-  trainControl( 
-    method = "none", 
-    classProbs = TRUE, 
-    summaryFunction = prSummary, 
-    savePredictions = "all"
-  ) 
- 
-aux_randomForest <- train(formula, 
-                 data = aux_train, 
-                 method = 'rf', 
-                 metric = 'AUC', 
-                 trControl = ctrl, 
-                 tuneLength = 1, 
-                 na.action = "na.omit") 
-    
-    aux_cv <- sample_train %>% 
-      slice(-cv_folds[[i]]) 
-    
-    preds <- predict(aux_randomForest,newdata = aux_cv,type='prob')
-      
-    aux_cv <- aux_cv %>% 
-      mutate(prediction = preds$default)
-    
-    PR <-  pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default'),curve = TRUE)
-    AUCPR[i] <-  PR$auc.integral
-    F1[i] <- max(2*PR$curve[,1] * PR$curve[,2] / (PR$curve[,1] + PR$curve[,2]),na.rm = TRUE)
-}
-
-algo2a_AUC <- mean(AUCPR)
-algo2a_F <- mean(F1)
-```
-
-
-Avec moyenne glissante sur trois périodes
-```{r}
-# AUCPR <- numeric(length = 5)
-# for (i in 1:5) {
-#     # aux_train <- sample_train %>% 
-#     #   slice(cv_folds[[i]]) 
-#     # 
-#     # aux_train <- aux_train %>% 
-#     #   as.data.frame()
-#     
-#     aux_cv <- randomForest$pred[[randomForest$pred 
-#       # sample_train %>% 
-#       # slice(-cv_folds[[i]]) %>% 
-#       # broom::augment(aux_glm,newdata = .,type.predict = 'response') %>% 
-#       # rename(prediction = .fitted)
-#     
-#     PR <-  pr.curve(scores.class0 = aux_cv$prediction,weights.class0 =  as.numeric(aux_cv$outcome == 'default'),curve = TRUE)
-#     AUCPR[i] <-  PR$auc.integral
-#     F1[i] <- max(2*PR$curve[,1] * PR$curve[,2] / (PR$curve[,1] + PR$curve[,2]),na.rm = TRUE)
-# }
-```
-
-
-## TEST
 ```{r}
 
+history <- model %>% fit_generator(
+  train_gen,
+  steps_per_epoch = 40,
+  epochs = 6,
+  validation_data = validation_gen,
+  validation_steps = 15,
+  verbose = TRUE
+)
 ```
 
