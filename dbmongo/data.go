@@ -374,9 +374,9 @@ func compactEntreprise(c *gin.Context) {
 	}
 
 	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/compactEntrepriseMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/compactEntrepriseReduce.js")
-	finalizeFct, errFinalize := ioutil.ReadFile("js/compactEntrepriseFinalize.js")
+	mapFct, errMap := ioutil.ReadFile("js/compact/EntrepriseMap.js")
+	reduceFct, errReduce := ioutil.ReadFile("js/compact/EntrepriseReduce.js")
+	finalizeFct, errFinalize := ioutil.ReadFile("js/compact/EntrepriseFinalize.js")
 	if errMap != nil || errReduce != nil || errFinalize != nil {
 		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
 		return
