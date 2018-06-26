@@ -38,6 +38,8 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
+		api.POST("/batch", newBatch)
+
 		api.GET("/import/all/:batch", importAll)
 		api.GET("/import/apdemande/:batch", importAPDemande)
 		api.GET("/import/apconso/:batch", importAPConso)
