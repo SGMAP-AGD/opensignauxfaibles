@@ -7,7 +7,22 @@
         
       </v-flex>
       <v-flex key="import" xs3>
-     
+     <v-card>
+          <v-card-title>
+            <div>
+              <span>Import</span><br>
+            </div>
+          </v-card-title>
+            <v-select
+            v-model="selected_batch"
+            :items="batch"
+            label="Batch"
+            required
+            ></v-select>
+          <v-card-actions>
+            <v-btn @click="import()">Import</v-btn>
+          </v-card-actions>
+        </v-card>
       </v-flex>
       <v-flex key="compact" xs3>
      <v-card>

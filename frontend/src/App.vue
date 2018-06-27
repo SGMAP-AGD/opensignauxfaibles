@@ -60,7 +60,10 @@ export default {
           color: 'grey darken-2' },
         { title: 'Visites',
           action: '/workflow',
-          color: 'red darken-4' }
+          color: 'red darken-4' },
+        { title: 'Paramètres',
+          action: '/admin',
+          color: 'black' }
       ]
     }
   },
