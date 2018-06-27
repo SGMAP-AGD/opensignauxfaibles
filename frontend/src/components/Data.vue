@@ -20,7 +20,7 @@
             required
             ></v-select>
           <v-card-actions>
-            <v-btn @click="import()">Import</v-btn>
+            <v-btn @click="importData()">Import</v-btn>
           </v-card-actions>
         </v-card>
       </v-flex>
@@ -94,6 +94,9 @@ export default {
     },
     compactEntreprise () {
       axios.get('http://localhost:3000/api/compact/entreprise').then()
+    },
+    importData () {
+      alert('Pas encore implémenté')
     }
   },
   data () {
