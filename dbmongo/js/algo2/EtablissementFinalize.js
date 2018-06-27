@@ -55,9 +55,7 @@ function finalize(k, v) {
             "outcome_0_12": "non_default",
             "date_defaillance": null,
             "cotisation_due_periode": {},
-            "debit_array": [],
-            "delai" : false,
-            "duree_delai": 0
+            "debit_array": []
         }
     });
 
@@ -141,7 +139,9 @@ function finalize(k, v) {
             pastYearTimes.map(
                 function(time){
                     if (time in value) {
-                        value[time].delai = true;
+                        var remaining_months = (date_echeance.getUTCMonth() - time.getUTCMonth()) +
+                                    12*(date_echeance.getUTCFullYear() - time.getUTCFullYear()) 
+                        value[time].delai = remaining_months;
                         value[time].duree_delai = delai.duree_delai
                         value[time].montant_echeancier = delai.montant_echeancier
 
