@@ -117,7 +117,7 @@ func reduce(c *gin.Context) {
 	if siret == "" {
 		queryEtablissement = bson.M{"value.index." + algo: true}
 		queryEntreprise = nil
-		output = bson.M{"replace": "Features"}
+		output = bson.M{"merge": "Features"}
 	} else {
 		queryEtablissement = bson.M{"value.siret": siret}
 		queryEntreprise = bson.M{"value.siren": siret[0:9]}

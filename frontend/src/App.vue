@@ -49,7 +49,7 @@ export default {
       drawer: false,
       menu: {
         title: 'Menu',
-        color: 'pink darken-1'
+        color: 'light-green darken-4'
       },
       items: [
         { title: 'Détection',

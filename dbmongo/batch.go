@@ -5,7 +5,7 @@ import (
 	"github.com/globalsign/mgo"
 )
 
-// Admin Collection key
+// AdminID Collection key
 type AdminID struct {
 	Key  string `json:"key" bson:"key"`
 	Type string `json:"type" bson:"type"`

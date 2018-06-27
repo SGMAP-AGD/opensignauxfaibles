@@ -1,8 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from '@/components/HelloWorld'
-import DataImport from '@/components/DataImport'
-import DataBatch from '@/components/DataBatch'
+import Data from '@/components/Data'
 
 Vue.use(Router)
 
@@ -14,14 +13,9 @@ export default new Router({
       component: HelloWorld
     },
     {
-      path: '/data/import',
-      name: 'DataImport',
-      component: DataImport
-    },
-    {
-      path: '/data/batch',
-      name: 'DataBatch',
-      component: DataBatch
+      path: '/data',
+      name: 'Data',
+      component: Data
     }
   ]
 })
