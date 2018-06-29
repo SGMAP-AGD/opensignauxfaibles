@@ -10,6 +10,8 @@ Vue.use(Vuetify)
 
 Vue.config.productionTip = false
 
+Vue.prototype.$api = 'http://localhost:3000/api'
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

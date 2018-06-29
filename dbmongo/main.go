@@ -38,7 +38,10 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
-		api.POST("/batch", newBatch)
+		api.PUT("/admin/batch/:batchID", newBatch)
+		api.GET("/admin/batch", listBatch)
+
+		api.GET("/admin/clone/:to", cloneDB)
 
 		api.GET("/import/all/:batch", importAll)
 		api.GET("/import/apdemande/:batch", importAPDemande)

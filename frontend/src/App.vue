@@ -16,20 +16,28 @@
         </v-list-tile>
       </v-list>
     </v-menu>
-
-
-      <v-toolbar-title><span id="gray">Open</span> <span id="blue">Signaux</span> <span id="red">Faibles</span></v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>fa-user</v-icon>
-      </v-btn>
+    <v-toolbar-title>
+      <span id="gray">Open</span>
+      <span id="blue">Signaux</span>
+      <span id="red">Faibles</span>
+    </v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-btn icon>
+      <v-icon>fa-user</v-icon>
+    </v-btn>
     </v-toolbar>
     <v-content>
       <router-view/>
     </v-content>
 
-    <v-footer :fixed="fixed" app>
-      <span>v0.1  &copy; 2017</span>
+    <v-footer>
+      <v-btn 
+      flat 
+      icon 
+      color="blue"
+      href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
+        <v-icon >fa-github</v-icon>
+      </v-btn>
     </v-footer>
   </v-app>
 </template>
@@ -61,7 +69,7 @@ export default {
         { title: 'Visites',
           action: '/workflow',
           color: 'red darken-4' },
-        { title: 'Paramètres',
+        { title: 'Admin',
           action: '/admin',
           color: 'black' }
       ]
