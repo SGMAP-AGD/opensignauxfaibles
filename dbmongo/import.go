@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
@@ -11,42 +10,38 @@ import (
 	"github.com/spf13/viper"
 )
 
-func createRepo(c *gin.Context) {
-	// db := c.Keys["DB"].(*mgo.Database)
+func adminFiles(c *gin.Context) {
 	basePath := viper.GetString("APP_DATA")
-	batch := c.Params.ByName("batch")
+	files, err := listFiles(basePath)
 
-	directories := []string{
-		"admin_urssaf",
-		"altares",
-		"apconso",
-		"apdemande",
-		"bdf",
-		"ccsf",
-		"cotisation",
-		"debit",
-		"delai",
-		"effectif",
-		"sirene",
-		"interim",
-		"dmmo",
-		"dpae",
+	if err != nil {
+		c.JSON(500, err)
+	} else {
+		c.JSON(200, files)
+	}
+}
+
+func listFiles(basePath string) ([]string, error) {
+	var files []string
+
+	currentFiles, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		return []string{}, err
 	}
 
-	response := make(map[string]string)
-	var status int
-	for _, directory := range directories {
-		path := basePath + "/" + batch + "/" + directory
-		err := os.MkdirAll(path, 0755)
-		status = 200
-		if err != nil {
-			status = 207
-			response[path] = err.Error()
+	for _, file := range currentFiles {
+		if file.IsDir() {
+			subPath := fmt.Sprintf("%s/%s", basePath, file.Name())
+			subFiles, err := listFiles(subPath)
+			if err != nil {
+				return []string{}, err
+			}
+			files = append(files, subFiles...)
 		} else {
-			response[path] = "ok"
+			files = append(files, fmt.Sprintf("%s/%s", basePath, file.Name()))
 		}
 	}
-	c.JSON(status, response)
+	return files, nil
 }
 
 // GetFileList construit la liste des fichiers à traiter

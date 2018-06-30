@@ -26,6 +26,27 @@
             </v-card-actions>
           </v-card-title>
         </v-card>
+
+        <v-card>
+          <v-card-title>
+            <div>
+              <span>Attachement fichiers</span><br>
+            </div>
+          </v-card-title>
+          <v-card-actions>
+            <v-select
+              :items="files"
+              v-model="file"
+              label="Fichier"
+          ></v-select>
+          </v-card-actions>
+          <v-card-actions>
+            
+          </v-card-actions>
+          <v-card-actions>
+            <v-btn @click="listBatch()">Liste lot</v-btn>
+          </v-card-actions>
+        </v-card>
       </v-flex>
       <v-flex key="import" xs3>
         <v-card>
@@ -115,11 +136,20 @@ export default {
     },
     createBatch () {
       axios.put(this.$api + '/admin/batch/' + this.batchID)
-      .then(response => alert(response.data))
+      .then(response => alert(JSON.stringify(response.data, null, 2)))
     },
     listBatch () {
-      axios.get(this.$api + '/admin/batch').then(response => alert(JSON.stringify(response.data, null, 2)))
+      var self = this
+      axios.get(this.$api + '/admin/batch').then(response => { self.batch = response.data.map(batch => batch.id.key) })
+    },
+    listFiles () {
+      var self = this
+      axios.get(this.$api + '/admin/files').then(response => { self.files = response.data })
     }
+  },
+  mounted () {
+    this.listBatch()
+    this.listFiles()
   },
   data () {
     return {
@@ -128,6 +158,8 @@ export default {
       batch: [],
       algo: [],
       name: 'App',
+      files: [],
+      file: '',
       selected_batch: '',
       selected_algo: ''
     }

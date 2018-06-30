@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -15,42 +16,93 @@ type AdminID struct {
 	Type string `json:"type" bson:"type"`
 }
 
-// Admin stockage des parametres admin
-type Admin struct {
-	ID     AdminID     `json:"id" bson:"_id"`
-	Params interface{} `json:"params" bson:"params"`
+// AdminBatch metadata Batch
+type AdminBatch struct {
+	ID    AdminID    `json:"id" bson:"_id"`
+	Files BatchFiles `json:"files" bson:"files"`
 }
 
-func (batch *Admin) load(batchKey string, db *mgo.Database) error {
+// BatchFiles fichiers mappés par type
+type BatchFiles map[string][]string
+
+func (batchFiles BatchFiles) attachFile(fileType string, file string) {
+	batchFiles[fileType] = append(batchFiles[fileType])
+}
+
+func (batch *AdminBatch) load(batchKey string, db *mgo.Database) error {
 	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(batch)
 	return err
 }
 
-func (batch *Admin) save(db *mgo.Database) error {
+func (batch *AdminBatch) save(db *mgo.Database) error {
 	_, err := db.C("Admin").Upsert(bson.M{"_id": batch.ID}, batch)
 	return err
 }
 
-func newBatch(c *gin.Context) {
-	var admin Admin
+func (batch *AdminBatch) new(batchID string) error {
+	if batchID == "" {
+		return errors.New("Valeur de batch non autorisée")
+	}
+	batch.ID.Key = batchID
+	batch.ID.Type = "batch"
+	batch.Files = BatchFiles{}
+	return nil
+}
+
+func attachFileBatch(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
+	batch := AdminBatch{}
 
-	admin.ID.Key = c.Params.ByName("batchID")
-	admin.ID.Type = "batch"
+	var params struct {
+		batch    string
+		fileType string
+		file     string
+	}
 
-	err := admin.save(db)
+	err := c.Bind(params)
+
+	if err != nil {
+		c.JSON(500, "Requête invalide")
+		return
+	}
+	err = batch.load(params.batch, db)
+
+	if err != nil {
+		c.JSON(500, "Erreur au chargement du lot")
+		return
+	}
+	batch.Files.attachFile(params.fileType, params.file)
+
+	err = batch.save(db)
+	if err != nil {
+		c.JSON(500, "Erreur à l'enregistrement")
+		return
+	}
+	c.JSON(200, batch)
+
+}
+
+func registerNewBatch(c *gin.Context) {
+	batch := AdminBatch{}
+	err := batch.new(c.Params.ByName("batchID"))
+
+	if err != nil {
+		c.JSON(500, "Valeur de batch non autorisée")
+	}
+	db := c.Keys["DB"].(*mgo.Database)
+	err = batch.save(db)
 
 	if err != nil {
 		c.JSON(500, err)
 	} else {
-		c.JSON(200, admin)
+		c.JSON(200, batch)
 	}
 }
 
 func listBatch(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
-	var batch []Admin
-	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.batch").All(&batch)
+	var batch []AdminBatch
+	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
 	c.JSON(200, batch)
 }
 

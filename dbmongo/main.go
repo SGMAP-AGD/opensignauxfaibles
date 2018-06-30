@@ -38,8 +38,11 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
-		api.PUT("/admin/batch/:batchID", newBatch)
+		api.PUT("/admin/batch/:batchID", registerNewBatch)
+
 		api.GET("/admin/batch", listBatch)
+		api.GET("/admin/files", adminFiles)
+		api.POST("/admin/files", attachFileBatch)
 
 		api.GET("/admin/clone/:to", cloneDB)
 
@@ -55,8 +58,6 @@ func main() {
 		api.GET("/import/sirene/:batch", importSirene)
 		api.GET("/import/bdf/:batch", importBDF)
 		api.GET("/import/dpae/:batch", importDPAE)
-
-		api.GET("/repo/create/:batch", createRepo)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
