@@ -26,7 +26,7 @@ type AdminBatch struct {
 type BatchFiles map[string][]string
 
 func (batchFiles BatchFiles) attachFile(fileType string, file string) {
-	batchFiles[fileType] = append(batchFiles[fileType])
+	batchFiles[fileType] = append(batchFiles[fileType], file)
 }
 
 func (batch *AdminBatch) load(batchKey string, db *mgo.Database) error {
@@ -54,24 +54,24 @@ func attachFileBatch(c *gin.Context) {
 	batch := AdminBatch{}
 
 	var params struct {
-		batch    string
-		fileType string
-		file     string
+		Batch    string `json:"batch"`
+		FileType string `json:"type"`
+		File     string `json:"file"`
 	}
 
-	err := c.Bind(params)
+	err := c.Bind(&params)
 
 	if err != nil {
-		c.JSON(500, "Requête invalide")
+		c.JSON(500, err)
 		return
 	}
-	err = batch.load(params.batch, db)
+	err = batch.load(params.Batch, db)
 
 	if err != nil {
 		c.JSON(500, "Erreur au chargement du lot")
 		return
 	}
-	batch.Files.attachFile(params.fileType, params.file)
+	batch.Files.attachFile(params.FileType, params.File)
 
 	err = batch.save(db)
 	if err != nil {
@@ -104,6 +104,25 @@ func listBatch(c *gin.Context) {
 	var batch []AdminBatch
 	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
 	c.JSON(200, batch)
+}
+
+func listTypes(c *gin.Context) {
+	c.JSON(200, []string{
+		"admin_urssaf",
+		"apconso",
+		"bdf",
+		"cotisation",
+		"delai",
+		"dpae",
+		"interim",
+		"altares",
+		"apdemande",
+		"ccsf",
+		"debit",
+		"dmmo",
+		"effectif",
+		"sirene",
+	})
 }
 
 func cloneDB(c *gin.Context) {

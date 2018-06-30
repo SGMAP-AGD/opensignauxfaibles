@@ -35,16 +35,29 @@
           </v-card-title>
           <v-card-actions>
             <v-select
+            v-model="selected_batch"
+            :items="batch"
+            label="Batch"
+            required
+            ></v-select>
+          </v-card-actions>
+          <v-card-actions>
+            <v-select
               :items="files"
               v-model="file"
               label="Fichier"
           ></v-select>
           </v-card-actions>
           <v-card-actions>
-            
+            <v-select
+              :items="types"
+              v-model="type"
+              label="Type"
+            ></v-select>  
           </v-card-actions>
+          
           <v-card-actions>
-            <v-btn @click="listBatch()">Liste lot</v-btn>
+            <v-btn @click="attachFile()">Associer</v-btn>
           </v-card-actions>
         </v-card>
       </v-flex>
@@ -57,7 +70,7 @@
           </v-card-title>
           <v-card-actions>
             <v-select
-            v-model="importBatch"
+            v-model="selected_batch"
             :items="batch"
             label="Batch"
             required
@@ -145,11 +158,25 @@ export default {
     listFiles () {
       var self = this
       axios.get(this.$api + '/admin/files').then(response => { self.files = response.data })
+    },
+    listTypes () {
+      var self = this
+      axios.get(this.$api + '/admin/types').then(response => { self.types = response.data })
+    },
+    attachFile () {
+      var self = this
+      axios.post(this.$api + '/admin/attach',
+        {
+          'file': self.file,
+          'type': self.type,
+          'batch': self.selected_batch
+        })
     }
   },
   mounted () {
     this.listBatch()
     this.listFiles()
+    this.listTypes()
   },
   data () {
     return {
@@ -161,7 +188,9 @@ export default {
       files: [],
       file: '',
       selected_batch: '',
-      selected_algo: ''
+      selected_algo: '',
+      types: [],
+      type: ''
     }
   }
 }

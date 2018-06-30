@@ -42,8 +42,8 @@ func main() {
 
 		api.GET("/admin/batch", listBatch)
 		api.GET("/admin/files", adminFiles)
-		api.POST("/admin/files", attachFileBatch)
-
+		api.POST("/admin/attach", attachFileBatch)
+		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
 
 		api.GET("/import/all/:batch", importAll)
