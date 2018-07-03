@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func sliceIndex(limit int, predicate func(i int) bool) int {
@@ -119,6 +121,10 @@ func getCompteSiretMapping(path []string) map[string]string {
 		file.Close()
 	}
 	return compteSiretMapping
+}
+
+func importAdminUrsaff(c *gin.Context, batch *AdminBatch) {
+
 }
 
 func max(a, b int) int {

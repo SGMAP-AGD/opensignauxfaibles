@@ -11,8 +11,6 @@ import (
 	"strings"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // Cotisation Cotisation – fichier Urssaf
@@ -78,16 +76,10 @@ func parseCotisation(paths []string) chan *Cotisation {
 	return outputChannel
 }
 
-func importCotisation(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
+func importCotisation(batch *AdminBatch) error {
+	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
 
-	batch := c.Params.ByName("batch")
-
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	dataSource := files["cotisation"]
-	mapping := getCompteSiretMapping(files["admin_urssaf"])
-
-	for cotisation := range parseCotisation(dataSource) {
+	for cotisation := range parseCotisation(batch.Files["cotisation"]) {
 		if siret, ok := mapping[cotisation.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(*cotisation, 1))
 
@@ -95,12 +87,13 @@ func importCotisation(c *gin.Context) {
 				Value: Etablissement{
 					Siret: siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							Cotisation: map[string]*Cotisation{
 								hash: cotisation,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

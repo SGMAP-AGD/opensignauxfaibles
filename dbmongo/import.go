@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"regexp"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/spf13/viper"
@@ -84,16 +86,20 @@ func GetFileList(basePath string, period string) (map[string][]string, error) {
 }
 
 func importAll(c *gin.Context) {
-	importAltares(c)
-	importAPConso(c)
-	importAPDemande(c)
-	importEffectif(c)
-	importDebit(c)
-	importBDF(c)
-	importCotisation(c)
-	importDelai(c)
-	importSirene(c)
-	importDPAE(c)
+}
+
+var importFunctions = map[string]func(*AdminBatch) error{
+	"apconso":    importAPConso,
+	"bdf":        importBDF,
+	"cotisation": importCotisation,
+	"delai":      importDelai,
+	"dpae":       importDPAE,
+	"altares":    importAltares,
+	"apdemande":  importAPDemande,
+	"ccsf":       importCCSF,
+	"debit":      importDebit,
+	"effectif":   importEffectif,
+	"sirene":     importSirene,
 }
 
 func purge(c *gin.Context) {
@@ -101,4 +107,17 @@ func purge(c *gin.Context) {
 	db.C("Etablissement").RemoveAll(nil)
 	db.C("Entreprise").RemoveAll(nil)
 	c.String(200, "Done")
+}
+
+func importBatch(c *gin.Context) error {
+	batch := AdminBatch{}
+	batchKey := c.Params.ByName("batch")
+	db := c.Keys["DB"].(*mgo.Database)
+	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
+	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
+	err := batch.load(batchKey, db, chanEtablissement, chanEntreprise)
+
+	spew.Dump(batch.Files)
+
+	return err
 }

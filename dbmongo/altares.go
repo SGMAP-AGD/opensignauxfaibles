@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // Altares Extrait du récapitulatif altarès
@@ -23,7 +21,7 @@ type Altares struct {
 	Siret         string    `json:"-" bson:"-"`
 }
 
-func parseAltares(path string, batch string) chan *Altares {
+func parseAltares(path string) chan *Altares {
 	outputChannel := make(chan *Altares)
 
 	file, err := os.Open(path)
@@ -72,24 +70,20 @@ func parseAltares(path string, batch string) chan *Altares {
 	return outputChannel
 }
 
-func importAltares(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	altares := files["altares"][0]
-
-	for altares := range parseAltares(altares, batch) {
+func importAltares(batch *AdminBatch) error {
+	for altares := range parseAltares(batch.Files["altares"][0]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 
 		value := ValueEtablissement{
 			Value: Etablissement{
 				Siret: altares.Siret,
 				Batch: map[string]Batch{
-					batch: Batch{
+					batch.ID.Key: Batch{
 						Altares: map[string]*Altares{
 							hash: altares,
 						}}}}}
-		insertWorker <- &value
+		batch.ChanEtablissement <- &value
 	}
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // Effectif Urssaf
@@ -102,14 +100,8 @@ func parseEffectif(paths []string) chan map[string]*Effectif {
 	return outputChannel
 }
 
-func importEffectif(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-
-	effectif := files["effectif"]
-	for effectif := range parseEffectif(effectif) {
+func importEffectif(batch *AdminBatch) error {
+	for effectif := range parseEffectif(batch.Files["effectif"]) {
 
 		randomKey := ""
 		for randomKey = range effectif {
@@ -123,12 +115,13 @@ func importEffectif(c *gin.Context) {
 				Value: Etablissement{
 					Siret: siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							Effectif: effectif,
 						}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
 
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

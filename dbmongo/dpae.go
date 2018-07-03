@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // DPAE Déclaration préalabre à l'embauche
@@ -66,13 +64,8 @@ func parseDPAE(path string) chan *DPAE {
 	return outputChannel
 }
 
-func importDPAE(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	dpaes := files["dpae"]
-
-	for _, dpaeFile := range dpaes {
+func importDPAE(batch *AdminBatch) error {
+	for _, dpaeFile := range batch.Files["dpae"] {
 		for dpae := range parseDPAE(dpaeFile) {
 			hash := fmt.Sprintf("%x", structhash.Md5(dpae, 1))
 
@@ -80,13 +73,13 @@ func importDPAE(c *gin.Context) {
 				Value: Etablissement{
 					Siret: dpae.Siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							DPAE: map[string]*DPAE{
 								hash: dpae,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
-
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

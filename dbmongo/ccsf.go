@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // CCSF information urssaf ccsf
@@ -65,28 +63,16 @@ func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
 	return outputChannel
 }
 
-func importCCSF(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
+func importCCSF(batch *AdminBatch) error {
 
-	batch := c.Params.ByName("batch")
+	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
 
-	files, err := GetFileList(viper.GetString("APP_DATA"), batch)
-
-	if err != nil {
-		c.JSON(500, err)
-		return
-	}
-
-	dataSource := files["ccsf"]
-	mapping := getCompteSiretMapping(files["admin_urssaf"])
-
-	dateBatch, errDate := batchToTime(batch)
+	dateBatch, errDate := batchToTime(batch.ID.Key)
 	if errDate != nil {
-		c.JSON(500, errDate)
-		return
+		return errDate
 	}
 
-	for _, data := range dataSource {
+	for _, data := range batch.Files["ccsf"] {
 		for ccsf := range parseCCSF(data, dateBatch) {
 			if siret, ok := mapping[ccsf.NumeroCompte]; ok {
 				hash := fmt.Sprintf("%x", structhash.Md5(ccsf, 1))
@@ -95,16 +81,14 @@ func importCCSF(c *gin.Context) {
 					Value: Etablissement{
 						Siret: siret,
 						Batch: map[string]Batch{
-							batch: Batch{
-								// Compact: map[string]bool{
-								// 	"status": false,
-								// },
+							batch.ID.Key: Batch{
 								CCSF: map[string]*CCSF{
 									hash: ccsf,
 								}}}}}
-				insertWorker <- &value
+				batch.ChanEtablissement <- &value
 			}
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

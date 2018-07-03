@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/tealeg/xlsx"
 )
 
@@ -62,23 +60,21 @@ func parseBDF(path []string) chan *BDF {
 	return outputChannel
 }
 
-func importBDF(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEntreprise"].(chan *ValueEntreprise)
-	batch := c.Params.ByName("batch")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	files := allFiles["bdf"]
-	for bdf := range parseBDF(files) {
+func importBDF(batch *AdminBatch) error {
+
+	for bdf := range parseBDF(batch.Files["bdf"]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(bdf, 1))
 
 		value := ValueEntreprise{
 			Value: Entreprise{
 				Siren: bdf.Siren,
 				Batch: map[string]Batch{
-					batch: Batch{
+					batch.ID.Key: Batch{
 						BDF: map[string]*BDF{
 							hash: bdf,
 						}}}}}
-		insertWorker <- &value
+		batch.ChanEntreprise <- &value
 	}
-	insertWorker <- &ValueEntreprise{}
+	batch.ChanEntreprise <- &ValueEntreprise{}
+	return nil
 }

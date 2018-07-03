@@ -28,19 +28,19 @@ func DB() gin.HandlerFunc {
 		log.Panic(err)
 	}
 
-	dbInsertEntreprise := insertEntreprise(db)
-	dbInsertEtablissement := insertEtablissement(db)
+	chanEntreprise := insertEntreprise(db)
+	chanEtablissement := insertEtablissement(db)
 
 	go func() {
 		for range time.Tick(30 * time.Second) {
-			dbInsertEntreprise <- &ValueEntreprise{}
-			dbInsertEtablissement <- &ValueEtablissement{}
+			chanEntreprise <- &ValueEntreprise{}
+			chanEtablissement <- &ValueEtablissement{}
 		}
 	}()
 
 	return func(c *gin.Context) {
-		c.Set("insertEntreprise", dbInsertEntreprise)
-		c.Set("insertEtablissement", dbInsertEtablissement)
+		c.Set("chanEntreprise", chanEntreprise)
+		c.Set("chanEtablissement", chanEtablissement)
 		c.Set("DBSESSION", mongodb)
 		c.Set("DB", db)
 		c.Next()

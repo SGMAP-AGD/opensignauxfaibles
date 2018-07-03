@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // Debit Débit – fichier Urssaf
@@ -92,16 +90,10 @@ func parseDebit(paths []string) chan *Debit {
 	return outputChannel
 }
 
-func importDebit(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
+func importDebit(batch *AdminBatch) error {
+	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
 
-	batch := c.Params.ByName("batch")
-
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	dataSource := files["debit"]
-	mapping := getCompteSiretMapping(files["admin_urssaf"])
-
-	for debit := range parseDebit(dataSource) {
+	for debit := range parseDebit(batch.Files["debit"]) {
 		if siret, ok := mapping[debit.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(debit, 1))
 
@@ -109,12 +101,13 @@ func importDebit(c *gin.Context) {
 				Value: Etablissement{
 					Siret: siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							Debit: map[string]*Debit{
 								hash: debit,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }
