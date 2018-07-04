@@ -144,6 +144,7 @@ function finalize(k, v) {
         }
     )
 
+
     // Cotisation
     var value_cotisation = {}
 
@@ -261,6 +262,24 @@ function finalize(k, v) {
         //val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1 || 1))
         val.apart_last12_months = (val.apart_last12_months ? 1 : 0)
         val.apart_consommee = (val.apart_heures_consommees > 0 ? 1 : 0)
+        
+        var ccsfHashes = Object.keys(v.ccsf || {}) 
+
+        var optccsf = ccsfHashes.reduce( 
+            function (accu, hash) { 
+                ccsf = v.ccsf[hash] 
+                if (ccsf.date_traitement.getTime() < val.periode.getTime() && ccsf.date_traitement.getTime() > accu.date_traitement.getTime()) { 
+                    accu = ccsf 
+                }
+                return accu 
+            }, 
+            { 
+                date_traitement: new Date(0) 
+            } 
+        ) 
+        if (optccsf.date_traitement.getTime() != 0) { 
+            val.date_ccsf = optccsf.date_traitement 
+        } 
 
         // geolocalisation
         var sireneHashes = Object.keys(v.sirene || {})
@@ -271,6 +290,10 @@ function finalize(k, v) {
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
         val.code_ape  = (sirene || { "ape": null}).ape
+        val.raison_sociale = (sirene || {"raisonsociale": null}).raisonsociale
+
+
+    
 
         delete val.effectif_history
         delete val.cotisation_array
@@ -278,10 +301,10 @@ function finalize(k, v) {
         delete val.montant_dette
         delete val.apart_heures_consommees_array
         delete val.cotisation_due_periode
-        delete val.montant_part_ouvriere
-        delete val.montant_part_patronale
+        //delete val.montant_part_ouvriere
+        //delete val.montant_part_patronale
         //delete val.ratio_dettecumulee_cotisation_12m
-        delete val.mean_cotisation_due
+        //delete val.mean_cotisation_due
         delete val.effectif_date
         delete val.effectif_average
         delete val.lag_effectif
@@ -290,4 +313,4 @@ function finalize(k, v) {
     return_value = { "siren": k.substring(0, 9)}
     return_value[k] = value_array
     return return_value
-}
+}   

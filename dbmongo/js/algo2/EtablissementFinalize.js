@@ -139,8 +139,8 @@ function finalize(k, v) {
             pastYearTimes.map(
                 function(time){
                     if (time in value) {
-                        var remaining_months = (date_echeance.getUTCMonth() - time.getUTCMonth()) +
-                                    12*(date_echeance.getUTCFullYear() - time.getUTCFullYear()) 
+                        var remaining_months = (date_echeance.getUTCMonth() - new Date(time).getUTCMonth()) +
+                                    12*(date_echeance.getUTCFullYear() - new Date(time).getUTCFullYear()) 
                         value[time].delai = remaining_months;
                         value[time].duree_delai = delai.duree_delai
                         value[time].montant_echeancier = delai.montant_echeancier
@@ -151,7 +151,32 @@ function finalize(k, v) {
         }
     )
 
+
     // defaillance - On prend la date de l'évènement le plus proche dans l'avenir par rapport à period
+    // Object.keys(v.altares).map(
+    //     function (hash) {
+    //         var altares = v.altares[hash]
+    //         var periode_effet = new Date(Date.UTC(altares.date_effet.getUTCFullYear(), altares.date_effet.getUTCMonth(), 1, 0, 0, 0, 0))
+    //         var code_evenement = altares.code_evenement
+    //         return {"periode_effet": periode_effet,
+    //                 "code_evenement": code_evenemement}
+    //     }).sort(function(a,b){return(a.periode_effet.getTime() < b.periode_effet.getTime())}).forEach(
+    //         function (event){
+    //             var periode_outcome = new Date(event.periode_effet.getUTCFullYear() - 1, event.periode_effet.getUTCMonth(), 1, 0, 0, 0, 0)
+    //             var pastYearTimes = generatePeriodSerie(periode_outcome, event.periode_effet).map(function (date) { return date.getTime() })
+    //         pastYearTimes.map(
+    //             function (time) {
+    //                 if (time in value) {
+    //                     value[time].date_defaillance = event.periode_effet
+    //                     value[time].outcome_0_12 = "default";
+    //                     value[time].altares_status = event.code_evenement;
+    //                 }
+    //             }
+    //         )
+
+    //         }
+    //     )
+
     Object.keys(v.altares).map(
         function (hash) {
             var altares = v.altares[hash]
@@ -168,6 +193,12 @@ function finalize(k, v) {
             )
         }
     )
+
+
+      
+
+
+            
 
     // Cotisation
     var value_cotisation = {}
@@ -287,6 +318,25 @@ function finalize(k, v) {
         val.apart_last12_months = (val.apart_last12_months ? 1 : 0)
         val.apart_consommee = (val.apart_heures_consommees > 0 ? 1 : 0)
 
+          // CCSF 
+        var ccsfHashes = Object.keys(v.ccsf || {}) 
+          
+        var optccsf = ccsfHashes.reduce( 
+            function (accu, hash) { 
+                ccsf = v.ccsf[hash] 
+                if (ccsf.date_traitement.getTime() < val.periode.getTime() && ccsf.date_traitement.getTime() > accu.date_traitement.getTime()) { 
+                    accu = ccsf 
+                } 
+            }, 
+            { 
+                date_traitement: new Date(0) 
+            } 
+        ) 
+        if (optccsf.date_traitement.getTime() != 0) { 
+            val.date_ccsf = optccsf.date_traitement 
+        } 
+
+
         // geolocalisation
         var sireneHashes = Object.keys(v.sirene || {})
         if (sireneHashes.length != 0) {
@@ -295,12 +345,14 @@ function finalize(k, v) {
 
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
+        val.code_ape  = (sirene || { "ape": null}).ape
         val.activite_saisonniere = (sirene || {"activitesaisoniere": null}).activitesaisoniere
         val.productif = (sirene || {"productif": null}).productif
         val.debut_activite = (sirene || {"debut_activite":null}).debut_activite
-        val.tranche_ca = (sirene || {"tranche_ca":null}).tranche_ca
-        val.indice_monoactivite = (sirene || {"indicemonoactivite": null}).indice_monoactivite
+        val.tranche_ca = (sirene || {"trancheca":null}).trancheca
+        val.indice_monoactivite = (sirene || {"indicemonoactivite": null}).indicemonoactivite
 
+            
         delete val.effectif_history
         delete val.cotisation_array
         delete val.debit_array

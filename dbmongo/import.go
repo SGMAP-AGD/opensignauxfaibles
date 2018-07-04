@@ -94,6 +94,7 @@ func importAll(c *gin.Context) {
 	importDelai(c)
 	importSirene(c)
 	importDPAE(c)
+	importCCSF(c)
 }
 
 func purge(c *gin.Context) {

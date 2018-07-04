@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -76,17 +76,22 @@ func main() {
 		api.GET("/data/algo", dataAlgo)
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 
-		api.GET("/debug", debug)
+		api.GET("/debug/:batch", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
 }
 
 func debug(c *gin.Context) {
-	debut, _ := time.Parse("20060102", "20140101")
-	fin, _ := time.Parse("20060102", "20180501")
-	c.JSON(200, genereSeriePeriode(debut, fin))
+	basePath := viper.GetString("APP_DATA")
+	batch := c.Params.ByName("batch")
+	files, err := GetFileList(basePath, batch)
+	spew.Dump(files)
+	spew.Dump(err)
+	c.JSON(200, "cooool")
+	c.JSON(200, "tres coooool")
 }
+
 func loadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
