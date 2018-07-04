@@ -164,12 +164,20 @@ prediction <- predict_at(actual_period,
                          tw_complete_long,
                          function(x) caret_prob(rf,x))
 
-predicted_data <- prediction %>% 
-  left_join(raw_data,by = c('siret','periode'))  
+prediction_month_before <- predict_at(actual_period %m-% months(1),
+                         tw_complete_long,
+                         function(x) caret_prob(rf,x))
+
+joined <-
+  compare_prediction_probabilities(
+    sample_start = prediction_month_before,
+    sample_end = prediction,
+    only_siret = TRUE) %>%
+  left_join(raw_data, by = c('siret', 'periode')) 
 
 # Export
-predicted_data %>% 
-  prepare_for_export() %>% 
+joined %>% 
+  prepare_for_export(additional_names = c('diff','prob_old')) %>% 
   export(batch = "1806")
 
 ```
