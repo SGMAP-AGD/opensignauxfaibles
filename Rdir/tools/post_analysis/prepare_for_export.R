@@ -1,7 +1,7 @@
 prepare_for_export <- function(data, additional_names = NULL){
 
   export_names <-  c(
-    'siret',
+  'siret',
   'raison_sociale',
   'departement',
   'region',
@@ -35,10 +35,11 @@ prepare_for_export <- function(data, additional_names = NULL){
 
   export_names <- c(additional_names,export_names)
 
-  export_names <- export_names[export_names %in% names(data)]
+
 
   cat("Préparation à l'export ... \n")
-  cat(paste0('Dernière période connue: ',max(data$periode)))
+  cat(paste0('Dernière période connue: ',max(data$periode, na.rm = TRUE)))
+
 
   # Report des dernières infos financieres connues
   derniers_bilans_connus <- data %>%
@@ -64,8 +65,12 @@ prepare_for_export <- function(data, additional_names = NULL){
       dplyr::mutate(CCSF = date_ccsf ) %>%
       dplyr::arrange(dplyr::desc(prob))
 
+    temp_sample <- temp_sample %>%
+      mark_known_sirets(name = 'sirets_connus.csv')
 
+    export_names <- export_names[export_names %in% names(temp_sample)]
 
+    #if (is.emp)
     toExport <- temp_sample %>%
       dplyr::select(one_of(export_names))
 }

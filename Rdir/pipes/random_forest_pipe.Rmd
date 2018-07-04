@@ -28,6 +28,7 @@ library(rprojroot)
 # Sources
 
 source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
 source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
 source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
 source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
@@ -177,9 +178,8 @@ joined <-
 
 # Export
 joined %>% 
-  prepare_for_export(additional_names = c('diff','prob_old')) %>% 
-  export(batch = "1806")
-
+  prepare_for_export(additional_names = c('diff','prob_old', 'connu')) %>% 
+  export(batch = '1806')
 ```
 
 
