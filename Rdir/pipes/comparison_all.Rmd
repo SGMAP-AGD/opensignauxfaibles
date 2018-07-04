@@ -39,7 +39,10 @@ source(find_rstudio_root_file('tools','utilities','AUCPR.R'))
 source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
 source(find_rstudio_root_file('tools','post_analysis','export.R'))
 source(find_rstudio_root_file('tools','utilities','pr.F1.R'))
-source(find_rstudio_root_file('tools','models','cross_validated_model_fit.R'))
+source(find_rstudio_root_file('tools','models','caret_prob.R'))
+source(find_rstudio_root_file('tools','models','model_tune.R'))
+source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
+source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
 
 ```
 
@@ -51,7 +54,7 @@ actual_period <- as.Date("2018-04-01")
 
 ## Recuperation des données dans MongoDB
 ```{r}
-raw_data <- connect_to_database('Features')
+raw_data <- connect_to_database('Features', min_effectif = 20)
 ```
 
 ## Definition de l'objectif
@@ -88,13 +91,13 @@ Uniquement si les données Banque de France ont été importées
 
 ```{r}
 seed <- 1234
-mids <-  impute_missing_data_BdF(raw_data,seed = seed)
-imputed_data <- mice::complete(mids,1) %>% as_tbl_time(periode)
+mids <-  impute_missing_data_BdF(raw_data,number_imputations = 5, number_iterations = 1, seed = seed)
+imputed_data <- mids %>% filter(.imp==1) %>% select(-.imp) %>% as_tbl_time(periode)
 ```
 
 sinon 
 ```{r}
-imputed_data <- raw_data
+# imputed_data <- raw_data
 ```
 
 
@@ -104,8 +107,6 @@ Avec suréchantillonnage. Les suréchantillons seront supprimés à la main dans
 
 ```{r}
 seed <- 10011
-set.seed(seed)
-
 samples <-
   split_snapshot_rdm_month(
     imputed_data,
@@ -113,7 +114,8 @@ samples <-
     date_sup = as.Date("2016-12-01"),
     frac_train = 0.6,
     frac_cross = 0.2,
-    frac_eyeball = 0.05
+    frac_eyeball = 0.05,
+    seed = seed
   )
 
 sample_train <- samples$train %>% 
@@ -164,20 +166,13 @@ formula <-
   outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
   log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
+  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
 
-AUCPR_aux_failure <- numeric(length = 5)
-AUCPR_aux_default <- numeric(length = 5)
-# F1_aux <- numeric(length = 5)
-
-for (i in 1:5) {
-  aux_train_sirets <- sample_train %>%
-    slice(cv_folds[[i]])
-
+glm_model <- function(aux_train, aux_cv){
   
   # Suppression du suréchantillonnage dans l'échantillon d'entraînement
-  aux_train <- imputed_data %>% 
-    semi_join(aux_train_sirets, by = 'siret') %>% 
+  
+  aux_train <-aux_train %>% 
     filter(periode == as.Date('2015-01-01')) %>%
     as.data.frame()
   
@@ -188,32 +183,14 @@ for (i in 1:5) {
           "non_default", "default"
         ))))
   
-  aux_cv <- sample_train %>%
-    slice(-cv_folds[[i]]) %>%
+  aux_cv <- aux_cv %>%
     broom::augment(aux_glm, newdata = ., type.predict = 'response') %>%
-    rename(prediction = .fitted)
-  
-  AUCPR_aux_failure[i] <-  AUCPR(aux_cv$prediction, aux_cv$outcome == 'default')
-  AUCPR_aux_default[i] <- AUCPR(aux_cv$prediction, aux_cv$default)
-   
+    rename(pred = .fitted)
 }
 
-AUCPR_failure[cursor] <- mean(AUCPR_aux_failure)
-AUCPR_default[cursor] <- mean(AUCPR_aux_default)
+results <- model_cv_eval(glm_model, sample_train, cv_folds)
 
-# Modèle final pour le Eyeball set
- final_glm1a <-  glm(formula,
-      family = "binomial",
-      data = imputed_data %>% semi_join(sample_train, by=c('siret','periode'))%>% 
-        mutate(outcome = fct_relevel(
-               outcome, 
-               c("non_default", "default")))
-      )
- 
- sample_eyeball <- sample_eyeball %>%
-   broom::augment(final_glm1a, newdata = ., type.predict = 'response') %>%
-   rename(prediction_log_PA = .fitted)
-# F1_failure[cursor] <-  mean(F1_aux)
+add_results(results,'logistic','failure')
 ```
 
 Avec suréchantillonnage
@@ -222,7 +199,7 @@ glm_oversampling <- function(train_set,validation_set){
   formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
   log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
+  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m
   
   ctrl <-
   trainControl(
@@ -241,12 +218,12 @@ glm_oversampling <- function(train_set,validation_set){
   pred <- my_model %>% 
     predict(newdata = validation_set,
             type = 'prob') %>% 
-    .$default
+    mutate(pred = default)
   
   return(pred)
 }
 
-results <- cross_validated_model_fit(glm_oversampling, sample_train, cv_folds)
+results <- model_cv_eval(glm_oversampling, sample_train, cv_folds)
 
 add_results(results,'oversampled_logistic','failure')
 ```
@@ -259,7 +236,7 @@ glm_bdf <- function(train_set,validation_set){
   formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
     apart_last12_months + apart_consommee + apart_share_heuresconsommees +
     log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+    ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
     taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
   
   ctrl <-
@@ -279,12 +256,12 @@ glm_bdf <- function(train_set,validation_set){
   pred <- my_model %>% 
     predict(newdata = validation_set,
             type = 'prob') %>% 
-    .$default
+    mutate(pred = default)
   
   return(pred)
 }
 
-results <- cross_validated_model_fit(glm_bdf, sample_train, cv_folds)
+results <- model_cv_eval(glm_bdf, sample_train, cv_folds)
 add_results(results,'logistic_with_bdf', 'failure')
 
 ```
@@ -294,9 +271,64 @@ Avec foret aleatoire
 ```{r}
 
 
-random_forest <- function(train_set,validation_set, formula){
-  set.seed(1900)
+# random_forest <- function(train_set,validation_set, formula){
+#   set.seed(1900)
+#   
+#   ctrl <-
+#     trainControl(
+#       method = "none",
+#       classProbs = TRUE,
+#       summaryFunction = prSummary,
+#       savePredictions = "none"
+#     )
+#   
+#   grid <- expand.grid(mtry=c(4), splitrule = c("gini"), min.node.size=c(1))
+#   
+#   my_model  <- train(formula, 
+#                      data =  train_set %>% 
+#                     mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
+#                      method = 'ranger', 
+#                      metric = 'AUC', 
+#                      trControl = ctrl, 
+#                      tuneGrid = grid, 
+#                      na.action = "na.omit") 
+#   pred <- my_model %>% 
+#     predict(newdata = validation_set,
+#             type = 'prob') %>% 
+#     .$default
+#   
+#   return(pred)
+# }
+source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
+
+
+  formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+    taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
   
+results <- model_cv_eval(
+  function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
+
+add_results(results,'random_forest','failure')
+
+```
+Methode Ranger
+```{r}
+
+model_predict_ranger <- function(formula, train_set,new_data = NULL, mtry = 4) {
+  if (!is.null(new_data)){
+      assertthat::assert_that(nrow(train_set %>% semi_join(new_data, by = 'siret')) == 0)
+  }
+
+  if (is.data.frame(mtry)) {
+    mtry <- mtry$mtry
+  }
+  set.seed(1900)
+
+  assertthat::assert_that(length(mtry)==1)
+
   ctrl <-
     trainControl(
       method = "none",
@@ -304,80 +336,126 @@ random_forest <- function(train_set,validation_set, formula){
       summaryFunction = prSummary,
       savePredictions = "none"
     )
-  
-  grid <- expand.grid(mtry=c(4), splitrule = c("gini"), min.node.size=c(1))
-  
-  my_model  <- train(formula, 
-                     data =  train_set %>% 
-                    mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
-                     method = 'ranger', 
-                     metric = 'AUC', 
-                     trControl = ctrl, 
-                     tuneGrid = grid, 
-                     na.action = "na.omit") 
-  pred <- my_model %>% 
-    predict(newdata = validation_set,
-            type = 'prob') %>% 
-    .$default
-  
-  return(pred)
+
+  grid <- expand.grid(mtry= mtry, splitrule = c("gini"), min.node.size=c(1))
+  #grid <- expand.grid(.mtry = mtry)
+  my_model  <- train(formula,
+                     data =  train_set %>%
+                       mutate(outcome = fct_relevel(outcome,c('default','non_default'))),
+                     method = 'ranger',
+                     metric = 'AUC',
+                     trControl = ctrl,
+                     tuneGrid = grid,
+                     na.action = "na.omit")
+
+  if (!is.null(new_data)) {
+
+    pred <- my_model %>% caret_prob(sample = new_data)
+
+  } else pred = NULL
+
+  return(list(pred = pred, model = my_model))
 }
+
 
   formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
     apart_last12_months + apart_consommee + apart_share_heuresconsommees +
     log_cotisationdue_effectif +
-    log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+    ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
     taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
   
-results <- cross_validated_model_fit(function(train,validation) random_forest(train,validation,formula), sample_train, cv_folds)
-add_results(results,'random_forest','failure')
+results <- model_cv_eval(
+  function(train,validation) model_predict_ranger(formula,train,validation), sample_train, cv_folds)
 
+add_results(results,'random_forest_ranger','failure')
 ```
 
 Avec moyenne glissante sur trois périodes
 ```{r}
-####
-#### FIX ME
-
-cursor <- 5
-cat('Current model: ', model_names[cursor])
-
-AUCPR_aux_failure <- numeric(length = 5)
-for (i in 1:5) {
-    aux_random_forest_cv <- randomForest$pred %>% 
-      filter(mtry == 4, Resample == paste0('Fold',i)) 
-      # sample_train %>%
-      # slice(-cv_folds[[i]]) %>%
-      # broom::augment(aux_glm,newdata = .,type.predict = 'response') %>%
-      # rename(prediction = .fitted)
-
-    PR <-  pr.curve(scores.class0 = aux_random_forest_cv$default,
-                    weights.class0 =  as.numeric((sample_train[aux_random_forest_cv$rowIndex,])$outcome == 'default'),curve = TRUE)
-    AUCPR_aux_failure[i] <-  PR$auc.integral
-}
-
-AUCPR_failure[cursor] <- mean(AUCPR_aux_failure)
+# # FIX ME !!!
+# cursor <- 5
+# cat('Current model: ', model_names[cursor])
+# 
+# AUCPR_aux_failure <- numeric(length = 5)
+# for (i in 1:5) {
+#     aux_random_forest_cv <- randomForest$pred %>% 
+#       filter(mtry == 4, Resample == paste0('Fold',i)) 
+#       # sample_train %>%
+#       # slice(-cv_folds[[i]]) %>%
+#       # broom::augment(aux_glm,newdata = .,type.predict = 'response') %>%
+#       # rename(prediction = .fitted)
+# 
+#     PR <-  pr.curve(scores.class0 = aux_random_forest_cv$default,
+#                     weights.class0 =  as.numeric((sample_train[aux_random_forest_cv$rowIndex,])$outcome == 'default'),curve = TRUE)
+#     AUCPR_aux_failure[i] <-  PR$auc.integral
+# }
+# 
+# AUCPR_failure[cursor] <- mean(AUCPR_aux_failure)
 ```
 
 Ajout code NAF
 ```{r}
-formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
-  taux_marge + financier_court_terme + frais_financier + delai_fournisseur +   poids_frng + dette_fiscale +
-  libelle_naf_simplifie
-
-results <- cross_validated_model_fit(function(train,validation) random_forest(train,validation,formula), sample_train, cv_folds)
-add_results(results,'random_forest_with_naf','failure')
+# formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+#   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+#   log_cotisationdue_effectif +
+#   ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+#   taux_marge + financier_court_terme + frais_financier + delai_fournisseur +   poids_frng + dette_fiscale +
+#   libelle_naf_simplifie
+# 
+# results <- model_cv_eval(function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
+# add_results(results,'random_forest_with_naf','failure')
 ```
 
-Et en changeant d'objectif ?
+
+Et en changeant d'objectif ? Objectif Default 24 mois
 ```{r}
-sample_train <- sample_train %>% 
+
+  formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+    apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+    log_cotisationdue_effectif +
+    ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+    taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
+
+imputed_data_new_obj <- imputed_data %>% 
+   objective_default_or_failure(n_months = 3, threshold = 1, lookback = 24) %>%
   set_objective('default')
-results <- cross_validated_model_fit(function(train,validation) random_forest(train,validation,formula), sample_train, cv_folds)
-add_results(results,'random_forest_with_naf','default')
+
+sample_train <- sample_train %>% 
+  select(-outcome, -default_any, -default) %>%
+  left_join(imputed_data_new_obj)
+
+results <- model_cv_eval(function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
+add_results(results,'random_forest_24_mois','default')
+```
+Objectif default 18 mois 
+```{r}
+
+imputed_data_new_obj <- imputed_data %>% 
+   objective_default_or_failure(n_months = 3, threshold = 1, lookback = 18) %>%
+  set_objective('default')
+
+sample_train <- sample_train %>% 
+  select(-outcome, -default_any, -default) %>%
+  left_join(imputed_data_new_obj)
+
+
+results <- model_cv_eval(function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
+add_results(results,'random_forest_18_mois','default')
+```
+
+Objectif default 12 mois
+```{r}
+
+imputed_data_new_obj <- imputed_data %>% 
+   objective_default_or_failure(n_months = 3, threshold = 1, lookback = 12) %>%
+  set_objective('default')
+
+sample_train <- sample_train %>% 
+  select(-outcome, -default_any, -default) %>%
+  left_join(imputed_data_new_obj)
+
+results <- model_cv_eval(function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
+add_results(results,'random_forest_12_mois','default')
 ```
 
 ## réseau de neuronne
@@ -490,7 +568,24 @@ AUCPR_failure[cursor] <- mean(AUCPR_aux_failure)
 
 ## Résultats
 ```{r}
-ggplot(data_frame(names = model_names, AUCPR_aux_failure = AUCPR_aux_failure), 
-     aes(x = names, y = AUCPR_aux_failure)) +
-  geom_bar()
+to_plot <- model_results
+
+to_plot <- to_plot %>% gather("evaluation","AUCPR", starts_with('AUCPR'))
+
+to_plot$model_name <- factor(to_plot$model_name, levels = rev( 
+                          c('logistic',
+                           'oversampled_logistic',
+                           'logistic_with_bdf',
+                           'random_forest',
+                           'random_forest_12_mois',
+                           'random_forest_18_mois',
+                           'random_forest_24_mois')))
+
+to_plot <- to_plot[nrow(to_plot):1,]
+ggplot(to_plot, 
+     aes(x = model_name, y = AUCPR, group = evaluation, color = evaluation, shape = objective)) +
+  geom_line() + 
+  geom_point(size = 4) +
+  scale_y_continuous() + 
+  coord_flip()
 ```

@@ -1,4 +1,4 @@
-cross_validated_model_fit <- function(model_fun, train_set, cv_folds){
+model_cv_eval <- function(model_fun, train_set, cv_folds){
 
   n = length(cv_folds)
   AUCPR_aux_failure <- numeric(length = n)
@@ -8,18 +8,26 @@ cross_validated_model_fit <- function(model_fun, train_set, cv_folds){
 
   for (i in seq_along(cv_folds)) {
 
+    cat('Evaluation of the model on fold', i, '\n')
+
     aux_train <- sample_train %>%
       slice(cv_folds[[i]])
 
     aux_cv <- sample_train %>%
       slice(-cv_folds[[i]])
 
-    prediction <- model_fun(aux_train,aux_cv)
+    output <- model_fun(aux_train,aux_cv)
+    prediction = output$pred
 
     AUCPR_aux_failure[i] <-  AUCPR(prediction, aux_cv$failure)
     AUCPR_aux_default[i] <- AUCPR(prediction, aux_cv$default)
-    F1_aux_failure <- pr.F1(prediction,aux_cv$failure)
-    F1_aux_default <- pr.F1(prediction,aux_cv$default)
+    F1_aux_failure[i] <- pr.F1(prediction,aux_cv$failure)
+    F1_aux_default[i] <- pr.F1(prediction,aux_cv$default)
+
+    cat('Precision Recall AUC for failure', AUCPR_aux_failure[i])
+    cat('\n')
+    cat('Precision Recall AUC for default', AUCPR_aux_default[i])
+    cat('\n')
 
   }
   return(list(

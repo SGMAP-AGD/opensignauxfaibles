@@ -1,4 +1,4 @@
-assert_split_consistency <- function(train, cv_folds, test, eyeball){
+assert_split_consistency <- function(train, cv_folds, test = data.frame(siret = character()), eyeball= data.frame(siret = character())){
 
   assertthat::assert_that(nrow(train %>% semi_join(test,by = 'siret')) == 0)
   assertthat::assert_that(nrow(train %>% semi_join(eyeball,by = 'siret')) == 0)
@@ -10,4 +10,6 @@ assert_split_consistency <- function(train, cv_folds, test, eyeball){
   for (i in seq_along(train_sets)){
     assertthat::assert_that(nrow(train_sets[[i]] %>% semi_join(cv_sets[[i]],by = 'siret'))==0)
   }
+
+
 }

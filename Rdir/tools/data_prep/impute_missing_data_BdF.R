@@ -71,6 +71,7 @@ impute_missing_data_BdF <- function(df,number_imputations = 1, number_iterations
   ini$pred[all_variables[!(all_variables %in% variables_to_impute)],] = 0
 
   # imputing on a yearly basis
+
   temp_mids <- mice(df2,
                m = number_imputations,
                maxit = number_iterations,
@@ -79,7 +80,7 @@ impute_missing_data_BdF <- function(df,number_imputations = 1, number_iterations
                printFlag = TRUE,
                seed = seed)
 
-  long_by_year <- mice::complete(temp_mids,'long', include = TRUE)
+    long_by_year <- mice::complete(temp_mids,'long', include = TRUE)
 
   # Expanding imputed values at each period
   long_by_periode <- df %>%
@@ -91,12 +92,13 @@ impute_missing_data_BdF <- function(df,number_imputations = 1, number_iterations
     arrange(.imp,siret)
 
 
-    mids <- as.mids(long_by_periode)
+    #mids <- as.mids(long_by_periode)
 
   # mids completion
-    mids$pred[,all_variables[!(all_variables %in% predictors)]] = 0
-    mids$meth[all_variables[!(all_variables %in% variables_to_impute)]] = ''
-    mids$pred[all_variables[!(all_variables %in% variables_to_impute)],] = 0
-    mids$seed <- seed
-return(mids)
+    #mids$pred[,all_variables[!(all_variables %in% predictors)]] = 0
+    #mids$meth[all_variables[!(all_variables %in% variables_to_impute)]] = ''
+    #mids$pred[all_variables[!(all_variables %in% variables_to_impute)],] = 0
+    #mids$seed <- seed
+
+return(long_by_periode %>% as_tbl_time(periode))
 }

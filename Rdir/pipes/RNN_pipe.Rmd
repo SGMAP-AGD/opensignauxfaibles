@@ -33,6 +33,9 @@ source(find_rstudio_root_file('tools','data_prep','normalize_df.R'))
 source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
 source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
 source(find_rstudio_root_file('tools','post_analysis','export.R'))
+source(find_rstudio_root_file('tools','models','model_tune.R'))
+source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
+source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
 
 
 ```
