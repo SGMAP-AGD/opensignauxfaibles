@@ -39,8 +39,8 @@ func DB() gin.HandlerFunc {
 	}()
 
 	return func(c *gin.Context) {
-		c.Set("chanEntreprise", chanEntreprise)
-		c.Set("chanEtablissement", chanEtablissement)
+		c.Set("ChanEntreprise", chanEntreprise)
+		c.Set("ChanEtablissement", chanEtablissement)
 		c.Set("DBSESSION", mongodb)
 		c.Set("DB", db)
 		c.Next()

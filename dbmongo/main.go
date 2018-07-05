@@ -45,19 +45,9 @@ func main() {
 		api.POST("/admin/attach", attachFileBatch)
 		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
+		api.GET("/admin/features", adminFeature)
 
-		api.GET("/import/:batch", importAll)
-		//		api.GET("/import/apdemande/:batch", importAPDemande)
-		//		api.GET("/import/apconso/:batch", importAPConso)
-		//		api.GET("/import/cotisation/:batch", importCotisation)
-		//		api.GET("/import/ccsf/:batch", importCCSF)
-		//		api.GET("/import/debit/:batch", importDebit)
-		//		api.GET("/import/effectif/:batch", importEffectif)
-		//		api.GET("/import/altares/:batch", importAltares)
-		//		api.GET("/import/delai/:batch", importDelai)
-		//		api.GET("/import/sirene/:batch", importSirene)
-		//		api.GET("/import/bdf/:batch", importBDF)
-		//		api.GET("/import/dpae/:batch", importDPAE)
+		api.GET("/import/:batch", importBatch)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
@@ -72,8 +62,7 @@ func main() {
 		api.POST("/R/algo1", algo1)
 
 		api.POST("/data", data)
-		api.GET("/data/batch", dataBatch)
-		api.GET("/data/algo", dataAlgo)
+
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 
 		api.GET("/debug", debug)

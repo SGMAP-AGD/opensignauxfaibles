@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"regexp"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/spf13/viper"
@@ -109,15 +107,16 @@ func purge(c *gin.Context) {
 	c.String(200, "Done")
 }
 
-func importBatch(c *gin.Context) error {
+func importBatch(c *gin.Context) {
 	batch := AdminBatch{}
 	batchKey := c.Params.ByName("batch")
 	db := c.Keys["DB"].(*mgo.Database)
 	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
 	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
-	err := batch.load(batchKey, db, chanEtablissement, chanEntreprise)
+	batch.load(batchKey, db, chanEtablissement, chanEntreprise)
 
-	spew.Dump(batch.Files)
+	for _, fn := range importFunctions {
+		fn(&batch)
+	}
 
-	return err
 }

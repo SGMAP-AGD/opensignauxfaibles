@@ -1,9 +1,44 @@
 <template>
 <div>
-
   <v-container grid-list-md text-xs-center>
     <v-layout>
       <v-flex key="datasource" xs3>
+        <v-card>
+          <v-card-title>
+            <div>
+              <span>Attachement fichiers</span><br>
+            </div>
+          </v-card-title>
+          <v-card-actions>
+            <v-select
+            v-model="attachBatchID"
+            :items="batches"
+            item-text="id.key"
+            item-value="id.key"
+            label="Batch"
+            required
+            ></v-select>
+          </v-card-actions>
+          <v-card-actions>
+            <v-combobox
+            :items="files"
+            v-model="attachFilesID"
+            label="Fichier"
+            multiple
+            chips
+            ></v-combobox>
+          </v-card-actions>
+          <v-card-actions>
+            <v-select
+              :items="types"
+              v-model="attachTypeID"
+              label="Type"
+            ></v-select>  
+          </v-card-actions>
+          <v-card-actions>
+            <v-btn @click="attachFiles()">Associer</v-btn>
+          </v-card-actions>
+        </v-card>
         <v-card>
           <v-card-title>
             <div>
@@ -12,7 +47,7 @@
             <v-card-actions>
               <v-text-field
                 name="batchID"
-                v-model="batchID"
+                v-model="createBatchID"
                 label="YYMM"
                 value=""
                 single-line
@@ -26,42 +61,21 @@
             </v-card-actions>
           </v-card-title>
         </v-card>
-
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Attachement fichiers</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-            v-model="selected_batch"
-            :items="batch"
-            label="Batch"
-            required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-select
-              :items="files"
-              v-model="file"
-              label="Fichier"
-          ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-select
-              :items="types"
-              v-model="type"
-              label="Type"
-            ></v-select>  
-          </v-card-actions>
-          
-          <v-card-actions>
-            <v-btn @click="attachFile()">Associer</v-btn>
-          </v-card-actions>
-        </v-card>
       </v-flex>
-      <v-flex key="import" xs3>
+      <v-flex key="import" xs6>
+        <v-expansion-panel>
+          <v-expansion-panel-content
+            v-for="b in batches"
+            :key="b.id.key"
+          >
+            <div slot="header">Lot {{b.id.key}} - {{ Object.keys(b.files).reduce((m,n) => { return m + b.files[n].length }, 0) }} fichiers</div>
+            <v-card>
+              <Batch v-bind:key="b.id.key" :batch="b"></Batch>
+            </v-card>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-flex>
+      <v-flex key="reduce" xs3>
         <v-card>
           <v-card-title>
             <div>
@@ -70,8 +84,10 @@
           </v-card-title>
           <v-card-actions>
             <v-select
-            v-model="selected_batch"
-            :items="batch"
+            v-model="importBatchID"
+            :items="batches"
+            item-text="id.key"
+            item-value="id.key"
             label="Batch"
             required
             ></v-select>
@@ -80,8 +96,6 @@
             <v-btn @click="importData()">Import</v-btn>
           </v-card-actions>
         </v-card>
-      </v-flex>
-      <v-flex key="compact" xs3>
         <v-card>
           <v-card-title>
             <div>
@@ -95,8 +109,6 @@
             <v-btn @click="compactEntreprise()">Entreprise</v-btn>
           </v-card-actions>
         </v-card>
-      </v-flex>
-      <v-flex key="reduce" xs3>
         <v-card>
           <v-card-title>
             <div>
@@ -105,14 +117,16 @@
           </v-card-title>
           <v-card-actions>
             <v-select
-              v-model="selected_algo"
-              :items="algo"
+              v-model="reduceFeatureID"
+              :items="features"
               label="Algorithme"
               required
             ></v-select>
             <v-select
-              v-model="selected_batch"
-              :items="batch"
+              v-model="reduceBatchID"
+              :items="batches"
+              item-text="id.key"
+              item-value="id.key"
               label="Batch"
               required
             ></v-select>
@@ -128,6 +142,8 @@
 </template>
 
 <script>
+import Batch from '@/components/Batch'
+
 import axios from 'axios'
 export default {
   methods: {
@@ -136,63 +152,78 @@ export default {
       this.menu.color = this.items[key].color
     },
     reduce () {
-      axios.get('http://localhost:3000/api/reduce/' + this.selected_algo + '/' + this.selected_batch).then(response => alert('coucou'))
+      axios.get(this.$api + '/reduce/' + this.reduceFeatureID + '/' + this.reduceBatchID).then(response => alert('coucou'))
     },
     compactEtablissement () {
-      axios.get('http://localhost:3000/api/compact/etablissement').then()
+      axios.get(this.$api + '/compact/etablissement').then()
     },
     compactEntreprise () {
-      axios.get('http://localhost:3000/api/compact/entreprise').then()
+      axios.get(this.$api + '/compact/entreprise').then()
     },
     importData () {
-      alert('Pas encore implémenté')
+      var self = this
+      axios.get(this.$api + '/import/' + self.importBatchID)
     },
     createBatch () {
-      axios.put(this.$api + '/admin/batch/' + this.batchID)
-      .then(response => alert(JSON.stringify(response.data, null, 2)))
-    },
-    listBatch () {
       var self = this
-      axios.get(this.$api + '/admin/batch').then(response => { self.batch = response.data.map(batch => batch.id.key) })
+      axios.put(this.$api + '/admin/batch/' + this.createBatchID)
+      .then(response => self.refresh())
     },
-    listFiles () {
+    refresh () {
       var self = this
-      axios.get(this.$api + '/admin/files').then(response => { self.files = response.data })
-    },
-    listTypes () {
-      var self = this
-      axios.get(this.$api + '/admin/types').then(response => { self.types = response.data })
-    },
-    attachFile () {
-      var self = this
-      axios.post(this.$api + '/admin/attach',
-        {
-          'file': self.file,
-          'type': self.type,
-          'batch': self.selected_batch
+      axios.get(this.$api + '/admin/batch').then(response => {
+        self.batches = response.data
+      })
+      axios.get(this.$api + '/admin/files').then(response => {
+        this.files = response.data.map(file => {
+          return {
+            'text': file.split('/').reverse().slice(0, 3).reverse().join('/'),
+            'value': file
+          }
         })
+      })
+      axios.get(this.$api + '/admin/types').then(response => { self.types = response.data.sort() })
+      axios.get(this.$api + '/admin/features').then(response => { self.features = response.data })
+    },
+    attachFiles () {
+      this.attachFilesRecur(this.attachFilesID)
+    },
+    attachFilesRecur (files) {
+      var self = this
+      if (files.length > 0) {
+        axios.post(this.$api + '/admin/attach',
+          {
+            'file': files[0].value,
+            'type': self.attachTypeID,
+            'batch': self.attachBatchID
+          }).then(response => { this.attachFilesRecur(files.slice(1)) })
+      } else {
+        this.refresh()
+      }
     }
   },
   mounted () {
-    this.listBatch()
-    this.listFiles()
-    this.listTypes()
+    this.refresh()
   },
   data () {
     return {
-      batchID: '',
-      importBatch: '',
-      batch: [],
-      algo: [],
       name: 'App',
+      createBatchID: '',
+      features: [],
+      importBatchID: '',
+      reduceBatchID: '',
+      reduceFeatureID: '',
       files: [],
-      file: '',
-      selected_batch: '',
-      selected_algo: '',
+      fileID: '',
       types: [],
-      type: ''
+      attachTypeID: '',
+      batches: [],
+      attachBatchID: '',
+      attachFilesID: [],
+      viewFiles: {}
     }
-  }
+  },
+  components: { Batch }
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->

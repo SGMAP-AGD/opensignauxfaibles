@@ -117,6 +117,20 @@ func listBatch(c *gin.Context) {
 	c.JSON(200, batch)
 }
 
+func getBatchesID(db *mgo.Database) []string {
+	var batch []AdminBatch
+	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
+	var batchesID []string
+	for _, b := range batch {
+		batchesID = append(batchesID, b.ID.Key)
+	}
+	return batchesID
+}
+
+func adminFeature(c *gin.Context) {
+	c.JSON(200, []string{"algo1", "algo2"})
+}
+
 func listTypes(c *gin.Context) {
 	c.JSON(200, []string{
 		"admin_urssaf",
