@@ -69,6 +69,8 @@ prepare_for_export <- function(data, additional_names = NULL){
       mark_known_sirets(name = 'sirets_connus.csv')
 
     export_names <- export_names[export_names %in% names(temp_sample)]
+    cat('Les variables suivantes sont absentes du dataframe:','\n')
+    cat(!(export_names %in% names(temp_sample)))
 
     #if (is.emp)
     toExport <- temp_sample %>%

@@ -6,6 +6,11 @@ function finalize(k, v) {
     v = Object.keys((v.batch || {})).sort().reduce((m, batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
+            var  array_delete = (v.batch[batch].compact.delete[type]||[])
+            if (array_delete != {}) {array_delete.forEach(hash => {
+                delete m[type][hash]
+            })
+            }
             Object.assign(m[type], v.batch[batch][type])
         })
         return m
@@ -281,7 +286,7 @@ function finalize(k, v) {
             val.date_ccsf = optccsf.date_traitement 
         } 
 
-        // geolocalisation
+        // geolocalisation 
         var sireneHashes = Object.keys(v.sirene || {})
         if (sireneHashes.length != 0) {
             sirene = v.sirene[sireneHashes[0]]
@@ -289,6 +294,8 @@ function finalize(k, v) {
 
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
+        val.region = (sirene || { "region": null }).region
+        val.departement = (sirene || { "departement": null }).departement
         val.code_ape  = (sirene || { "ape": null}).ape
         val.raison_sociale = (sirene || {"raisonsociale": null}).raisonsociale
 
@@ -308,8 +315,8 @@ function finalize(k, v) {
         delete val.effectif_date
         delete val.effectif_average
         delete val.lag_effectif
-
     })
+
     return_value = { "siren": k.substring(0, 9)}
     return_value[k] = value_array
     return return_value
