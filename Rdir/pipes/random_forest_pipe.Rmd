@@ -28,52 +28,60 @@ library(rprojroot)
 # Sources
 
 source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','interface','mark_known_sirets.R'))
 source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
 source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
-source(find_rstudio_root_file('tools','split','split_snapshot_each_month.R'))
+source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
+source(find_rstudio_root_file('tools','objective','set_objective.R'))
+source(find_rstudio_root_file('tools','split','split_snapshot_rdm_month.R'))
+source(find_rstudio_root_file('tools','split','assert_split_consistency.R'))
 source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
+source(find_rstudio_root_file('tools','post_analysis','predict_at.R'))
 source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
 source(find_rstudio_root_file('tools','post_analysis','export.R'))
+source(find_rstudio_root_file('tools','models','caret_prob.R'))
+source(find_rstudio_root_file('tools','models','model_tune.R'))
+source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
+source(find_rstudio_root_file('tools','post_analysis','compare_prediction_probabilities.R'))
+
 
 
 ```
 
 ## Definition periode actuelle
 ```{r}
-actual_period <- as.Date("2018-04-01")
+actual_period <- as.Date("2018-05-01")
 ```
 
 
 ## Recuperation des données dans MongoDB
 ```{r}
-table_wholesample <- connect_to_database('algo1')
+raw_data <- connect_to_database('Features')
 ```
 
 ## Definition de l'objectif
 ```{r}
-table_wholesample <- objective_RJ_LJ_PS(table_wholesample)
-table_wholesample <- table_wholesample %>%
-  mutate(outcome = factor(outcome)) %>% 
-  mutate(outcome = fct_recode(
-    outcome,
-    default = "TRUE",
-    non_default = "FALSE"
-  ) %>%
-    fct_relevel(c("default","non_default")))
-
+raw_data <- raw_data %>% 
+  objective_default_or_failure(n_months = 3, threshold = 1, lookback = 18) %>%
+  objective_RJ_LJ_PS() %>% 
+  set_objective('default')
 ```
 
-## Selection des features 
+## Feature engineering
+
 ```{r}
-table_wholesample_sel <- table_wholesample %>%
-  select(siret,periode,outcome,outcome_any,date_defaillance, cut_effectif,cut_growthrate, lag_effectif_missing,
-         apart_last12_months, apart_consommee, apart_share_heuresconsommees,
-         log_cotisationdue_effectif,
-         log_ratio_dettecumulee_cotisation_12m, indicatrice_dettecumulee_12m,
-         #indicatrice_croissance_dettecumulee,
-         #nb_debits,
-         #delai, delai_sup_6mois,
-         taux_marge, financier_court_terme, frais_financier, delai_fournisseur, poids_frng, dette_fiscale)
+
+libelle_naf_simplifie <- raw_data$libelle_naf_niveau1 
+libelle_naf_simplifie[libelle_naf_simplifie %in% c(
+  'Enseignement',
+  'Activités extra-territoriales',
+  'Administration publique',
+  'Agriculture, sylviculture et pêche')] <- 
+  'autre'
+
+raw_data <- raw_data %>% 
+  mutate(libelle_naf_simplifie = libelle_naf_simplifie) 
+
 ```
 ## Imputation des données manquantes
 
@@ -81,15 +89,9 @@ Uniquement si les données Banque de France ont été importées
 
 ```{r}
 seed <- 1234
-mids <-  impute_missing_data_BdF(table_wholesample_sel,seed)
-tw_complete <- mice::complete(mids,1) %>% as_tbl_time(periode)
+imputed_data_long <-  impute_missing_data_BdF(raw_data,3,3,seed)
+imputed_data <- imputed_data_long %>% filter(.imp==1) %>% select(-.imp) %>% as_tbl_time(periode)
 ```
-
-sinon 
-```{r}
-#tw_complete <- table_wholesample_sel
-```
-
 
 ## Split train test 
 
@@ -97,28 +99,24 @@ Avec suréchantillonnage. Les suréchantillons seront supprimés à la main dans
 
 ```{r}
 seed <- 10011
-set.seed(seed)
 
 samples <-
-  split_snapshot_each_month(
-    tw_complete,
-    date_inf = as.Date("2015-01-01"),
-    date_sup = as.Date("2016-12-01"),
-    frac_train = 0.6,
-    frac_cross = 0.2,
-    frac_eyeball = 0.05
+  split_snapshot_rdm_month(
+    imputed_data,
+    date_inf = as.Date("2014-01-01"),
+    date_sup = as.Date("2016-01-01"),
+    frac_train = 0.7,
+    frac_cross = 0.3,
+    frac_eyeball = 0,
+    seed = seed
   )
 
 sample_train <- samples$train %>% 
-  left_join(tw_complete, by = c('siret','periode'))
-  
+  left_join(imputed_data, by = c('siret','periode'))
+
 cv_folds <- samples$cv_fold
 
-sample_eyeball <- samples$eyeball  %>%
-  left_join(table_wholesample_sel, by = c('siret','periode'))
-
-sample_test <- tw_complete %>%
-      semi_join(samples$test, by = c('siret','periode'))
+assert_split_consistency(sample_train,cv_folds)
 ```
 
 ## Model
@@ -126,33 +124,29 @@ sample_test <- tw_complete %>%
 Avec foret aleatoire
 
 ```{r}
+source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
+```
+
+
+```{r}
 set.seed(1900)
-formula <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+
+formula_with_bdf <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
   apart_last12_months + apart_consommee + apart_share_heuresconsommees +
   log_cotisationdue_effectif +
-  log_ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
-  taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale
+  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+  taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale 
 
-ctrl <- 
-  trainControl( 
-    method = "cv", 
-    classProbs = TRUE, 
-    summaryFunction = prSummary, 
-    savePredictions = "all", 
-    index = cv_folds 
-  ) 
- 
-attr(sample_train$outcome,'contrasts') <- NULL
-randomForest <- train(formula, 
-                 data =  sample_train %>% 
-                   mutate(outcome = fct_relevel(outcome,c('default','non_default'))), 
-                 method = 'ranger', 
-                 metric = 'AUC', 
-                 trControl = ctrl, 
-                 tuneLength = 10, 
-                 na.action = "na.omit") 
 
-algo2a_AUC <- max(randomForest$results$AUC)
+#   tune_grid = expand.grid(mtry = c(2,3,4))
+#   
+# opt_mtry <- model_tune(function(x,y,z) model_predict_random_forest(formula_with_bdf,x,y,z),
+#                        sample_train, 
+#                        cv_folds, 
+#                        tune_grid)
+
+rf <- model_predict_random_forest(formula_with_bdf,sample_train, mtry = 4)
+rf <- rf$model
 
 ```
 
@@ -160,33 +154,79 @@ algo2a_AUC <- max(randomForest$results$AUC)
 ## Prediction
 ```{r}
 
-tw_complete_long <- mice::complete(mids,'long')
 #provisoire: retrait NA et inf
-tw_complete_long <- tw_complete_long %>%
+tw_complete_long <- imputed_data_long %>%
+  filter(.imp != 0) %>% 
   filter(!is.infinite(log_cotisationdue_effectif)) %>%
   filter(!is.na(log_cotisationdue_effectif))
 
-sample_actual <- tw_complete_long %>%
-  filter(periode == actual_period |
-        periode == actual_period %m-% months(1) |
-        periode == actual_period %m-% months(2))
 
-prob <- predict(randomForest, newdata = sample_actual,type = "prob")
+prediction <- predict_at(actual_period,
+                         tw_complete_long,
+                         function(x) caret_prob(rf,x))
 
-prediction <- sample_actual %>%
-  cbind(prob = prob$default) %>%
-  group_by(siret) %>%
-  summarize(prob = mean(prob), periode = max(periode)) %>%
-  filter(periode != actual_period %m-% months(2)) %>% 
-  arrange(desc(prob)) %>%
-  as.data.frame()
+prediction_month_before <- predict_at(actual_period %m-% months(1),
+                         tw_complete_long,
+                         function(x) caret_prob(rf,x))
+
+joined <-
+  compare_prediction_probabilities(
+    sample_start = prediction_month_before,
+    sample_end = prediction,
+    only_siret = TRUE) %>%
+  left_join(raw_data, by = c('siret', 'periode')) 
 
 # Export
-prediction %>% 
-  left_join(table_wholesample, by = c("siret","periode")) %>%
-  prepare_for_export() %>% 
-  export(batch = "1805")
-
+joined %>% 
+  prepare_for_export(additional_names = c('diff','prob_old', 'connu')) %>% 
+  export(batch = '1806')
 ```
 
 
+# Comparing several inputs
+```{r}
+formulas <- list(
+  reference = formula_with_bdf,
+    
+  without_bdf =  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m,
+  
+  with_naf =  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
+  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
+  log_cotisationdue_effectif +
+  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
+  taux_marge + financier_court_terme + frais_financier + delai_fournisseur +   poids_frng + dette_fiscale +
+  libelle_naf_simplifie
+)
+
+
+results <-  lapply(formulas, function (formula){ 
+      output <- model_cv_eval(function(y,z) random_predict_random_forest(formula,y,z,opt_mtry),sample_train,cv_folds, opt_mtry);
+      return(output$AUCPR_default)
+  })
+
+```
+
+Compare with and without bdf
+```{r}
+
+output_with <- model_predict_random_forest(formulas$reference,sample_train,mtry = 4)
+prediction_with <- predict_at(actual_period,
+                         tw_complete_long,
+                         function(x) caret_prob(output_with$model,x))
+
+output_without <- model_predict_random_forest(formulas$without_bdf,sample_train,mtry = 4)
+prediction_without <- predict_at(actual_period,
+                         tw_complete_long,
+                         function(x) caret_prob(output_without$model,x))
+
+joined <- compare_prediction_probabilities(sample_start = prediction_without,
+                                           sample_end = prediction_with) %>% 
+  left_join(raw_data,by = c('siret','periode')) %>% 
+  prepare_for_export(additional_names = c('diff','prob_old'))
+
+joined %>% export(batch = '1806')
+```
+ 

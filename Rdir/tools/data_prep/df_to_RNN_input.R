@@ -11,7 +11,7 @@ df_to_RNN_input <- function(siret_period_pairs,df,date_inf,date_sup,lookback_mon
 
   var_monthly <-  c('effectif',
                     'log_cotisationdue_effectif',
-                    'log_ratio_dettecumulee_cotisation_12m')
+                    'ratio_dettecumulee_cotisation_12m')
 
   var_yearly <- c('poids_frng',
                   'taux_marge',

@@ -4,7 +4,9 @@ connect_to_database <- function(collection, min_effectif = 20){
   cat(' Fini.','\n')
 
   cat('Import ...')
-  data <- dbconnection$aggregate('[{"$unwind":{"path": "$value"}}]')$value %>%
+ ### FIX ME: batch en dur
+  cat('FIX ME')
+  data <- dbconnection$aggregate('[{"$match":{"_id.batch":"1806"}},{"$unwind":{"path": "$value"}}]')$value %>%
     mutate(
       cut_growthrate = forcats::fct_relevel(
         cut_growthrate,
@@ -17,6 +19,8 @@ connect_to_database <- function(collection, min_effectif = 20){
     )
 
   cat(' Fini.','\n')
+
+  assertthat::assert_that(anyDuplicated(data %>% select(siret,periode)) == 0)
 
   table_wholesample <- data %>%
     mutate(periode = as.Date(periode)) %>%

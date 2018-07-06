@@ -42,8 +42,8 @@ func data(c *gin.Context) {
 	output = nil
 
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-05-01")
-	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-01-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-06-01")
+	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
 
 	scope := bson.M{"date_debut": dateDebut,
 		"date_fin":               dateFin,
@@ -89,6 +89,10 @@ func data(c *gin.Context) {
 func reduce(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 
+	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-06-01")
+	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
+
 	// Détermination scope traitement
 	algo := c.Params.ByName("algo")
 	batch := c.Params.ByName("batch")
@@ -110,10 +114,6 @@ func reduce(c *gin.Context) {
 		queryEntreprise = bson.M{"value.siren": siret[0:9]}
 		output = nil
 	}
-
-	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-07-01")
-	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
 
 	mapFctEtablissement, errEtabM := ioutil.ReadFile("js/" + algo + "/EtablissementMap.js")
 	reduceFctEtablissement, errEtabR := ioutil.ReadFile("js/" + algo + "/EtablissementReduce.js")
@@ -241,7 +241,7 @@ func indexEntreprise(c *gin.Context) {
 		Map:    string(mapFct),
 		Reduce: string(reduceFct),
 		Out:    output,
-		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805"},
+		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805", "1806"},
 			"types": []string{
 				"altares",
 				"apconso",

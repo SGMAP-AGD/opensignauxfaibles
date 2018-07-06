@@ -1,11 +1,22 @@
-compare_prediction_probabilities <-  function(sample1,sample2){
+compare_prediction_probabilities <- function(sample_start, sample_end, only_siret = FALSE) {
+    assertthat::assert_that('prob' %in% names(sample_start) &&
+                              'prob' %in% names(sample_end))
+    assertthat::assert_that(!anyDuplicated(sample_start$siret) &&
+                              !anyDuplicated(sample_end$siret))
 
-    sample1 <- sample1 %>% rename(prob1 = predicted_default)
-    sample2 <- sample2 %>% rename(prob2 = predicted_default)
-
-    join_samples <- sample1 %>%
-      full_join(sample2,by = "siret") %>%
-      mutate(prob2_prob1 = prob2 - prob1)
-
-    return(join_samples)
-}
+    sample_start <- sample_start %>% rename(prob_old = prob)
+    if (only_siret) {
+      assertthat::assert_that(
+        anyDuplicated(sample_start$siret) == 0 &&
+        anyDuplicated(sample_end$siret) == 0)
+      joined_samples <- sample_start %>%
+        select(-periode) %>%
+        full_join(sample_end, by = c('siret')) %>%
+        mutate(diff = prob - prob_old)
+    } else {
+      joined_samples <- sample_start %>%
+        full_join(sample_end, by = c('siret', 'periode')) %>%
+        mutate(diff = prob - prob_old)
+    }
+    return(joined_samples)
+  }

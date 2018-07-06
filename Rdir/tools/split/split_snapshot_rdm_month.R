@@ -47,7 +47,7 @@ split_snapshot_rdm_month <-
       as_tibble() %>%
       group_by(siret) %>%
       summarize() %>%
-      sample_frac(frac_train)
+      sample_frac(frac_train + frac_cross)
 
 
     sample_train <- data %>%
@@ -56,7 +56,11 @@ split_snapshot_rdm_month <-
       mutate( prob = if_else(outcome=='default',
                              (n()-sum(outcome=='default')) / n(),
                              sum(outcome == 'default')/n())) %>%
-      sample_frac(1,replace = TRUE,weight = prob) %>%
+      sample_frac(1,replace = TRUE,weight = prob)
+
+    cat("Fraction of positive outcomes in sample_train:", sum(sample_train$outcome == 'default') / nrow(sample_train))
+    cat('\n')
+    sample_train <- sample_train %>%
       select(-outcome,-prob)
 
     cv_folds <- groupKFold(sample_train$siret, k = 5)
@@ -75,6 +79,9 @@ split_snapshot_rdm_month <-
 
     sample_test <- remaining %>%
       anti_join(sample_eyeball, by = 'siret')
+
+    cat("Fraction of sirets in sample_train:", n_distinct(sample_train$siret) / n_distinct(data$siret))
+    cat('\n')
 
     return(list("train" =  sample_train,"cv_folds" = cv_folds, "eyeball" = sample_eyeball,  "test" = sample_test))
   }
