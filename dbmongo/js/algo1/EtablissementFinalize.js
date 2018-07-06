@@ -103,9 +103,11 @@ function finalize(k, v) {
 
     Object.keys(v.apconso).forEach(hash => {
         var valueap = v.apconso[hash]
-        if (valueap.id_conso.substring(0, 10) in apart) {
-            apart[valueap.id_conso.substring(0, 10)].consommation.push(hash)
+
+        if (valueap.id_conso in apart) {
+           apart[valueap.id_conso].consommation.push(hash)
         }
+
     })
 
     Object.keys(apart).forEach(k => {
