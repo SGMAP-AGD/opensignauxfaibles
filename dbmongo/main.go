@@ -53,12 +53,10 @@ func main() {
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactEntreprise)
-		api.GET("/index/entreprise/:siren", indexEntreprise)
 
 		api.GET("/reduce/:algo/:batch/:siret", reduce)
 		api.GET("/reduce/:algo/:batch", reduce)
 
-		api.POST("/data/browse", browse)
 		api.POST("/R/algo1", algo1)
 
 		api.POST("/data", data)

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -52,9 +51,9 @@ func data(c *gin.Context) {
 		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
 	}
 
-	mapFct, errM := ioutil.ReadFile("js/browse/Map.js")
-	reduceFct, errR := ioutil.ReadFile("js/browse/Reduce.js")
-	finalizeFct, errF := ioutil.ReadFile("js/browse/Finalize.js")
+	mapFct, errM := ioutil.ReadFile("js/data/browse/Map.js")
+	reduceFct, errR := ioutil.ReadFile("js/data/browse/Reduce.js")
+	finalizeFct, errF := ioutil.ReadFile("js/data/browse/Finalize.js")
 
 	if errM != nil || errR != nil || errF != nil {
 		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
@@ -115,17 +114,17 @@ func reduce(c *gin.Context) {
 		output = nil
 	}
 
-	mapFctEtablissement, errEtabM := ioutil.ReadFile("js/" + algo + "/EtablissementMap.js")
-	reduceFctEtablissement, errEtabR := ioutil.ReadFile("js/" + algo + "/EtablissementReduce.js")
-	finalizeFctEtablissement, errEtabF := ioutil.ReadFile("js/" + algo + "/EtablissementFinalize.js")
+	mapFctEtablissement, errEtabM := ioutil.ReadFile("js/features/" + algo + "/EtablissementMap.js")
+	reduceFctEtablissement, errEtabR := ioutil.ReadFile("js/features/" + algo + "/EtablissementReduce.js")
+	finalizeFctEtablissement, errEtabF := ioutil.ReadFile("js/features/" + algo + "/EtablissementFinalize.js")
 
-	mapFctEntreprise, errEntM := ioutil.ReadFile("js/" + algo + "/EntrepriseMap.js")
-	reduceFctEntreprise, errEntR := ioutil.ReadFile("js/" + algo + "/EntrepriseReduce.js")
-	finalizeFctEntreprise, errEntF := ioutil.ReadFile("js/" + algo + "/EntrepriseFinalize.js")
+	mapFctEntreprise, errEntM := ioutil.ReadFile("js/features/" + algo + "/EntrepriseMap.js")
+	reduceFctEntreprise, errEntR := ioutil.ReadFile("js/features/" + algo + "/EntrepriseReduce.js")
+	finalizeFctEntreprise, errEntF := ioutil.ReadFile("js/features/" + algo + "/EntrepriseFinalize.js")
 
-	mapFctUnion, errUnM := ioutil.ReadFile("js/" + algo + "/UnionMap.js")
-	reduceFctUnion, errUnR := ioutil.ReadFile("js/" + algo + "/UnionReduce.js")
-	finalizeFctUnion, errUnF := ioutil.ReadFile("js/" + algo + "/UnionFinalize.js")
+	mapFctUnion, errUnM := ioutil.ReadFile("js/features/" + algo + "/UnionMap.js")
+	reduceFctUnion, errUnR := ioutil.ReadFile("js/features/" + algo + "/UnionReduce.js")
+	finalizeFctUnion, errUnF := ioutil.ReadFile("js/features/" + algo + "/UnionFinalize.js")
 
 	if errEtabM != nil || errEtabR != nil || errEtabF != nil ||
 		errEntM != nil || errEntR != nil || errEntF != nil ||
@@ -199,79 +198,6 @@ func reduce(c *gin.Context) {
 
 }
 
-func browse(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-	var siret []string
-	c.Bind(&siret)
-
-	var etablissement []interface{}
-	db.C("Etablissement").Find(bson.M{"value.siret": "41191670300019"}).All(&etablissement)
-	spew.Dump(etablissement)
-	c.JSON(200, etablissement)
-}
-
-func indexEntreprise(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	// Détermination scope traitement
-	var query interface{}
-	var output interface{}
-	var entreprise []interface{}
-
-	siret := c.Params.ByName("siren")
-	if siret == "" {
-		query = nil
-		output = bson.M{"replace": "Etablissement"}
-		entreprise = nil
-	} else {
-		query = bson.M{"value.siret": siret}
-		output = nil
-	}
-
-	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/index/EtablissementMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/index/EtablissementReduce.js")
-	if errMap != nil || errReduce != nil {
-		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errReduce.Error())
-		return
-	}
-
-	// Traitement MR
-	job := &mgo.MapReduce{
-		Map:    string(mapFct),
-		Reduce: string(reduceFct),
-		Out:    output,
-		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805", "1806"},
-			"types": []string{
-				"altares",
-				"apconso",
-				"apdemande",
-				"ccsf",
-				"cotisation",
-				"debit",
-				"delai",
-				"effectif",
-				"sirene",
-				"dpae",
-			},
-			"deleteOld": []string{"effectif", "apdemande", "apconso", "altares"},
-		},
-	}
-
-	err := errors.New("")
-	if output == nil {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, &entreprise)
-	} else {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
-	}
-
-	if err != nil {
-		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
-	} else {
-		c.JSON(200, entreprise)
-	}
-}
-
 func compactEtablissement(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 	batches := getBatchesID(db)
@@ -292,9 +218,9 @@ func compactEtablissement(c *gin.Context) {
 	}
 
 	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/compact/EtablissementMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/compact/EtablissementReduce.js")
-	finalizeFct, errFinalize := ioutil.ReadFile("js/compact/EtablissementFinalize.js")
+	mapFct, errMap := ioutil.ReadFile("js/batch/compact/EtablissementMap.js")
+	reduceFct, errReduce := ioutil.ReadFile("js/batch/compact/EtablissementReduce.js")
+	finalizeFct, errFinalize := ioutil.ReadFile("js/batch/compact/EtablissementFinalize.js")
 	if errMap != nil || errReduce != nil || errFinalize != nil {
 		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
 		return
@@ -358,9 +284,9 @@ func compactEntreprise(c *gin.Context) {
 	}
 
 	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/compact/EntrepriseMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/compact/EntrepriseReduce.js")
-	finalizeFct, errFinalize := ioutil.ReadFile("js/compact/EntrepriseFinalize.js")
+	mapFct, errMap := ioutil.ReadFile("js/batch/compact/EntrepriseMap.js")
+	reduceFct, errReduce := ioutil.ReadFile("js/batch/compact/EntrepriseReduce.js")
+	finalizeFct, errFinalize := ioutil.ReadFile("js/batch/compact/EntrepriseFinalize.js")
 	if errMap != nil || errReduce != nil || errFinalize != nil {
 		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
 		return
