@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
@@ -44,7 +43,7 @@ type Sirene struct {
 	Lattitude          float64   `json,omitempty:"lattitude" bson:"lattitude"`
 }
 
-func parseSirene(paths []string, batch string) chan *Sirene {
+func parseSirene(paths []string) chan *Sirene {
 	outputChannel := make(chan *Sirene)
 	ignoreSirene := stringSlice(viper.GetStringSlice("SIRENE_IGNORE"))
 
@@ -107,27 +106,21 @@ func parseSirene(paths []string, batch string) chan *Sirene {
 
 // hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
-func importSirene(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-
-	sirene := files["sirene"]
-	for sirene := range parseSirene(sirene, batch) {
+func importSirene(batch *AdminBatch) error {
+	for sirene := range parseSirene(batch.Files["sirene"]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 		value := ValueEtablissement{
 			Value: Etablissement{
 				Siret: sirene.Siren + sirene.Nic,
 				Batch: map[string]Batch{
-					batch: Batch{
+					batch.ID.Key: Batch{
 						Sirene: map[string]*Sirene{
 							hash: sirene,
 						}}}}}
-		insertWorker <- &value
+		batch.ChanEtablissement <- &value
 	}
 
-	insertWorker <- &ValueEtablissement{}
-
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

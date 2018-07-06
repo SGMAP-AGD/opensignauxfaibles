@@ -18,8 +18,10 @@ type AdminID struct {
 
 // AdminBatch metadata Batch
 type AdminBatch struct {
-	ID    AdminID    `json:"id" bson:"_id"`
-	Files BatchFiles `json:"files" bson:"files"`
+	ID                AdminID                  `json:"id" bson:"_id"`
+	Files             BatchFiles               `json:"files" bson:"files"`
+	ChanEtablissement chan *ValueEtablissement `json:"-" bson:"-"`
+	ChanEntreprise    chan *ValueEntreprise    `json:"-" bson:"-"`
 }
 
 // BatchFiles fichiers mappés par type
@@ -29,8 +31,14 @@ func (batchFiles BatchFiles) attachFile(fileType string, file string) {
 	batchFiles[fileType] = append(batchFiles[fileType], file)
 }
 
-func (batch *AdminBatch) load(batchKey string, db *mgo.Database) error {
+func (batch *AdminBatch) load(
+	batchKey string,
+	db *mgo.Database,
+	chanEtablissement chan *ValueEtablissement,
+	chanEntreprise chan *ValueEntreprise) error {
 	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(batch)
+	batch.ChanEntreprise = chanEntreprise
+	batch.ChanEtablissement = chanEtablissement
 	return err
 }
 
@@ -51,6 +59,9 @@ func (batch *AdminBatch) new(batchID string) error {
 
 func attachFileBatch(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
+	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
+	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
+
 	batch := AdminBatch{}
 
 	var params struct {
@@ -65,7 +76,7 @@ func attachFileBatch(c *gin.Context) {
 		c.JSON(500, err)
 		return
 	}
-	err = batch.load(params.Batch, db)
+	err = batch.load(params.Batch, db, chanEtablissement, chanEntreprise)
 
 	if err != nil {
 		c.JSON(500, "Erreur au chargement du lot")
@@ -104,6 +115,20 @@ func listBatch(c *gin.Context) {
 	var batch []AdminBatch
 	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
 	c.JSON(200, batch)
+}
+
+func getBatchesID(db *mgo.Database) []string {
+	var batch []AdminBatch
+	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
+	var batchesID []string
+	for _, b := range batch {
+		batchesID = append(batchesID, b.ID.Key)
+	}
+	return batchesID
+}
+
+func adminFeature(c *gin.Context) {
+	c.JSON(200, []string{"algo1", "algo2"})
 }
 
 func listTypes(c *gin.Context) {

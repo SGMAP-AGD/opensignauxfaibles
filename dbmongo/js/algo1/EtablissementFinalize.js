@@ -3,7 +3,7 @@ function finalize(k, v) {
     var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()
     liste_periodes = generatePeriodSerie(date_debut, date_fin)
 
-    v = Object.keys((v.batch || {})).sort().reduce((m, batch) => {
+    v = Object.keys((v.batch || {})).sort().filter(batch => batch <= actual_batch).reduce((m, batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
             var  array_delete = (v.batch[batch].compact.delete[type]||[])

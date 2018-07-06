@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/tealeg/xlsx"
 )
 
@@ -137,13 +135,9 @@ func parseAPDemande(path string) chan *APDemande {
 	return outputChannel
 }
 
-func importAPDemande(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	files := allFiles["apdemande"]
+func importAPDemande(batch *AdminBatch) error {
 
-	for _, file := range files {
+	for _, file := range batch.Files["apdemande"] {
 		for apdemande := range parseAPDemande(file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
 
@@ -151,16 +145,18 @@ func importAPDemande(c *gin.Context) {
 				Value: Etablissement{
 					Siret: apdemande.Siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							Compact: map[string]bool{
 								"status": false,
 							},
 							APDemande: map[string]*APDemande{
 								hash: apdemande,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }
 
 func parseAPConso(path string) chan *APConso {
@@ -203,25 +199,22 @@ func parseAPConso(path string) chan *APConso {
 	return outputChannel
 }
 
-func importAPConso(c *gin.Context) {
-	insertWorker, _ := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
-	batch := c.Params.ByName("batch")
-	allFiles, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	files := allFiles["apconso"]
+func importAPConso(batch *AdminBatch) error {
 
-	for _, file := range files {
+	for _, file := range batch.Files["apconso"] {
 		for apconso := range parseAPConso(file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apconso, 1))
 			value := ValueEtablissement{
 				Value: Etablissement{
 					Siret: apconso.Siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							APConso: map[string]*APConso{
 								hash: apconso,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

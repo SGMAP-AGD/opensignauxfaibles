@@ -1,51 +1,33 @@
 
 # Open Signaux Faibles
 
-## Configuration 
+Solution logicielle pour la détection anticipée d'entreprises en difficulté
 
-### Installer le projet
+## Architecture
 
+- backend golang
+- frontend vuetify
+- mongodb
 
-    $ git clone git@github.com:SGMAP-AGD/opensignauxfaibles.git
-    
+## Installation
 
-### Installer la librairie opensignauxfaibles
+```bash
+go get github.com/entrepreneur-interet-general/opensignauxfaibles/dbmongo
+```
 
-* Ouvrir RStudio
-* Ouvrir le projet opensignauxfaibles et taper : 
-    
-    library("packrat")
-    on()
-    library("devtools")
-    build()
-    install()
-    
-### PostGreSQL
+Dans l'arbre de sources de l'installation go, vous trouverez tous les répertoires nécessaires à l'exécution.
 
-Les données sont chargées dans une base de données PostGreSQL
+TODO:
 
-Le fichier keys.json à la racine du dossier contient les paramètres de connexion la base PostGre.
+- linker correctement les procédures R avec le core golang
+- provoquer l'installation des modules npm et la compilation webpack pour compiler l'exécutable golang tout compris.
+- intégrer toutes les dépendances fichier dans l'exécutable golang pour le rendre plus portable et faciliter l'installation
 
-    {
-      "host": [""],
-      "dbname": [""],
-      "port": [""],
-      "id":[""],
-      "pw":[""]
-    }
+## Configuration
 
-### Charger les données brutes
+Voir config.toml.example dans les sources
+Par ordre de priorité, le fichier de configuration peut se trouver dans:
 
-* Les données brutes sont dans le répertoire [data-raw/](data-raw/).
-* Le programme [import_data.Rmd](import_data.Rmd) importe toutes les données brutes dans la base PostGre avec le préfixe `table_`.
-* Les fonctions appelées dans import_data.Rmd sont définies dans [R/import_data.R](R/import_data.R).
-
-### Calcul des variables
-
-* Le programme [compute_samples.Rmd](compute_samples.Rmd) permet de calculer l'ensemble des variables
-* Les fonctions appelées dans [compute_samples.Rmd](compute_samples.Rmd) sont définies dans [R/compute_samples.R](R/compute_samples.R) 
-
-### Calcul des prédictions
-
-* Le programme [compute_model_0_12.Rmd](compute_model_0_12.Rmd) permet de calculer les prédictions à 12 mois.
-
+- /etc/opensignauxfaibles/config.toml
+- ~/.opensignauxfaibles/config.toml
+- ./config.toml

@@ -84,17 +84,20 @@ func GetFileList(basePath string, period string) (map[string][]string, error) {
 }
 
 func importAll(c *gin.Context) {
-	importAltares(c)
-	importAPConso(c)
-	importAPDemande(c)
-	importEffectif(c)
-	importDebit(c)
-	importBDF(c)
-	importCotisation(c)
-	importDelai(c)
-	importSirene(c)
-	importDPAE(c)
-	importCCSF(c)
+}
+
+var importFunctions = map[string]func(*AdminBatch) error{
+	"apconso":    importAPConso,
+	"bdf":        importBDF,
+	"cotisation": importCotisation,
+	"delai":      importDelai,
+	"dpae":       importDPAE,
+	"altares":    importAltares,
+	"apdemande":  importAPDemande,
+	"ccsf":       importCCSF,
+	"debit":      importDebit,
+	"effectif":   importEffectif,
+	"sirene":     importSirene,
 }
 
 func purge(c *gin.Context) {
@@ -102,4 +105,18 @@ func purge(c *gin.Context) {
 	db.C("Etablissement").RemoveAll(nil)
 	db.C("Entreprise").RemoveAll(nil)
 	c.String(200, "Done")
+}
+
+func importBatch(c *gin.Context) {
+	batch := AdminBatch{}
+	batchKey := c.Params.ByName("batch")
+	db := c.Keys["DB"].(*mgo.Database)
+	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
+	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
+	batch.load(batchKey, db, chanEtablissement, chanEntreprise)
+
+	for _, fn := range importFunctions {
+		fn(&batch)
+	}
+
 }

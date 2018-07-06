@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // Delai tuple fichier ursaff
@@ -93,16 +91,10 @@ func parseDelai(paths []string) chan *Delai {
 	return outputChannel
 }
 
-func importDelai(c *gin.Context) {
-	insertWorker := c.Keys["insertEtablissement"].(chan *ValueEtablissement)
+func importDelai(batch *AdminBatch) error {
+	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
 
-	batch := c.Params.ByName("batch")
-
-	files, _ := GetFileList(viper.GetString("APP_DATA"), batch)
-	dataSource := files["delai"]
-	mapping := getCompteSiretMapping(files["admin_urssaf"])
-
-	for delai := range parseDelai(dataSource) {
+	for delai := range parseDelai(batch.Files["delai"]) {
 		if siret, ok := mapping[delai.NumeroCompte]; ok {
 			hash := fmt.Sprintf("%x", structhash.Md5(delai, 1))
 
@@ -110,13 +102,13 @@ func importDelai(c *gin.Context) {
 				Value: Etablissement{
 					Siret: siret,
 					Batch: map[string]Batch{
-						batch: Batch{
+						batch.ID.Key: Batch{
 							Delai: map[string]*Delai{
 								hash: delai,
 							}}}}}
-			insertWorker <- &value
+			batch.ChanEtablissement <- &value
 		}
 	}
-	insertWorker <- &ValueEtablissement{}
-
+	batch.ChanEtablissement <- &ValueEtablissement{}
+	return nil
 }

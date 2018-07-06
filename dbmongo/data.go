@@ -12,19 +12,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-func dataBatch(c *gin.Context) {
-	list, err := batchList("1802", "1805")
-	if err != nil {
-		c.JSON(500, err)
-		return
-	}
-	c.JSON(200, list)
-}
-
-func dataAlgo(c *gin.Context) {
-	c.JSON(200, []string{"algo1", "algo2"})
-}
-
 func dataPrediction(c *gin.Context) {
 	var prediction []Prediction
 	var etablissement []ValueEtablissement
@@ -287,6 +274,7 @@ func indexEntreprise(c *gin.Context) {
 
 func compactEtablissement(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
+	batches := getBatchesID(db)
 
 	// Détermination scope traitement
 	var query interface{}
@@ -318,7 +306,7 @@ func compactEtablissement(c *gin.Context) {
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
 		Out:      output,
-		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805", "1806"},
+		Scope: bson.M{"batches": batches,
 			"types": []string{
 				"altares",
 				"apconso",
@@ -352,6 +340,7 @@ func compactEtablissement(c *gin.Context) {
 
 func compactEntreprise(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
+	batches := getBatchesID(db)
 
 	// Détermination scope traitement
 	var query interface{}
@@ -383,7 +372,7 @@ func compactEntreprise(c *gin.Context) {
 		Reduce:   string(reduceFct),
 		Finalize: string(finalizeFct),
 		Out:      output,
-		Scope: bson.M{"batches": []string{"1802", "1803", "1804", "1805", "1806"},
+		Scope: bson.M{"batches": batches,
 			"types": []string{
 				"bdf",
 			},
