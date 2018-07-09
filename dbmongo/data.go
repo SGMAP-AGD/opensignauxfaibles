@@ -2,14 +2,74 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"regexp"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
+
+// MapReduceJS Ensemble de fonctions JS pour mongodb
+type MapReduceJS struct {
+	Routine  string
+	Scope    string
+	Map      string
+	Reduce   string
+	Finalize string
+}
+
+func (mr *MapReduceJS) load(routine string, scope string) error {
+	file, err := ioutil.ReadDir("js/" + routine + "/" + scope)
+	sort.Slice(file, func(i, j int) bool {
+		return file[i].Name() < file[j].Name()
+	})
+
+	if err != nil {
+		return errors.New("Chemin introuvable")
+	}
+
+	mr.Routine = routine
+	mr.Scope = scope
+	mr.Map = ""
+	mr.Reduce = ""
+	mr.Finalize = ""
+
+	for _, f := range file {
+		if match, _ := regexp.MatchString("map.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + routine + "/" + scope + "/" + f.Name())
+			if err != nil {
+				return errors.New("Lecture impossible: js/" + routine + "/" + scope + "/" + f.Name())
+			}
+			mr.Map = mr.Map + string(fp)
+		}
+		if match, _ := regexp.MatchString("reduce.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + routine + "/" + scope + "/" + f.Name())
+			if err != nil {
+				return errors.New("Lecture impossible: js/" + routine + "/" + scope + "/" + f.Name())
+			}
+			mr.Reduce = mr.Reduce + string(fp)
+		}
+		if match, _ := regexp.MatchString("finalize.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + routine + "/" + scope + "/" + f.Name())
+			if err != nil {
+				return errors.New("Lecture impossible: js/" + routine + "/" + scope + "/" + f.Name())
+			}
+			mr.Finalize = mr.Finalize + string(fp)
+		}
+	}
+	return nil
+}
+
+func debug(c *gin.Context) {
+	mr := MapReduceJS{}
+	scope := c.Params.ByName("scope")
+	routine := c.Params.ByName("routine")
+	mr.load(routine, scope)
+	c.JSON(200, mr)
+}
 
 func dataPrediction(c *gin.Context) {
 	var prediction []Prediction
@@ -25,64 +85,6 @@ func dataPrediction(c *gin.Context) {
 	query := bson.M{"_id": bson.M{"$in": siret}}
 	db.C("Etablissement").Find(query).All(&etablissement)
 	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
-
-}
-
-func data(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-	siret := []string{}
-	c.Bind(&siret)
-	fmt.Println(siret)
-
-	var query interface{}
-	var output interface{}
-
-	query = bson.M{"value.siret": bson.M{"$in": siret}}
-	output = nil
-
-	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-06-01")
-	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
-
-	scope := bson.M{"date_debut": dateDebut,
-		"date_fin":               dateFin,
-		"date_fin_effectif":      dateFinEffectif,
-		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
-		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
-	}
-
-	mapFct, errM := ioutil.ReadFile("js/data/browse/Map.js")
-	reduceFct, errR := ioutil.ReadFile("js/data/browse/Reduce.js")
-	finalizeFct, errF := ioutil.ReadFile("js/data/browse/Finalize.js")
-
-	if errM != nil || errR != nil || errF != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
-		return
-	}
-
-	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
-		Out:      nil,
-		Scope:    scope,
-	}
-
-	var result interface{}
-	var err error
-
-	if output == nil {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, &result)
-	} else {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
-	}
-
-	if err != nil {
-		c.JSON(500, err)
-		return
-	}
-
-	c.JSON(200, result)
 }
 
 func reduce(c *gin.Context) {
@@ -114,21 +116,14 @@ func reduce(c *gin.Context) {
 		output = nil
 	}
 
-	mapFctEtablissement, errEtabM := ioutil.ReadFile("js/features/" + algo + "/EtablissementMap.js")
-	reduceFctEtablissement, errEtabR := ioutil.ReadFile("js/features/" + algo + "/EtablissementReduce.js")
-	finalizeFctEtablissement, errEtabF := ioutil.ReadFile("js/features/" + algo + "/EtablissementFinalize.js")
+	MREtablissement := MapReduceJS{}
+	MREntreprise := MapReduceJS{}
+	MRUnion := MapReduceJS{}
+	errEt := MREtablissement.load("algo1", "etablissement")
+	errEn := MREntreprise.load("algo1", "entreprise")
+	errUn := MRUnion.load("algo1", "union")
 
-	mapFctEntreprise, errEntM := ioutil.ReadFile("js/features/" + algo + "/EntrepriseMap.js")
-	reduceFctEntreprise, errEntR := ioutil.ReadFile("js/features/" + algo + "/EntrepriseReduce.js")
-	finalizeFctEntreprise, errEntF := ioutil.ReadFile("js/features/" + algo + "/EntrepriseFinalize.js")
-
-	mapFctUnion, errUnM := ioutil.ReadFile("js/features/" + algo + "/UnionMap.js")
-	reduceFctUnion, errUnR := ioutil.ReadFile("js/features/" + algo + "/UnionReduce.js")
-	finalizeFctUnion, errUnF := ioutil.ReadFile("js/features/" + algo + "/UnionFinalize.js")
-
-	if errEtabM != nil || errEtabR != nil || errEtabF != nil ||
-		errEntM != nil || errEntR != nil || errEntF != nil ||
-		errUnM != nil || errUnR != nil || errUnF != nil {
+	if errEt != nil || errEn != nil || errUn != nil {
 		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
 		return
 	}
@@ -142,9 +137,9 @@ func reduce(c *gin.Context) {
 	}
 
 	jobEtablissement := &mgo.MapReduce{
-		Map:      string(mapFctEtablissement),
-		Reduce:   string(reduceFctEtablissement),
-		Finalize: string(finalizeFctEtablissement),
+		Map:      string(MREtablissement.Map),
+		Reduce:   string(MREtablissement.Reduce),
+		Finalize: string(MREtablissement.Finalize),
 		Out:      bson.M{"replace": "MRWorkspace"},
 		Scope:    scope,
 	}
@@ -156,9 +151,9 @@ func reduce(c *gin.Context) {
 	}
 
 	jobEntreprise := &mgo.MapReduce{
-		Map:      string(mapFctEntreprise),
-		Reduce:   string(reduceFctEntreprise),
-		Finalize: string(finalizeFctEntreprise),
+		Map:      string(MREntreprise.Map),
+		Reduce:   string(MREntreprise.Reduce),
+		Finalize: string(MREntreprise.Finalize),
 		Out:      bson.M{"merge": "MRWorkspace"},
 		Scope:    scope,
 	}
@@ -170,9 +165,9 @@ func reduce(c *gin.Context) {
 	}
 
 	jobUnion := &mgo.MapReduce{
-		Map:      string(mapFctUnion),
-		Reduce:   string(reduceFctUnion),
-		Finalize: string(finalizeFctUnion),
+		Map:      string(MRUnion.Map),
+		Reduce:   string(MRUnion.Reduce),
+		Finalize: string(MRUnion.Finalize),
 		Out:      output,
 		Scope:    scope,
 	}
@@ -207,6 +202,7 @@ func compactEtablissement(c *gin.Context) {
 	var output interface{}
 	var etablissement []interface{}
 
+	// Si le parametre siret est absent, on traite l'ensemble de la collection
 	siret := c.Params.ByName("siret")
 	if siret == "" {
 		query = nil
@@ -218,19 +214,19 @@ func compactEtablissement(c *gin.Context) {
 	}
 
 	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/batch/compact/EtablissementMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/batch/compact/EtablissementReduce.js")
-	finalizeFct, errFinalize := ioutil.ReadFile("js/batch/compact/EtablissementFinalize.js")
-	if errMap != nil || errReduce != nil || errFinalize != nil {
-		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
+	MREtablissement := MapReduceJS{}
+	errEt := MREtablissement.load("compact", "etablissement")
+
+	if errEt != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
 		return
 	}
 
 	// Traitement MR
 	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
+		Map:      string(MREtablissement.Map),
+		Reduce:   string(MREtablissement.Reduce),
+		Finalize: string(MREtablissement.Finalize),
 		Out:      output,
 		Scope: bson.M{"batches": batches,
 			"types": []string{
@@ -273,6 +269,7 @@ func compactEntreprise(c *gin.Context) {
 	var output interface{}
 	var etablissement []interface{}
 
+	// Si le parametre siren est absent, on traite l'ensemble de la collection
 	siren := c.Params.ByName("siren")
 	if siren == "" {
 		query = nil
@@ -284,19 +281,19 @@ func compactEntreprise(c *gin.Context) {
 	}
 
 	// Ressources JS
-	mapFct, errMap := ioutil.ReadFile("js/batch/compact/EntrepriseMap.js")
-	reduceFct, errReduce := ioutil.ReadFile("js/batch/compact/EntrepriseReduce.js")
-	finalizeFct, errFinalize := ioutil.ReadFile("js/batch/compact/EntrepriseFinalize.js")
-	if errMap != nil || errReduce != nil || errFinalize != nil {
-		c.JSON(500, "Impossible d'accéder aux ressources JS pour ce traitement: "+errMap.Error()+" "+errFinalize.Error()+" "+errReduce.Error())
+	MREntreprise := MapReduceJS{}
+	errEn := MREntreprise.load("compact", "entreprise")
+
+	if errEn != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
 		return
 	}
 
 	// Traitement MR
 	job := &mgo.MapReduce{
-		Map:      string(mapFct),
-		Reduce:   string(reduceFct),
-		Finalize: string(finalizeFct),
+		Map:      string(MREntreprise.Map),
+		Reduce:   string(MREntreprise.Reduce),
+		Finalize: string(MREntreprise.Finalize),
 		Out:      output,
 		Scope: bson.M{"batches": batches,
 			"types": []string{

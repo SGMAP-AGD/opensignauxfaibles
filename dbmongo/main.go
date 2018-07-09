@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -59,24 +58,11 @@ func main() {
 
 		api.POST("/R/algo1", algo1)
 
-		api.POST("/data", data)
-
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-
-		api.GET("/debug/:batch", debug)
+		api.GET("/debug/:routine/:scope", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
-}
-
-func debug(c *gin.Context) {
-	basePath := viper.GetString("APP_DATA")
-	batch := c.Params.ByName("batch")
-	files, err := GetFileList(basePath, batch)
-	spew.Dump(files)
-	spew.Dump(err)
-	c.JSON(200, "cooool")
-	c.JSON(200, "tres coooool")
 }
 
 func loadConfig() {
