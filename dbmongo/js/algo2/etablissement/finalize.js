@@ -49,17 +49,18 @@ function finalize(k, v) {
             "siret": v.siret,
             "periode": e,
             "lag_effectif_missing": true,
-            "apart_last12_months": false,
-            "apart_heures_consommees_array": [],
+            "apart_heures_consommees": 0,
+            "apart_motif_recours": 0,
             "effectif_history": {},
             "outcome_0_12": "non_default",
             "date_defaillance": null,
             "cotisation_due_periode": {},
-            "debit_array": []
+            "debit_array": [],
+            "etat_proc_collective": "in_bonis"
         }
     });
 
-    var value = value_array.reduce(function (periode, val, index) {
+    var output = value_array.reduce(function (periode, val, index) {
         periode[val.periode.getTime()] = val
         return periode
     }, {});
@@ -76,7 +77,6 @@ function finalize(k, v) {
 
     // inscription des effectifs dans les périodes
     value_array.map(function (val) {
-        var currentTime = val.periode.getTime()
         var effectifDate = DateAddMonth(val.periode, offset_effectif)
         var historyDate = DateAddMonth(val.periode, offset_effectif - 12)
         var historyPeriods = generatePeriodSerie(historyDate, effectifDate)
@@ -87,10 +87,15 @@ function finalize(k, v) {
             val.effectif_history[p.getTime()] = map_effectif[p.getTime()]
         })
     })
-
     
-
-    // activite partielle    
+    //
+    ///
+    ////////////////////////
+    // activite partielle // 
+    //////////////////////// 
+    ///
+    //
+    
     var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
         apart[v.apdemande[hash].id_demande] = {
             "demande": hash,
@@ -113,23 +118,26 @@ function finalize(k, v) {
         }
     })
 
-    Object.keys(v.apconso).map(
+    Object.keys(v.apconso).forEach(
         function (h) {
             var conso = v.apconso[h]
-            if (conso.hash_demande && v.apdemande[conso.hash_demande].motif_recours_se != 3) {
-                var currentTime = conso.periode.getTime()
-                var beforeTime = new Date(conso.periode.getTime()).setFullYear(conso.periode.getFullYear() + 1)
-                var pastYearTimes = generatePeriodSerie(new Date(currentTime), new Date(beforeTime)).map(function (date) { return date.getTime() })
-                pastYearTimes.map(function (time) {
-                    if (time in value) {
-                        value[time].apart_last12_months = true;
-                        value[time].apart_heures_consommees_array.push(conso.heure_consomme);
-                    }
-                })
+            if (conso.hash_demande) {
+                var time = conso.periode.getTime()
+                if (time in output){
+                output[time].apart_heures_consommees = output[time].apart_heures_consommees + conso.heure_consomme;
+                output[time].apart_motif_recours = v.apdemande[conso.hash_demande].motif_recours_se;
+                }
             }
         })
 
-        // delais
+    //
+    ///
+    ////////////
+    // delais //
+    ////////////
+    ///
+    //
+        
     Object.keys(v.delai).map(
         function (hash) {
             var delai = v.delai[hash]
@@ -138,46 +146,59 @@ function finalize(k, v) {
             var pastYearTimes = generatePeriodSerie(date_creation, date_echeance).map(function (date) { return date.getTime() })
             pastYearTimes.map(
                 function(time){
-                    if (time in value) {
+                    if (time in output) {
                         var remaining_months = (date_echeance.getUTCMonth() - new Date(time).getUTCMonth()) +
                                     12*(date_echeance.getUTCFullYear() - new Date(time).getUTCFullYear()) 
-                        value[time].delai = remaining_months;
-                        value[time].duree_delai = delai.duree_delai
-                        value[time].montant_echeancier = delai.montant_echeancier
+                        output[time].delai = remaining_months;
+                        output[time].duree_delai = delai.duree_delai
+                        output[time].montant_echeancier = delai.montant_echeancier
 
                     }
                 }
             )
         }
+    ) 
+
+    //
+    ///
+    //////////////////
+    // defaillance  //
+    //////////////////
+    ///
+    //
+
+    // On filtre altares pour ne garder que les codes qui nous intéressents
+    var altares_codes  =  Object.keys(v.altares).reduce(function(events,hash) {
+        var altares_event = v.altares[hash]
+
+   
+        var etat = altaresToHuman(altares_event.code_evenement)
+        
+         if (etat != null)
+             events.push({"etat": etat, "date_proc_col": new Date(altares_event.date_effet)})
+
+        return(events)
+    },[{"etat" : "in_bonis", "date_proc_col" : new Date(0)}]).sort(
+        function(a,b) {return(a.date_proc_col.getTime() > b.date_proc_col.getTime())}
     )
 
+ 
 
-    // defaillance - On prend la date de l'évènement le plus proche dans l'avenir par rapport à period
-    // Object.keys(v.altares).map(
-    //     function (hash) {
-    //         var altares = v.altares[hash]
-    //         var periode_effet = new Date(Date.UTC(altares.date_effet.getUTCFullYear(), altares.date_effet.getUTCMonth(), 1, 0, 0, 0, 0))
-    //         var code_evenement = altares.code_evenement
-    //         return {"periode_effet": periode_effet,
-    //                 "code_evenement": code_evenemement}
-    //     }).sort(function(a,b){return(a.periode_effet.getTime() < b.periode_effet.getTime())}).forEach(
-    //         function (event){
-    //             var periode_outcome = new Date(event.periode_effet.getUTCFullYear() - 1, event.periode_effet.getUTCMonth(), 1, 0, 0, 0, 0)
-    //             var pastYearTimes = generatePeriodSerie(periode_outcome, event.periode_effet).map(function (date) { return date.getTime() })
-    //         pastYearTimes.map(
-    //             function (time) {
-    //                 if (time in value) {
-    //                     value[time].date_defaillance = event.periode_effet
-    //                     value[time].outcome_0_12 = "default";
-    //                     value[time].altares_status = event.code_evenement;
-    //                 }
-    //             }
-    //         )
+    altares_codes.forEach(
+        function (event) {
+                var periode_effet = new Date(Date.UTC(event.date_proc_col.getFullYear(), event.date_proc_col.getUTCMonth(), 1, 0, 0, 0, 0))
+                var time_til_last = Object.keys(output).filter(val => {return (val >= periode_effet)})
+                time_til_last.forEach(time => {
+                    if (time in output) {
+                        output[time].etat_proc_collective = event.etat
+                        output[time].date_proc_collective = event.date_proc_col
+                    }
+                })
+            }
+        )
 
-    //         }
-    //     )
 
-    Object.keys(v.altares).map(
+    Object.keys(v.altares).forEach(
         function (hash) {
             var altares = v.altares[hash]
             var periode_effet = new Date(Date.UTC(altares.date_effet.getUTCFullYear(), altares.date_effet.getUTCMonth(), 1, 0, 0, 0, 0))
@@ -185,9 +206,9 @@ function finalize(k, v) {
             var pastYearTimes = generatePeriodSerie(periode_outcome, periode_effet).map(function (date) { return date.getTime() })
             pastYearTimes.map(
                 function (time) {
-                    if (time in value) {
-                        value[time].date_defaillance = altares.date_effet
-                        value[time].outcome_0_12 = "default";
+                    if (time in output) {
+                        output[time].date_defaillance = altares.date_effet
+                        output[time].outcome_0_12 = "default";
                     }
                 }
             )
@@ -198,9 +219,14 @@ function finalize(k, v) {
       
 
 
-            
+    //
+    ///
+    /////////////////
+    // Cotisation ///
+    /////////////////
+    ///
+    //
 
-    // Cotisation
     var value_cotisation = {}
 
     Object.keys(v.cotisation).map(function (h) {
@@ -211,9 +237,19 @@ function finalize(k, v) {
         })
     })
 
+    //
+    ///
+    /////////////////
+    // Debits     ///
+    /////////////////
+    ///
+    //
+
+
+
     var value_dette = {}
 
-    Object.keys(v.debit).map(function (h) {
+    Object.keys(v.debit).forEach(function (h) {
         var debit = v.debit[h]
         if (debit.part_ouvriere + debit.part_patronale > 0) {
 
@@ -237,21 +273,30 @@ function finalize(k, v) {
         }
     })
 
-    Object.keys(value).map(function (time) {
-        var currentTime = value[time].periode.getTime()
-        var beforeTime = new Date(value[time].periode.getTime()).setFullYear(value[time].periode.getFullYear() - 1)
+    Object.keys(output).forEach(function (time) {
+        var currentTime = output[time].periode.getTime()
+        var beforeTime = new Date(output[time].periode.getTime()).setFullYear(output[time].periode.getFullYear() - 1)
         var pastYearTimes = generatePeriodSerie(new Date(beforeTime), new Date(currentTime)).map(function (date) { return date.getTime() })
-        value[time].cotisation_array = pastYearTimes.map(function (t) {
+        output[time].cotisation_array = pastYearTimes.map(function (t) {
             return value_cotisation[t]
         })
         if (time in value_dette) {
-            value[time].debit_array = value_dette[time]
+            output[time].debit_array = value_dette[time]
         }
     })
 
+    //
+    ///
+    /////////////////
+    // Effectif ///
+    /////////////////
+    ///
+    //
+
+
     value_array.map(function (val, index) {
         if (!(val.effectif)) {
-            delete value[val.periode.getTime()]
+            delete output[val.periode.getTime()]
             delete value_array[index]
         }
     })
@@ -290,7 +335,7 @@ function finalize(k, v) {
 
         val.effectif_average = e.total / e.length;
 
-        val.apart_heures_consommees = val.apart_heures_consommees_array.reduce(function (m, h) { return m + h }, 0)
+        //val.apart_heures_consommees = val.apart_heures_consommees_array.reduce(function (m, h) { return m + h }, 0)
         val.apart_share_heuresconsommees = ((val.effectif_average || 0) == 0 ? 0 : val.apart_heures_consommees / (val.effectif_average * 1607) * 100)
 
         c = val.cotisation_array.reduce(function (m, cot) {
@@ -315,8 +360,8 @@ function finalize(k, v) {
 
         val.ratio_dettecumulee_cotisation_12m = (val.mean_cotisation_due > 0 ? (val.montant_part_ouvriere + val.montant_part_patronale) / val.mean_cotisation_due : 0)
         //val.log_ratio_dettecumulee_cotisation_12m = Math.log((val.ratio_dettecumulee_cotisation_12m + 1 || 1))
-        val.apart_last12_months = (val.apart_last12_months ? 1 : 0)
-        val.apart_consommee = (val.apart_heures_consommees > 0 ? 1 : 0)
+        //val.apart_last12_months = (val.apart_last12_months ? 1 : 0)
+        //val.apart_consommee = (val.apart_heures_consommees > 0 ? 1 : 0)
 
           // CCSF 
         var ccsfHashes = Object.keys(v.ccsf || {}) 
@@ -327,11 +372,14 @@ function finalize(k, v) {
                 if (ccsf.date_traitement.getTime() < val.periode.getTime() && ccsf.date_traitement.getTime() > accu.date_traitement.getTime()) { 
                     accu = ccsf 
                 } 
+                return(accu)
             }, 
             { 
                 date_traitement: new Date(0) 
             } 
         ) 
+      
+
         if (optccsf.date_traitement.getTime() != 0) { 
             val.date_ccsf = optccsf.date_traitement 
         } 
@@ -345,10 +393,12 @@ function finalize(k, v) {
 
         val.lattitude = (sirene || { "lattitude": null }).lattitude
         val.longitude = (sirene || { "longitude": null }).longitude
+        val.region = (sirene || {"region": null}).region
+        val.departement = (sirene || {"departement": null}).departement
         val.code_ape  = (sirene || { "ape": null}).ape
         val.activite_saisonniere = (sirene || {"activitesaisoniere": null}).activitesaisoniere
         val.productif = (sirene || {"productif": null}).productif
-        val.debut_activite = (sirene || {"debut_activite":null}).debut_activite
+        val.debut_activite = (sirene || {"debut_activite":null}).debut_activite.getFullYear()
         val.tranche_ca = (sirene || {"trancheca":null}).trancheca
         val.indice_monoactivite = (sirene || {"indicemonoactivite": null}).indicemonoactivite
 
