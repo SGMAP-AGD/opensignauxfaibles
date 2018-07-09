@@ -94,7 +94,7 @@ function finalize(k, v) {
 
     // activite partielle    
     var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
-        apart[v.apdemande[hash].id_demande] = {
+        apart[v.apdemande[hash].id_demande.substring(0,10)] = {
             "demande": hash,
             "consommation": []
         }
@@ -104,8 +104,8 @@ function finalize(k, v) {
     Object.keys(v.apconso).forEach(hash => {
         var valueap = v.apconso[hash]
 
-        if (valueap.id_conso in apart) {
-           apart[valueap.id_conso].consommation.push(hash)
+        if (valueap.id_conso.substring(0,10) in apart) {
+           apart[valueap.id_conso.substring(0,10)].consommation.push(hash)
         }
 
     })
