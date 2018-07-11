@@ -255,6 +255,7 @@ other_NN <- other_input %>%
 concatenated <- layer_concatenate(list(yearly_NN,monthly_NN,other_NN))
 
 output <-  concatenated %>% 
+  layer_dense(units = 64,activation = 'relu') %>%
   layer_dense(units = 32, activation = 'relu') %>% 
   layer_dense(units = 1, activation = 'sigmoid')
 
@@ -269,7 +270,8 @@ model <- keras_model(list(
 
 ```{r}
 model %>% compile(
-  optimizer = optimizer_rmsprop(lr = 0.0001),
+ # optimizer = optimizer_rmsprop(lr = 0.0001),
+  optimizer = optimizer_adam(lr = 0.0001),
   loss = "binary_crossentropy",
   metrics = c('acc')
 )
@@ -281,7 +283,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 40,
-  epochs = 6,
+  epochs = 12,
   validation_data = validation_gen,
   validation_steps = 15,
   verbose = TRUE
