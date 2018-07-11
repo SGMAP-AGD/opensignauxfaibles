@@ -109,6 +109,16 @@
             <v-btn @click="compactEntreprise()">Entreprise</v-btn>
           </v-card-actions>
         </v-card>
+                <v-card>
+          <v-card-title>
+            <div>
+              <span>Supprimer le dernier batch</span><br>
+            </div>
+          </v-card-title>
+          <v-card-actions>
+            <v-btn @click="dropBatch()">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
         <v-card>
           <v-card-title>
             <div>
@@ -159,6 +169,9 @@ export default {
     },
     compactEntreprise () {
       axios.get(this.$api + '/compact/entreprise').then()
+    },
+    dropBatch () {
+      axios.get(this.$api + '/dropBatch')
     },
     importData () {
       var self = this

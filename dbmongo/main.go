@@ -47,6 +47,7 @@ func main() {
 		api.GET("/admin/features", adminFeature)
 
 		api.GET("/import/:batch", importBatch)
+		api.GET("/dropBatch", dropBatch)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)

@@ -318,3 +318,44 @@ func compactEntreprise(c *gin.Context) {
 	}
 
 }
+
+func dropBatch(c *gin.Context) {
+	db := c.Keys["DB"].(*mgo.Database)
+
+	batches := getBatchesID(db)
+	sort.Slice(batches, func(i, j int) bool {
+		return batches[i] > batches[j]
+	})
+	currentBatch := batches[0]
+
+	MREtablissement := MapReduceJS{}
+	errEt := MREtablissement.load("dropBatch", "etablissement")
+	MREntreprise := MapReduceJS{}
+	errEn := MREntreprise.load("dropBatch", "entreprise")
+
+	if errEt != nil || errEn != nil {
+		c.JSON(500, "Probleme d'accès aux ressources MapReduce")
+		return
+	}
+
+	jobEt := &mgo.MapReduce{
+		Map:      string(MREtablissement.Map),
+		Reduce:   string(MREtablissement.Reduce),
+		Finalize: string(MREtablissement.Finalize),
+		Out:      bson.M{"replace": "Etablissement"},
+		Scope:    bson.M{"currentBatch": currentBatch},
+	}
+
+	jobEn := &mgo.MapReduce{
+		Map:      string(MREntreprise.Map),
+		Reduce:   string(MREntreprise.Reduce),
+		Finalize: string(MREntreprise.Finalize),
+		Out:      bson.M{"replace": "Entreprise"},
+		Scope:    bson.M{"currentBatch": currentBatch},
+	}
+
+	_, errEt = db.C("Etablissement").Find(nil).MapReduce(jobEt, nil)
+	_, errEn = db.C("Entreprise").Find(nil).MapReduce(jobEn, nil)
+
+	c.JSON(200, currentBatch)
+}
