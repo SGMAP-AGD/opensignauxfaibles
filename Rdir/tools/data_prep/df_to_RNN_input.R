@@ -132,52 +132,48 @@ df_to_RNN_input <- function(siret_period_pairs,df_m,df_y,date_inf,date_sup,lookb
   #   }
   #
   #
-  #   #
-  #   # Select other data ###############################################################
-  #   #
-  #   vars <- c('siret','periode')
-  #   vars <- c(vars,
-  #             'code_ape')#,
-  #   #           'code_ape_2',
-  #   #           'code_ape_3',
-  #   #           'code_ape_4',
-  #   #           'code_ape_5'
-  #   # )
-  #
-  #   sample_other <- array(0,dim = c(n,length(vars)-2))
-  #
-  #   for (ii in 1:n){
-  #     aux_siret = siret_period_pairs$siret[ii]
-  #
-  #     sample_other[ii,] <- df %>%
-  #       mutate(code_ape = as.numeric(code_ape)-1) %>%
-  #       filter(siret == aux_siret) %>%
-  #       select(vars) %>%
-  #       summarize_all(first) %>%
-  #       select(-siret, -periode) %>%
-  #       as.matrix()
-  #   }
-  #
-  #   dimnames(sample_monthly) <- NULL
-  #   dimnames(sample_yearly) <- NULL
-  #   dimnames(sample_other) <- NULL
-  #   dimnames(target) <- NULL
-  #
-  #
-  #   # ## Provisoire
-  #   # return(list(
-  #   #   sample_monthly,
-  #   #   target
-  #   # ))
-  #   #############
-  #   return(list(
-  #     list(
-  #       monthly_input = sample_monthly,
-  #       yearly_input = sample_yearly,
-  #       other_input = sample_other
-  #     ),
-  #     list(target)
-  #   ))
+  ##
+  ###
+  # Select other data ###############################################################
+  ###
+  ##
+
+  vars <- c('siret','periode')
+    vars <- c(vars,
+              'code_ape')#,
+    #           'code_ape_2',
+    #           'code_ape_3',
+    #           'code_ape_4',
+    #           'code_ape_5'
+    # )
+
+    sample_other <- array(0,dim = c(n,length(vars)-2))
+
+    for (ii in 1:n){
+      aux_siret = siret_period_pairs$siret[ii]
+
+      sample_other[ii,] <- df %>%
+        mutate(code_ape = as.numeric(code_ape)-1) %>%
+        filter(siret == aux_siret) %>%
+        select(vars) %>%
+        summarize_all(first) %>%
+        select(-siret, -periode) %>%
+        as.matrix()
+    }
+
+    dimnames(sample_monthly) <- NULL
+    dimnames(sample_yearly) <- NULL
+    dimnames(sample_other) <- NULL
+    dimnames(target) <- NULL
+
+    return(list(
+      list(
+        monthly_input = sample_monthly,
+        yearly_input = sample_yearly,
+        other_input = sample_other
+      ),
+      list(target)
+    ))
 
 
 }
