@@ -1,4 +1,4 @@
-connect_to_database <- function(collection, min_effectif = 20){
+connect_to_database <- function(collection, batch, min_effectif = 20){
   cat('Connexion à la collection mongodb ...')
   dbconnection <- mongo(collection = collection, db = 'opensignauxfaibles', verbose = TRUE, url = 'mongodb://localhost:27017')
   cat(' Fini.','\n')
@@ -6,7 +6,7 @@ connect_to_database <- function(collection, min_effectif = 20){
   cat('Import ...')
  ### FIX ME: batch en dur
   cat('FIX ME')
-  data <- dbconnection$aggregate('[{"$match":{"_id.batch":"1806"}},{"$unwind":{"path": "$value"}}]')$value %>%
+  data <- dbconnection$aggregate(paste0('[{"$match":{"_id.batch":"',batch,'"}},{"$unwind":{"path": "$value"}}]'))$value %>%
     mutate(
       cut_growthrate = forcats::fct_relevel(
         cut_growthrate,
