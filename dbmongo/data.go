@@ -119,9 +119,9 @@ func reduce(c *gin.Context) {
 	MREtablissement := MapReduceJS{}
 	MREntreprise := MapReduceJS{}
 	MRUnion := MapReduceJS{}
-	errEt := MREtablissement.load("algo1", "etablissement")
-	errEn := MREntreprise.load("algo1", "entreprise")
-	errUn := MRUnion.load("algo1", "union")
+	errEt := MREtablissement.load(algo, "etablissement")
+	errEn := MREntreprise.load(algo, "entreprise")
+	errUn := MRUnion.load(algo, "union")
 
 	if errEt != nil || errEn != nil || errUn != nil {
 		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
