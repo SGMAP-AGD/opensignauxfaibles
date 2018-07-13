@@ -23,7 +23,7 @@ function finalize(k, v) {
             if (periode.arrete_bilan.getTime() < v.bdf[hash].arrete_bilan.getTime()
                 && periode.periode.getTime() > v.bdf[hash].arrete_bilan.getTime()) {
                 periode.arrete_bilan = v.bdf[hash].arrete_bilan
-                periode.secteur = v.bdf[hash].secteur
+                //periode.secteur = v.bdf[hash].secteur
                 periode.poids_frng = v.bdf[hash].poids_frng
                 periode.taux_marge = v.bdf[hash].taux_marge
                 periode.delai_fournisseur = v.bdf[hash].delai_fournisseur
