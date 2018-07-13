@@ -115,8 +115,16 @@ func importBatch(c *gin.Context) {
 	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
 	batch.load(batchKey, db, chanEtablissement, chanEntreprise)
 
-	for _, fn := range importFunctions {
-		fn(&batch)
+	if batch.Open {
+		for _, fn := range importFunctions {
+			err := fn(&batch)
+			if err != nil {
+				c.JSON(500, err)
+			}
+			return
+		}
+	} else {
+		c.JSON(403, "Ce lot est fermé, import impossible.")
 	}
 
 }

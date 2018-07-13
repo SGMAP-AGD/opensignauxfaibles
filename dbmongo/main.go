@@ -38,8 +38,10 @@ func main() {
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
 		api.PUT("/admin/batch/:batchID", registerNewBatch)
-
+		api.POST("admin/batch", updateBatch)
 		api.GET("/admin/batch", listBatch)
+		api.DELETE("/admin/batch", dropBatch)
+
 		api.GET("/admin/files", adminFiles)
 		api.POST("/admin/attach", attachFileBatch)
 		api.GET("/admin/types", listTypes)
@@ -47,7 +49,6 @@ func main() {
 		api.GET("/admin/features", adminFeature)
 
 		api.GET("/import/:batch", importBatch)
-		api.GET("/dropBatch", dropBatch)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
@@ -60,7 +61,7 @@ func main() {
 		api.POST("/R/algo1", algo1)
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-		api.GET("/debug/:routine/:scope", debug)
+		api.GET("/debug/", debug)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
