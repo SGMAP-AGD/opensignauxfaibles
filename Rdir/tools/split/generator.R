@@ -1,85 +1,75 @@
 generator <-
   function(data,
-           lookback_yearlydata,
-           lookback_monthlydata,
+           var_yearly,
+           lookback_yearly_data,
+           var_monthly,
+           lookback_monthly_data,
+           var_other,
            sirets,
            date_inf,
            date_sup,
            seed = 1010,
            batch_size = 128,
            step = 1,
-           na_value = 0
-           ) {
-
+           na_value = 0,
+           oversampling = TRUE) {
     set.seed(seed)
 
     date_inf <- as.Date(date_inf)
     date_sup <- as.Date(date_sup)
-    lookback_monthlydata_m <- months(lookback_monthlydata)
-    lookback_yearlydata_m <- months(lookback_yearlydata * 12)
+    lookback_monthlydata_m <- months(lookback_monthly_data)
+    lookback_yearlydata_m <- months(lookback_yearly_data * 12)
 
 
-    var0 <-  c('siret','periode')
+    var0 <-  c('siret', 'periode')
 
-    var_monthly <-  c('effectif',
-                    'log_cotisationdue_effectif',
-                    'log_ratio_dettecumulee_cotisation_12m')
 
-    var_yearly <- c('poids_frng',
-                    'taux_marge',
-                    'delai_fournisseur',
-                    'dette_fiscale',
-                    'financier_court_terme',
-                    'frais_financier')
 
     df_m <- data %>%
       filter(siret %in% sirets) %>%
       arrange(periode)
 
     possible_pairs <- df_m %>%
-      select(siret,periode,outcome) %>%
-      filter_time( date_inf ~ date_sup) %>%
-      mutate( prob = if_else(outcome=='default',
-                             (n()-sum(outcome=='default')) / n(),
-                             sum(outcome == 'default')/n()))
+      select(siret, periode, outcome) %>%
+      filter_time(date_inf ~ date_sup)
+
+    if (oversampling) {
+      possible_pairs <- possible_pairs %>%
+        mutate(prob = if_else(
+          outcome == 'default',
+          (n() - sum(outcome == 'default')) / n(),
+          sum(outcome == 'default') / n()
+        ))
+    } else {
+      possible_pairs <- possible_pairs %>%
+        mutate(prob = 1)
+    }
 
     #
     # Replacing all na values by a fix value
     #
 
-    # replace_all_na <- function(x,na_value){
-    #   if (is.numeric(x))  x[is.na(x)] = na_value
-    #   return(x)
-    # }
-    # sub_data[] <- sub_data %>%
-    #   lapply(replace_all_na,na_value = na_value)
+    df_y <- monthly_to_yearly(df_m)
 
-    df_y <- df_m %>%
-      collapse_by("1 year",
-       side = 'start',
-       start_date = floor_index(min(.$periode),'1 Y'),
-       clean = TRUE) %>%
-      group_by(siret, periode) %>%
-      summarize_all(function(x) last(x[!is.na(x)])) %>%
-      ungroup()
-
-
-    gen <- function(){
+    gen <- function() {
       #
       # Sampling the input data by siret and period
       #
 
       batch_sample <- possible_pairs %>%
-        sample_n(size = batch_size,replace = FALSE, weight = .$prob)
+        sample_n(size = batch_size,
+                 replace = FALSE,
+                 weight = .$prob)
 
       out <- df_to_RNN_input(
         siret_period_pairs = batch_sample,
         df_m = df_m,
         df_y = df_y,
-        date_inf = date_inf,
-        date_sup = date_sup,
-        lookback_monthlydata = lookback_monthlydata,
-        lookback_yearlydata = lookback_yearlydata,
+        var_monthly = var_monthly,
+        lookback_monthly_data = lookback_monthly_data,
+        var_yearly = var_yearly,
+        lookback_yearly_data = lookback_yearly_data,
+        var_other = var_other,
         na_value = na_value
       )
 

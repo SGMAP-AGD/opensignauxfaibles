@@ -15,19 +15,27 @@ split_snapshot_rdm_month <-
   function(data,
            date_inf,
            date_sup,
+           crossvalidation = TRUE,
            frac_train = 0.60,
-           frac_cross = 0.20,
+           frac_val = 0.20,
            frac_eyeball = 0.05,
            seed = 1010) {
 
-    assert_that(
+
+
+    assertthat::assert_that(
       frac_train > 0 ,
-      frac_cross > 0,
+      frac_val > 0,
       frac_eyeball >= 0,
       frac_train < 1,
-      frac_train + frac_cross + frac_eyeball <= 1,
+      frac_train + frac_val + frac_eyeball <= 1,
       msg = "Fractions must be positive and not exceed 1"
     )
+    assertthat::assert_that(
+      nrow(data) == n_distinct(data %>% select(siret, periode))
+    )
+
+
     set.seed(seed)
 
     date_inf <- as.Date(date_inf)
@@ -38,40 +46,39 @@ split_snapshot_rdm_month <-
       filter_time( date_inf ~ date_sup) %>%
       select(siret,periode,outcome)
 
-    #
-
-    #
-
-
-    sample_sirets_train <- data %>%
-      as_tibble() %>%
-      group_by(siret) %>%
-      summarize() %>%
-      sample_frac(frac_train + frac_cross)
-
+    sample_sirets_train <- sample_frac(tbl = unique(data['siret']), size = frac_train + frac_val)
 
     sample_train <- data %>%
-      inner_join(sample_sirets_train,by = "siret") %>%
-      select(siret, periode,outcome) %>%
-      mutate( prob = if_else(outcome=='default',
-                             (n()-sum(outcome=='default')) / n(),
-                             sum(outcome == 'default')/n())) %>%
-      sample_frac(1,replace = TRUE,weight = prob)
+      semi_join(sample_sirets_train,by = "siret")
 
     cat("Fraction of positive outcomes in sample_train:", sum(sample_train$outcome == 'default') / nrow(sample_train))
     cat('\n')
-    sample_train <- sample_train %>%
-      select(-outcome,-prob)
+    cat("Fraction of sirets in sample_train:", n_distinct(sample_train$siret) / n_distinct(data$siret))
+    cat('\n')
 
-    cv_folds <- groupKFold(sample_train$siret, k = 5)
+    sample_train <- sample_train %>%
+      select(siret, periode)
+
 
     remaining <- data %>%
       anti_join(sample_sirets_train,by = "siret") %>%
       select(siret, periode)
 
+    cv_folds <- list()
+    sample_val <- data.frame()
+
+    if (crossvalidation){
+      cv_folds <- groupKFold(sample_train$siret, k = 5)
+    } else {
+      val_siret <- sample_frac(tbl = unique(sample_train['siret']), size = frac_val / (frac_val + frac_train))
+      sample_val <- sample_train %>% filter(siret %in% val_siret$siret)
+      sample_train <- sample_train %>% filter(! siret %in% val_siret$siret)
+    }
+
+
     if (frac_eyeball > 0) {
       sample_eyeball <- remaining %>%
-        sample_frac(frac_eyeball / (1 - frac_train - frac_cross))
+        sample_frac(frac_eyeball / (1 - frac_train - frac_val))
     } else {
       sample_eyeball <-
         tibble(siret = character(), periode = as.Date(character()))
@@ -80,8 +87,5 @@ split_snapshot_rdm_month <-
     sample_test <- remaining %>%
       anti_join(sample_eyeball, by = 'siret')
 
-    cat("Fraction of sirets in sample_train:", n_distinct(sample_train$siret) / n_distinct(data$siret))
-    cat('\n')
-
-    return(list("train" =  sample_train,"cv_folds" = cv_folds, "eyeball" = sample_eyeball,  "test" = sample_test))
+    return(list("train" =  sample_train,"cv_folds" = cv_folds,"validation" = sample_val, "eyeball" = sample_eyeball,  "test" = sample_test))
   }

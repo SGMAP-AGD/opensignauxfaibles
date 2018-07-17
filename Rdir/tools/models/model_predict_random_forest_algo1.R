@@ -1,5 +1,4 @@
 model_predict_random_forest <- function(formula, train_set,new_data = NULL, mtry = 4) {
-
   if (!is.null(new_data)){
       assertthat::assert_that(nrow(train_set %>% semi_join(new_data, by = 'siret')) == 0)
   }
@@ -11,22 +10,6 @@ model_predict_random_forest <- function(formula, train_set,new_data = NULL, mtry
 
   assertthat::assert_that(length(mtry)==1)
 
-  ##
-  ###
-  ## Features
-  ###
-  ##
-
-  data <- feature_engineering_random_forest(train_set,new_data, oversampling = TRUE)
-  train_set <- data[[1]]
-  new_data <- data[[2]]
-
-  ##
-  ###
-  ## Model training
-  ###
-  ##
-
   ctrl <-
     trainControl(
       method = "none",
@@ -35,18 +18,16 @@ model_predict_random_forest <- function(formula, train_set,new_data = NULL, mtry
       savePredictions = "none"
     )
 
-  #grid <- expand.grid(mtry= mtry, splitrule = c("gini"), min.node.size=c(1))
-  grid <- expand.grid(.mtry = mtry)
-
+  grid <- expand.grid(mtry= mtry, splitrule = c("gini"), min.node.size=c(1))
+  #grid <- expand.grid(.mtry = mtry)
   my_model  <- train(formula,
                      data =  train_set %>%
                        mutate(outcome = fct_relevel(outcome,c('default','non_default'))),
-                     method = 'rf',
+                     method = 'ranger',
                      metric = 'AUC',
                      trControl = ctrl,
                      tuneGrid = grid,
                      na.action = "na.omit")
-
 
   if (!is.null(new_data)) {
 
