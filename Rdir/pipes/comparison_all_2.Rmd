@@ -191,6 +191,13 @@ source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
     montant_part_patronale + libelle_naf_simplifie + activite_saisonniere + productif + age + tranche_ca + indice_monoactivite + 
     taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale + effectif_entreprise + apart_entreprise + debit_entreprise + nbr_etablissements_connus + delai + duree_delai + montant_echeancier 
   
+   tune_grid = expand.grid(mtry = c(10))
+   
+ opt_mtry <- model_tune(function(x,y,z) model_predict_random_forest(formula,x,y,z),
+                        sample_train, 
+                       cv_folds,
+                       tune_grid)
+  
 results <- model_cv_eval(
   function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
 

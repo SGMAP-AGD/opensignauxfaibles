@@ -17,7 +17,8 @@ model_cv_eval <- function(model_fun, train_set, cv_folds){
       slice(-cv_folds[[i]])
 
     output <- model_fun(aux_train,aux_cv)
-    prediction = output$pred
+    prediction <- output$pred
+    browser()
 
     AUCPR_aux_failure[i] <-  AUCPR(prediction, aux_cv$failure)
     AUCPR_aux_default[i] <- AUCPR(prediction, aux_cv$default)
