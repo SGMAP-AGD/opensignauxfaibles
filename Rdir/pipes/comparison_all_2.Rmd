@@ -45,9 +45,12 @@ source(find_rstudio_root_file('tools','utilities','AUCPR.R'))
 source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
 source(find_rstudio_root_file('tools','post_analysis','export.R'))
 source(find_rstudio_root_file('tools','utilities','pr.F1.R'))
+source(find_rstudio_root_file('tools','utilities','replace_na_by.R'))
+source(find_rstudio_root_file('tools','utilities','add_past_trends.R'))
 source(find_rstudio_root_file('tools','models','caret_prob.R'))
 source(find_rstudio_root_file('tools','models','model_tune.R'))
 source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
+source(find_rstudio_root_file('tools','models','model_eval.R'))
 source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
 
 ```
@@ -189,15 +192,20 @@ source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
   formula <-  outcome ~ effectif + apart_heures_consommees + apart_motif_recours +
     etat_proc_collective + cotisation + montant_part_ouvriere +
     montant_part_patronale + libelle_naf_simplifie + activite_saisonniere + productif + age + tranche_ca + indice_monoactivite + 
-    taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale + effectif_entreprise + apart_entreprise + debit_entreprise + nbr_etablissements_connus + delai + duree_delai + montant_echeancier 
+    taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale + effectif_entreprise + apart_entreprise + debit_entreprise + nbr_etablissements_connus + delai + duree_delai + montant_echeancier +
+    effectif_variation_1 + effectif_variation_3 + effectif_variation_6 + effectif_variation_12 + 
+    apart_heures_consommees_variation_1 + apart_heures_consommees_variation_3 + apart_heures_consommees_variation_6 + apart_heures_consommees_variation_12 +
+    montant_part_ouvriere_variation_1 + montant_part_ouvriere_variation_3 + montant_part_ouvriere_variation_6 + montant_part_ouvriere_variation_12 +
+    montant_part_patronale_variation_1 + montant_part_patronale_variation_3 + montant_part_patronale_variation_6 + montant_part_patronale_variation_12
   
-   tune_grid = expand.grid(mtry = c(10))
+   tune_grid = expand.grid(mtry = c(3,4,5))
    
- opt_mtry <- model_tune(function(x,y,z) model_predict_random_forest(formula,x,y,z),
+ out <- model_tune(function(x,y,z) model_predict_random_forest(formula,x,y,z),
                         sample_train, 
                        cv_folds,
                        tune_grid)
-  
+ opt_mtry <- out$best
+ 
 results <- model_cv_eval(
   function(train,validation) model_predict_random_forest(formula,train,validation), sample_train, cv_folds)
 

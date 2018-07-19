@@ -17,15 +17,13 @@ feature_engineering_random_forest <- function(train_set, ..., oversampling) {
     #2 new computed fields
     data <- data %>%
       mutate(age = year(periode) - debut_activite)
-    replace_na_by_0 <- function(name,data) {
-      data[is.na(data[,name]), name] = 0
-      return(data)
-    }
 
-    data <- replace_na_by_0("montant_echeancier",data)
-    data <- replace_na_by_0("delai",data)
-    data <- replace_na_by_0("duree_delai",data)
-    data <- replace_na_by_0("cotisation",data)
+
+
+    data <- replace_na_by("montant_echeancier",data,0)
+    data <- replace_na_by("delai",data,0)
+    data <- replace_na_by("duree_delai",data,0)
+    data <- replace_na_by("cotisation",data,0)
 
     data <- data %>%
       mutate(
@@ -55,10 +53,24 @@ feature_engineering_random_forest <- function(train_set, ..., oversampling) {
     data <- data %>%
       mutate(libelle_naf_simplifie = libelle_naf_simplifie)
 
+    data <- add_past_trends(data,
+                            c('effectif',
+                              'apart_heures_consommees',
+                              'montant_part_ouvriere',
+                              'montant_part_patronale'),
+                            c(1,3,6,12),
+                            slope = FALSE)
+
+    names_with_na <- names(data %>% select(contains('variation')))
+    for (name in names_with_na)
+      data <- replace_na_by(name,data,0)
+
     seed <- 1234
     imputed_data_long <-  impute_missing_data_BdF(data,number_imputations,number_iterations,seed) %>%
       as_tbl_time(periode)
-    #imputed_data <- imputed_data_long %>% filter(.imp==1) %>% select(-.imp) %>% as_tbl_time(periode)
+
+
+
 
     return(imputed_data_long)
 

@@ -1,11 +1,13 @@
 add_past_trends <- function(data,variables, lookback_months, slope = FALSE){
 
-  assertthat::assert_that(all(c('siret','periode', variables) %in% names(data)))
-  assertthat::assert_that(length(variables) == 1 | length(variables) == length(lookback_months))
 
-  if (length(variables) == 1) {
-    variables <- rep(variables, length(lookback_months))
-  }
+
+  assertthat::assert_that(all(c('siret','periode', variables) %in% names(data)))
+
+  grid <- expand.grid(variables = variables,lookback = lookback_months,stringsAsFactors = FALSE)
+  variables <- grid$variables
+  lookback_months <- grid$lookback
+
   data_nested <- data %>%
     arrange(siret,periode) %>%
     group_by(siret) %>%
@@ -29,8 +31,6 @@ add_past_trends <- function(data,variables, lookback_months, slope = FALSE){
           slopes[i] <- aux_slope(x, sub_y)
         }
 
-      if (length(slopes) != length(y))
-        browser()
       assertthat::assert_that(length(slopes) == length(y))
 
       return(slopes)
@@ -39,14 +39,14 @@ add_past_trends <- function(data,variables, lookback_months, slope = FALSE){
     aux_past <-  function(data, variable, last_n) {
       y <- data[[variable]]
       y_lag <- lag(y, last_n)
-      return(y / y_lag[1:length(y)] - 1)
+      return(y - y_lag[1:length(y)])
     }
   }
 
-  cat('/!\ FIX ME: How are slopes on 6 months computed with only  3 available months? + Sensitive to wholes','\n')
+  #cat('/!\ FIX ME: How are slopes on 6 months computed with only  3 available months? + Sensitive to wholes','\n')
 
   for (i in seq_along(lookback_months)){
-      data_nested[[paste0(variables[i],'_variation_',lb)]] <-  purrr::map(data_nested$data, aux_past, variable= variables[i], last_n = lookback_months[i])
+      data_nested[[paste0(variables[i],'_variation_',lookback_months[i])]] <-  purrr::map(data_nested$data, aux_past, variable= variables[i], last_n = lookback_months[i])
   }
 
 
