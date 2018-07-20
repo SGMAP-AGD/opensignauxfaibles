@@ -1,90 +1,30 @@
 <template>
 <div>
-  <v-container grid-list-md text-xs-center>
-    <v-layout>
-      <v-flex key="import" xs9>
-        <v-expansion-panel>
-          <v-expansion-panel-content
-            v-for="b in batches"
-            :key="b.id.key"
-          >
-            <div slot="header">Lot {{b.id.key}} - {{ Object.keys(b.files).reduce((m,n) => { return m + b.files[n].length }, 0) }} fichiers</div>
-            <v-card>
-              <Batch v-bind:key="b.id.key" :batch="b"></Batch>
-            </v-card>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
+<v-container  grid-list-md text-xs-center>
+    <v-layout justify-start row wrap>
+      <v-flex 
+      xs12
+      >
+        <v-toolbar>
+          <v-switch label="Lots verrouillés" v-model="viewReadonly"></v-switch>
+          <v-spacer></v-spacer><v-btn>compacter</v-btn>
+        </v-toolbar>
       </v-flex>
-      <v-flex key="reduce" xs3>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Import</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-            v-model="importBatchID"
-            :items="batches"
-            item-text="id.key"
-            item-value="id.key"
-            label="Batch"
-            required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="importData()">Import</v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Compactage</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-btn @click="compactEtablissement()">Etablissement</v-btn>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="compactEntreprise()">Entreprise</v-btn>
-          </v-card-actions>
-        </v-card>
-                <v-card>
-          <v-card-title>
-            <div>
-              <span>Supprimer le dernier batch</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-btn @click="dropBatch()">Delete</v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Calcul des variables</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-              v-model="reduceFeatureID"
-              :items="features"
-              label="Algorithme"
-              required
-            ></v-select>
-            <v-select
-              v-model="reduceBatchID"
-              :items="batches"
-              item-text="id.key"
-              item-value="id.key"
-              label="Batch"
-              required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="reduce()">Reduce !</v-btn>
-          </v-card-actions>
-        </v-card>
+    </v-layout>
+  </v-container>
+  <v-container  grid-list-md text-xs-center>
+    <v-layout justify-start row wrap>
+      <v-flex 
+       xs4
+       >
+       <Batch :batch="newBatch" newBatch/>
+      </v-flex>
+      <v-flex 
+       xs4
+       v-for="batch in batches"
+       :key="batch.id.key"
+       >
+        <Batch :batch="batch" v-if="(viewReadonly)?true:!batch.readonly"/>
       </v-flex>
     </v-layout>
   </v-container>
@@ -93,8 +33,8 @@
 
 <script>
 import Batch from '@/components/Batch'
-
 import axios from 'axios'
+
 export default {
   methods: {
     setMenu (key) {
@@ -110,22 +50,31 @@ export default {
     compactEntreprise () {
       axios.get(this.$api + '/compact/entreprise').then()
     },
-    dropBatch () {
-      axios.delete(this.$api + '/admin/batch')
-    },
-    importData () {
-      var self = this
-      axios.get(this.$api + '/import/' + self.importBatchID)
-    },
-    createBatch () {
-      var self = this
-      axios.put(this.$api + '/admin/batch/' + this.createBatchID)
-      .then(response => self.refresh())
-    },
     refresh () {
       var self = this
       axios.get(this.$api + '/admin/batch').then(response => {
-        self.batches = response.data
+        this.newBatch = {
+          'id': {
+            'key': '',
+            'type': 'batch'
+          },
+
+          'files': {},
+          'log': null,
+          'readonly': false,
+          'params': {
+            'date_debut': (new Date()).toISOString().substring(0, 7),
+            'date_fin': (new Date()).toISOString().substring(0, 7),
+            'date_fin_effectif': (new Date()).toISOString().substring(0, 7)
+          }
+        }
+        self.batches = response.data.map(b => {
+          b.altered = false
+          b.params.date_debut = (b.params.date_debut === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_debut.substring(0, 7)
+          b.params.date_fin = (b.params.date_fin === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin.substring(0, 7)
+          b.params.date_fin_effectif = (b.params.date_fin_effectif === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin_effectif.substring(0, 7)
+          return b
+        })
       })
       axios.get(this.$api + '/admin/files').then(response => {
         this.files = response.data.map(file => {
@@ -160,20 +109,23 @@ export default {
   },
   data () {
     return {
-      name: 'App',
-      createBatchID: '',
-      features: [],
-      importBatchID: '',
-      reduceBatchID: '',
-      reduceFeatureID: '',
-      files: [],
-      fileID: '',
-      types: [],
-      attachTypeID: '',
-      batches: [],
-      attachBatchID: '',
-      attachFilesID: [],
-      viewFiles: {}
+      'name': 'App',
+      'viewReadonly': false,
+      'batches': [],
+      'newBatch': {
+        'id': {
+          'key': '',
+          'type': 'batch'
+        },
+        'files': {},
+        'log': null,
+        'readonly': false,
+        'params': {
+          'date_debut': (new Date()).toISOString().substring(0, 7),
+          'date_fin': (new Date()).toISOString().substring(0, 7),
+          'date_fin_effectif': (new Date()).toISOString().substring(0, 7)
+        }
+      }
     }
   },
   components: { Batch }

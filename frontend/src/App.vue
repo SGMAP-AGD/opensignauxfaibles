@@ -20,10 +20,12 @@
       <span id="gray">Open</span>
       <span id="blue">Signaux</span>
       <span id="red">Faibles</span>
+      
     </v-toolbar-title>
     <v-spacer></v-spacer>
+    
     <v-btn icon>
-      <v-icon>fa-user</v-icon>
+      <img height="28px" src="/static/favicon.png"/>
     </v-btn>
     </v-toolbar>
     <v-content>
@@ -32,11 +34,11 @@
 
     <v-footer>
       <v-btn 
-      flat 
-      icon 
-      color="blue"
-      href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
-        <v-icon >fa-github</v-icon>
+        flat 
+        icon 
+        color="blue"
+        href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
+        <v-icon>fab fa-github</v-icon>
       </v-btn>
     </v-footer>
   </v-app>
@@ -56,10 +58,13 @@ export default {
       fixed: false,
       drawer: false,
       menu: {
-        title: 'Menu',
+        title: 'Accueil',
         color: 'light-green darken-4'
       },
       items: [
+        { title: 'Accueil',
+          action: '/',
+          color: 'green' },
         { title: 'Détection',
           action: '/prediction',
           color: 'indigo darken-4' },
@@ -74,6 +79,13 @@ export default {
           color: 'black' }
       ]
     }
+  },
+  mounted () {
+    this.items.forEach((item, index) => {
+      if (item.action === location.hash.substring(1)) {
+        this.setMenu(index)
+      }
+    })
   },
   name: 'App'
 }

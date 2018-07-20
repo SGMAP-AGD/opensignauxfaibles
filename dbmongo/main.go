@@ -24,7 +24,10 @@ func main() {
 	r.Use(DB())
 	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
-	r.Use(cors.Default())
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:8080"}
+	config.AddAllowMethods([]string{"GET", "POST", "PUT", "HEAD", "DELETE"}...)
+	r.Use(cors.New(config))
 
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
@@ -37,10 +40,9 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
-		api.PUT("/admin/batch/:batchID", registerNewBatch)
-		api.POST("admin/batch", updateBatch)
+		api.POST("/admin/batch", updateBatch)
 		api.GET("/admin/batch", listBatch)
-		api.DELETE("/admin/batch", dropBatch)
+		api.DELETE("/admin/batch/:batchKey", dropBatch)
 
 		api.GET("/admin/files", adminFiles)
 		api.POST("/admin/attach", attachFileBatch)
@@ -61,6 +63,7 @@ func main() {
 		api.POST("/R/algo1", algo1)
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
+		api.GET("/data/naf", getNAF)
 		api.GET("/debug/", debug)
 	}
 	bind := viper.GetString("APP_BIND")

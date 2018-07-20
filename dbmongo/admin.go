@@ -1,9 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
@@ -19,16 +26,16 @@ type AdminID struct {
 
 // AdminBatch metadata Batch
 type AdminBatch struct {
-	ID                AdminID                      `json:"id" bson:"_id"`
-	Files             BatchFiles                   `json:"files" bson:"files"`
-	Open              bool                         `json:"open" bson:"open"`
-	Draft             bool                         `json:"draft" bson:"draft"`
-	DateDebut         time.Time                    `json:"date_debut" bson:"date_debut"`
-	DateFin           time.Time                    `json:"date_fin" bson:"date_fin"`
-	DateFinEffectif   time.Time                    `json:"date_fin_effectif" bson:"date_fin_effectif"`
-	Params            map[string]map[string]string `json:"params" bson:"params"`
-	ChanEtablissement chan *ValueEtablissement     `json:"-" bson:"-"`
-	ChanEntreprise    chan *ValueEntreprise        `json:"-" bson:"-"`
+	ID       AdminID    `json:"id" bson:"_id"`
+	Files    BatchFiles `json:"files" bson:"files"`
+	Readonly bool       `json:"readonly" bson:"readonly"`
+	Params   struct {
+		DateDebut       time.Time `json:"date_debut" bson:"date_debut"`
+		DateFin         time.Time `json:"date_fin" bson:"date_fin"`
+		DateFinEffectif time.Time `json:"date_fin_effectif" bson:"date_fin_effectif"`
+	} `json:"params" bson:"param"`
+	ChanEtablissement chan *ValueEtablissement `json:"-" bson:"-"`
+	ChanEntreprise    chan *ValueEntreprise    `json:"-" bson:"-"`
 }
 
 // BatchFiles fichiers mappés par type
@@ -99,45 +106,40 @@ func attachFileBatch(c *gin.Context) {
 	c.JSON(200, batch)
 }
 
-func registerNewBatch(c *gin.Context) {
-	batch := AdminBatch{}
-	err := batch.new(c.Params.ByName("batchID"))
-
-	if err != nil {
-		c.JSON(500, "Valeur de batch non autorisée")
-	}
-	db := c.Keys["DB"].(*mgo.Database)
-	err = batch.save(db)
-
-	if err != nil {
-		c.JSON(500, err)
-	} else {
-		c.JSON(200, batch)
-	}
-}
-
 func updateBatch(c *gin.Context) {
 	batch := AdminBatch{}
-	err := c.Bind(batch)
+	err := c.Bind(&batch)
+	spew.Dump(err)
 	if err != nil {
-		c.JSON(500, "Valeur de batch non autorisée")
+		c.JSON(500, err)
 		return
 	}
 
 	db := c.Keys["DB"].(*mgo.Database)
 
-	batch.save(db)
+	err = batch.save(db)
+	if err != nil {
+		c.JSON(500, "Erreur à l'enregistrement")
+		return
+	}
+	c.JSON(200, batch)
 }
+
 func listBatch(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
 	var batch []AdminBatch
-	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
+	err := db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
+	if err != nil {
+		spew.Dump(err)
+		c.JSON(500, err)
+		return
+	}
 	c.JSON(200, batch)
 }
 
 func getBatchesID(db *mgo.Database) []string {
 	var batch []AdminBatch
-	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batch)
+	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
 	var batchesID []string
 	for _, b := range batch {
 		batchesID = append(batchesID, b.ID.Key)
@@ -156,21 +158,24 @@ func adminFeature(c *gin.Context) {
 }
 
 func listTypes(c *gin.Context) {
-	c.JSON(200, []string{
-		"admin_urssaf",
-		"apconso",
-		"bdf",
-		"cotisation",
-		"delai",
-		"dpae",
-		"interim",
-		"altares",
-		"apdemande",
-		"ccsf",
-		"debit",
-		"dmmo",
-		"effectif",
-		"sirene",
+	c.JSON(200, []struct {
+		Type    string `json:"type" bson:"type"`
+		Libelle string `json:"text" bson:"text"`
+	}{
+		{"admin_urssaf", "Siret/Compte URSSAF"},
+		{"apconso", "Consommation Activité Partielle"},
+		{"bdf", "Ratios Banque de France"},
+		{"cotisation", "Cotisations URSSAF"},
+		{"delai", "Délais URSSAF"},
+		{"dpae", "Déclaration Préalable à l'embauche"},
+		{"interim", "Base Interim"},
+		{"altares", "Base Altarès"},
+		{"apdemande", "Demande Activité Partielle"},
+		{"ccsf", "Stock CCSF à date"},
+		{"debit", "Débits URSSAF"},
+		{"dmmo", "Déclaration Mouvement de Main d'Œuvre"},
+		{"effectif", "Emplois URSSAF"},
+		{"sirene", "Base GéoSirene"},
 	})
 }
 
@@ -190,4 +195,81 @@ func cloneDB(c *gin.Context) {
 	}
 	removeDatabaseCopy(db)
 	c.JSON(200, err)
+}
+
+// NAF libellés et liens N5/N1
+type NAF struct {
+	N1    map[string]string `json:"n1" bson:"n1"`
+	N5    map[string]string `json:"n5" bson:"n5"`
+	N5to1 map[string]string `json:"n5to1" bson:"n5to1"`
+}
+
+func loadNAF() (NAF, error) {
+	naf := NAF{}
+	naf.N1 = make(map[string]string)
+	naf.N5 = make(map[string]string)
+	naf.N5to1 = make(map[string]string)
+
+	NAF1 := viper.GetString("NAF_L1")
+	NAF5 := viper.GetString("NAF_L5")
+	NAF5to1 := viper.GetString("NAF_5TO1")
+
+	NAF1File, NAF1err := os.Open(NAF1)
+	if NAF1err != nil {
+		return NAF{}, NAF1err
+	}
+
+	NAF1reader := csv.NewReader(bufio.NewReader(NAF1File))
+	NAF1reader.Comma = ';'
+	NAF1reader.Read()
+	for {
+		row, error := NAF1reader.Read()
+		if error == io.EOF {
+			break
+		} else if error != nil {
+			log.Fatal(error)
+		}
+		naf.N1[row[0]] = row[1]
+		fmt.Println(row)
+	}
+
+	NAF5to1File, NAF5to1err := os.Open(NAF5to1)
+	if NAF5to1err != nil {
+		return NAF{}, NAF1err
+	}
+
+	NAF5to1reader := csv.NewReader(bufio.NewReader(NAF5to1File))
+	NAF5to1reader.Comma = ';'
+	NAF5to1reader.Read()
+	for {
+		row, error := NAF5to1reader.Read()
+		if error == io.EOF {
+			break
+		} else if error != nil {
+			log.Fatal(error)
+		}
+		naf.N5to1[row[0]] = row[1]
+	}
+
+	NAF5File, NAF5err := os.Open(NAF5)
+	if NAF5err != nil {
+		return NAF{}, NAF1err
+	}
+
+	NAF5reader := csv.NewReader(bufio.NewReader(NAF5File))
+	NAF5reader.Comma = ';'
+	NAF5reader.Read()
+	for {
+		row, error := NAF5reader.Read()
+		if error == io.EOF {
+			break
+		} else if error != nil {
+			log.Fatal(error)
+		}
+
+		naf.N5[row[0]] = row[1]
+
+	}
+
+	return naf, nil
 }

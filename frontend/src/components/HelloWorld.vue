@@ -1,18 +1,66 @@
 <template>
-  <v-container fluid>
-    <v-slide-y-transition mode="out-in">
-      <v-layout column align-center>
-        <img src="@/assets/logo.png" alt="Vuetify.js" class="mb-5">
-        <blockquote>
-          &#8220;First, solve the problem. Then, write the code.&#8221;
-          <footer>
-            <small>
-              <em>&mdash;John Johnson</em>
-            </small>
-          </footer>
-        </blockquote>
+  <v-container fluid grid-list-md text-xs-center>
+      <v-layout row wrap justify-start>
+        <v-flex xs12>TABLEAU DE BORD</v-flex>
+        
+        <v-flex xs4>
+          <v-card>
+            <v-card-title>
+              <h2>Intégration des données</h2>
+            </v-card-title>
+                        <v-divider></v-divider>
+            <v-card-text>
+              <v-list>
+                <v-list-tile avatar>
+                  Chiffre 1
+                </v-list-tile>
+                <v-list-tile avatar>
+                  Chiffre 2
+                </v-list-tile>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+        <v-flex xs4>
+          <v-card>
+            <v-card-title>
+              <h2>Calcul prédictions</h2>
+            </v-card-title>
+            <v-card-text>
+              <v-list>
+                <v-list-tile avatar>
+                  Effectué: x% 
+                </v-list-tile>
+
+                <v-list-tile avatar>
+                    En attente: y%
+                </v-list-tile>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+        <v-flex xs4>
+          <v-card>
+            <v-card-title>
+              <h2>Visites d'entreprises</h2>
+            </v-card-title>
+            <v-card-text>
+              <v-list>
+                <v-list-tile avatar>
+                  Planifiées: x% 
+                </v-list-tile>  
+                <v-list-tile avatar>
+                  Effectuées: y%
+                </v-list-tile>
+                <v-list-tile avatar>
+                  Retard: y%
+                </v-list-tile>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-flex>
       </v-layout>
-    </v-slide-y-transition>
+    
   </v-container>
 </template>
 

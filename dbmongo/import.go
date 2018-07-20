@@ -115,7 +115,7 @@ func importBatch(c *gin.Context) {
 	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
 	batch.load(batchKey, db, chanEtablissement, chanEntreprise)
 
-	if batch.Open {
+	if !batch.Readonly {
 		for _, fn := range importFunctions {
 			err := fn(&batch)
 			if err != nil {
