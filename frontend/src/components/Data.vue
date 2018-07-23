@@ -2,67 +2,7 @@
 <div>
   <v-container grid-list-md text-xs-center>
     <v-layout>
-      <v-flex key="datasource" xs3>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Attachement fichiers</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-            v-model="attachBatchID"
-            :items="batches"
-            item-text="id.key"
-            item-value="id.key"
-            label="Batch"
-            required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-combobox
-            :items="files"
-            v-model="attachFilesID"
-            label="Fichier"
-            multiple
-            chips
-            ></v-combobox>
-          </v-card-actions>
-          <v-card-actions>
-            <v-select
-              :items="types"
-              v-model="attachTypeID"
-              label="Type"
-            ></v-select>  
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="attachFiles()">Associer</v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Sources de données</span><br>
-            </div>
-            <v-card-actions>
-              <v-text-field
-                name="batchID"
-                v-model="createBatchID"
-                label="YYMM"
-                value=""
-                single-line
-              ></v-text-field>  
-            </v-card-actions>
-            <v-card-actions>
-              <v-btn @click="createBatch()">Créer lot</v-btn>
-            </v-card-actions>
-            <v-card-actions>
-              <v-btn @click="listBatch()">Liste lot</v-btn>
-            </v-card-actions>
-          </v-card-title>
-        </v-card>
-      </v-flex>
-      <v-flex key="import" xs6>
+      <v-flex key="import" xs9>
         <v-expansion-panel>
           <v-expansion-panel-content
             v-for="b in batches"
@@ -171,7 +111,7 @@ export default {
       axios.get(this.$api + '/compact/entreprise').then()
     },
     dropBatch () {
-      axios.get(this.$api + '/dropBatch')
+      axios.delete(this.$api + '/admin/batch')
     },
     importData () {
       var self = this

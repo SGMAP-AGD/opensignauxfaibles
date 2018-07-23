@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
@@ -18,10 +19,16 @@ type AdminID struct {
 
 // AdminBatch metadata Batch
 type AdminBatch struct {
-	ID                AdminID                  `json:"id" bson:"_id"`
-	Files             BatchFiles               `json:"files" bson:"files"`
-	ChanEtablissement chan *ValueEtablissement `json:"-" bson:"-"`
-	ChanEntreprise    chan *ValueEntreprise    `json:"-" bson:"-"`
+	ID                AdminID                      `json:"id" bson:"_id"`
+	Files             BatchFiles                   `json:"files" bson:"files"`
+	Open              bool                         `json:"open" bson:"open"`
+	Draft             bool                         `json:"draft" bson:"draft"`
+	DateDebut         time.Time                    `json:"date_debut" bson:"date_debut"`
+	DateFin           time.Time                    `json:"date_fin" bson:"date_fin"`
+	DateFinEffectif   time.Time                    `json:"date_fin_effectif" bson:"date_fin_effectif"`
+	Params            map[string]map[string]string `json:"params" bson:"params"`
+	ChanEtablissement chan *ValueEtablissement     `json:"-" bson:"-"`
+	ChanEntreprise    chan *ValueEntreprise        `json:"-" bson:"-"`
 }
 
 // BatchFiles fichiers mappés par type
@@ -90,7 +97,6 @@ func attachFileBatch(c *gin.Context) {
 		return
 	}
 	c.JSON(200, batch)
-
 }
 
 func registerNewBatch(c *gin.Context) {
@@ -110,6 +116,18 @@ func registerNewBatch(c *gin.Context) {
 	}
 }
 
+func updateBatch(c *gin.Context) {
+	batch := AdminBatch{}
+	err := c.Bind(batch)
+	if err != nil {
+		c.JSON(500, "Valeur de batch non autorisée")
+		return
+	}
+
+	db := c.Keys["DB"].(*mgo.Database)
+
+	batch.save(db)
+}
 func listBatch(c *gin.Context) {
 	db := c.Keys["DB"].(*mgo.Database)
 	var batch []AdminBatch
@@ -125,6 +143,12 @@ func getBatchesID(db *mgo.Database) []string {
 		batchesID = append(batchesID, b.ID.Key)
 	}
 	return batchesID
+}
+
+func getBatches(db *mgo.Database) []*AdminBatch {
+	var batches []*AdminBatch
+	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
+	return batches
 }
 
 func adminFeature(c *gin.Context) {

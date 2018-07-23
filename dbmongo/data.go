@@ -63,14 +63,6 @@ func (mr *MapReduceJS) load(routine string, scope string) error {
 	return nil
 }
 
-func debug(c *gin.Context) {
-	mr := MapReduceJS{}
-	scope := c.Params.ByName("scope")
-	routine := c.Params.ByName("routine")
-	mr.load(routine, scope)
-	c.JSON(200, mr)
-}
-
 func dataPrediction(c *gin.Context) {
 	var prediction []Prediction
 	var etablissement []ValueEtablissement
