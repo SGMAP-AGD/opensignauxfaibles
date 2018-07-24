@@ -1,119 +1,130 @@
 <template>
-  <div>
     <v-card
-    raised>
-      <v-card-title>
+      raised>
+      
         <v-toolbar 
-          flat
-          :color="(batch.readonly)?'indigo lighten-5':(altered)?'red lighten-5':'light-green accent-1'">
-        <v-menu 
-          offset-y
-          v-if="!newBatch">
-          <v-btn 
-            :color="(batch.readonly)?'indigo darken-4':(altered)?'red darken-4':'light-green darken-4'"
-            dark
-            slot="activator">
-            {{ newBatch ? "" : batch.id.key }}</v-btn>
-          <v-list>
-            <v-list-tile 
-              key="delete"
-              @click="dropBatch(batch)"
+          card
+          :color="(batch.readonly)?'deep-purple lighten-4':(batch.altered)?'red lighten-4':(newBatch)?'orange lighten-4':'teal lighten-4'">
+          <v-menu 
+            offset-y
+            v-if="!newBatch">
+            <v-btn 
+              :color="(batch.readonly)?'deep-purple lighten-2':(batch.altered)?'red darken-1':(newBatch)?'orange darken-1':'teal darken-1'"
+              dark
+              slot="activator">
+              {{ newBatch ? "" : batch.id.key }}</v-btn>
+            <v-list>
+              <v-list-tile 
+                key="drop"
+                @click="dropBatch(batch)"
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-trash</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Suppression</v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile 
+                key="delete"
+                @click="test()"
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-eraser</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Purge</v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile 
+                key="purge"
+                @click="test()"
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-download</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Import</v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile 
+                key="import"
+                @click="test()"
+                
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-compress</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Compactage</v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile 
+                @click="test()"
+                key="reduce"
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-calculator</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Réduction</v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile 
+                @click="test()"
+                key="predict"
+                >
+                <v-list-tile-action>
+                  <v-icon>fa-registered</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>Prédiction</v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+          </v-menu>
+          <v-container>
+            <v-layout>
+              <v-flex>
+              <v-text-field
+                
+                dense
+                label="Nouveau lot"
+                v-if="newBatch"
+                v-bind:key="'newBatch'"
+                v-model="batch.id.key"
+                color="pink darken-4"
+                @input="alterBatch()"
+                :rules="[duplicateBatchKey,newBatchKey]"
+              ></v-text-field>
+              </v-flex>
+                          </v-layout>
+          </v-container>
+              <v-spacer></v-spacer>
+              <v-flex xs2>
+              <v-btn 
+                icon
+                :color="(batch.readonly)?'deep-purple lighten-2':(batch.altered)?'red darken-1':(newBatch)?'orange darken-1':'teal darken-1'"
+                :disabled="(!batch.altered || batch.readonly) && !newBatch || batch.id.key=='' || duplicateBatchKey() != true || newBatchKey() != true"
+                :flat="(!batch.altered || batch.readonly) && !newBatch"
+                raised
+                :dark="batch.altered||newBatch"
+                @click="saveBatch(batch)"
               >
-              <v-list-tile-action>
-                <v-icon>fa-trash</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Suppression</v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile 
-              key="purge"
-              @click="test()"
-              >
-              <v-list-tile-action>
-                <v-icon>fa-eraser</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Purge</v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile 
-              key="import"
-              @click="test()"
-              >
-              <v-list-tile-action>
-                <v-icon>fa-download</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Import</v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile 
-              key="import"
-              @click="test()"
-              
-              >
-              <v-list-tile-action>
-                <v-icon>fa-compress</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Compactage</v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile 
-              @click="test()"
-              key="reduce"
-              >
-              <v-list-tile-action>
-                <v-icon>fa-calculator</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Réduction</v-list-tile-content>
-            </v-list-tile>
-            <v-list-tile 
-              @click="test()"
-              key="predict"
-              >
-              <v-list-tile-action>
-                <v-icon>fa-registered</v-icon>
-              </v-list-tile-action>
-              <v-list-tile-content>Prédiction</v-list-tile-content>
-            </v-list-tile>
-          </v-list>
-        </v-menu>
-        
-        <v-spacer ></v-spacer>
-        <v-text-field
-          v-if="newBatch"
-          v-model="batch.id.key"
-          @input="alterBatch()"
-        ></v-text-field>
-        <v-spacer></v-spacer>
-          <v-btn 
-            icon 
-            :color="(batch.readonly)?'indigo darken-4':(altered)?'red darken-4':'light-green darken-4'"
-            :disabled="(!altered || batch.readonly) && !newBatch || batch.id.key==''"
-            :flat="(!altered || batch.readonly) && !newBatch"
-            raised
-            :dark="altered||newBatch"
-            @click="saveBatch(batch)"
-          >
-            <v-icon light>
-              {{ (batch.readonly)?'fa-lock':(newBatch)?'fa-plus':(altered)?'fa-save':'fa-lock-open' }}
-            </v-icon>
-          </v-btn>
-          <v-tooltip top>
-            coucou
-            <span>Tu aimes les tooltips</span>
-          </v-tooltip>    
-          </v-toolbar>
-      </v-card-title>
+                <v-icon light>
+                  {{ (batch.readonly)?'fa-lock':(newBatch)?'fa-plus':(batch.altered)?'fa-save':'fa-lock-open' }}
+                </v-icon>
+              </v-btn>
+              </v-flex>
+
+        </v-toolbar>
         <v-divider></v-divider>
           <v-list dense>
             <v-list-tile>
               <v-list-tile-content>Fichiers</v-list-tile-content>
                 <v-list-tile-content class="align-end">
                 <v-dialog
-                :disabled="batch.readonly"
-                  width="70%"
+                  lazy
+                  scrollable
+                  v-model="batch.dialog"
+                  :disabled="batch.readonly"
+                  width="80%"
                 >
-                  <v-btn flat
+                  <v-btn 
+                    flat
                     slot="activator"
                   >
                     {{ Object.keys(batch.files).reduce((a,b) => { return a += batch.files[b].length }, 0) }}
                   </v-btn>
-                  <BatchFile :batch="batch"></BatchFile>
+                  <BatchFile :batch="batch" :types="types" :files="files"></BatchFile>
                 </v-dialog>
               </v-list-tile-content>
             </v-list-tile>
@@ -126,8 +137,8 @@
                       slot="activator"
                       readonly
                       flat
-                      
-                    >{{ batch.params.date_debut.substring(0, 7) }}</v-btn>
+                      >{{ batch.params.date_debut.substring(0, 7) }}
+                    </v-btn>
                   <v-date-picker 
                     header="false"
                     locale="fr-FR" 
@@ -191,7 +202,6 @@
             </v-list-tile>
           </v-list>
     </v-card>
-  </div>
 </template>
 
 <script>
@@ -205,8 +215,22 @@ export default {
     test () {
       alert(null)
     },
-    alterBatch (batch) {
-      this.altered = true
+    newBatchKey () {
+      if (this.$parent.batches.filter(batch => batch.readonly).filter(batch => batch.id.key >= this.batch.id.key).length > 0 && this.batch.id.key !== '') {
+        return this.$parent.batches.filter(batch => batch.readonly).filter(batch => batch.id.key >= this.batch.id.key).length + ' conflits.'
+      } else {
+        return true
+      }
+    },
+    duplicateBatchKey () {
+      if (this.$parent.batches.filter(batch => batch.id.key === this.batch.id.key).length) {
+        return 'Doublon'
+      } else {
+        return true
+      }
+    },
+    alterBatch () {
+      this.batch.altered = true
     },
     lockBatch () {
       this.batch.readonly = true
@@ -224,7 +248,7 @@ export default {
 
       axios.post(this.$api + '/admin/batch', batch).then(response => {
         this.$parent.refresh()
-        this.altered = false
+        this.batch.altered = false
       })
     }
   },
@@ -233,15 +257,17 @@ export default {
       type: Object,
       default: () => ({})
     },
+    types: {
+      type: Array,
+      default: () => ({})
+    },
+    files: {
+      type: Array,
+      default: () => ({})
+    },
     newBatch: {
       type: Boolean,
       default: () => (false)
-    }
-  },
-  data () {
-    return {
-      altered: false
-
     }
   }
 }

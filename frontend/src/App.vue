@@ -4,7 +4,7 @@
       app
       :clipped-left="clipped"
     >
-    <v-menu open-on-hover top offset-y>
+    <v-menu open-on-hover top offset-y transition="slide-x-transition">
       <v-btn slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
       <v-list>
         <v-list-tile v-for="(item, index) in items" 

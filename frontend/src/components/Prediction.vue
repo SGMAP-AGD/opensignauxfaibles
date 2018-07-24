@@ -210,7 +210,6 @@
                 (prediction.entreprise || {})
                 )
             )
-            console.log(etablissement.sirene)
             var allEffectif = etablissement.effectif.reduce((accu, effectif) => {
               var effectifPeriode = Date.parse(effectif.periode)
               accu[effectifPeriode] = (accu[effectif.periode] || 0) + effectif.effectif

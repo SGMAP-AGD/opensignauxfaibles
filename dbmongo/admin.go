@@ -161,21 +161,22 @@ func listTypes(c *gin.Context) {
 	c.JSON(200, []struct {
 		Type    string `json:"type" bson:"type"`
 		Libelle string `json:"text" bson:"text"`
+		Filter  string `json:"filter" bson:"filter"`
 	}{
-		{"admin_urssaf", "Siret/Compte URSSAF"},
-		{"apconso", "Consommation Activité Partielle"},
-		{"bdf", "Ratios Banque de France"},
-		{"cotisation", "Cotisations URSSAF"},
-		{"delai", "Délais URSSAF"},
-		{"dpae", "Déclaration Préalable à l'embauche"},
-		{"interim", "Base Interim"},
-		{"altares", "Base Altarès"},
-		{"apdemande", "Demande Activité Partielle"},
-		{"ccsf", "Stock CCSF à date"},
-		{"debit", "Débits URSSAF"},
-		{"dmmo", "Déclaration Mouvement de Main d'Œuvre"},
-		{"effectif", "Emplois URSSAF"},
-		{"sirene", "Base GéoSirene"},
+		{"admin_urssaf", "Siret/Compte URSSAF", "Liste comptes"},
+		{"apconso", "Consommation Activité Partielle", "conso"},
+		{"bdf", "Ratios Banque de France", "bdf"},
+		{"cotisation", "Cotisations URSSAF", "cotisation"},
+		{"delai", "Délais URSSAF", "delais|Délais"},
+		{"dpae", "Déclaration Préalable à l'embauche", "DPAE"},
+		{"interim", "Base Interim", "interim"},
+		{"altares", "Base Altarès", "ALTARES"},
+		{"apdemande", "Demande Activité Partielle", "dde"},
+		{"ccsf", "Stock CCSF à date", "ccsf"},
+		{"debit", "Débits URSSAF", "debit"},
+		{"dmmo", "Déclaration Mouvement de Main d'Œuvre", "dmmo"},
+		{"effectif", "Emplois URSSAF", "Emploi"},
+		{"sirene", "Base GéoSirene", "sirene"},
 	})
 }
 

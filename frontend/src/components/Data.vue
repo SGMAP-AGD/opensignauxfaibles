@@ -2,6 +2,7 @@
 <div>
 <v-container  grid-list-md text-xs-center>
     <v-layout justify-start row wrap>
+      
       <v-flex 
       xs12
       >
@@ -12,20 +13,24 @@
       </v-flex>
     </v-layout>
   </v-container>
-  <v-container  grid-list-md text-xs-center>
-    <v-layout justify-start row wrap>
-      <v-flex 
-       xs4
-       >
-       <Batch :batch="newBatch" newBatch/>
-      </v-flex>
-      <v-flex 
-       xs4
-       v-for="batch in batches"
-       :key="batch.id.key"
-       >
-        <Batch :batch="batch" v-if="(viewReadonly)?true:!batch.readonly"/>
-      </v-flex>
+  <v-container grid-list-md text-xs-center>
+    <v-layout justify-start row wrap >
+        <v-flex 
+        xs4
+        >
+        
+          <Batch :batch="newBatch" :types="types" :files="files" newBatch/>
+        
+        </v-flex>
+        <v-flex 
+        xs4
+        v-for="batch in batches"
+        :key="batch.id.key"
+        >
+        <v-fade-transition>
+          <Batch :batch="batch" :types="types" :files="files" v-if="(viewReadonly)?true:!batch.readonly"/>
+        </v-fade-transition>
+        </v-flex>
     </v-layout>
   </v-container>
 </div>
@@ -41,67 +46,50 @@ export default {
       this.menu.title = this.items[key].title
       this.menu.color = this.items[key].color
     },
-    reduce () {
-      axios.get(this.$api + '/reduce/' + this.reduceFeatureID + '/' + this.reduceBatchID).then(response => alert('coucou'))
-    },
-    compactEtablissement () {
-      axios.get(this.$api + '/compact/etablissement').then()
-    },
-    compactEntreprise () {
-      axios.get(this.$api + '/compact/entreprise').then()
-    },
     refresh () {
       var self = this
-      axios.get(this.$api + '/admin/batch').then(response => {
-        this.newBatch = {
-          'id': {
-            'key': '',
-            'type': 'batch'
-          },
+      axios.get(this.$api + '/admin/types').then(response => {
+        self.types = response.data
+        axios.get(this.$api + '/admin/batch').then(response => {
+          this.newBatch = {
+            'id': {
+              'key': '',
+              'type': 'batch'
+            },
 
-          'files': {},
-          'log': null,
-          'readonly': false,
-          'params': {
-            'date_debut': (new Date()).toISOString().substring(0, 7),
-            'date_fin': (new Date()).toISOString().substring(0, 7),
-            'date_fin_effectif': (new Date()).toISOString().substring(0, 7)
+            'files': self.types.reduce((a, h) => {
+              a[h.type] = []
+              return a
+            }, {}),
+            'log': null,
+            'readonly': false,
+            'params': {
+              'date_debut': (new Date()).toISOString().substring(0, 7),
+              'date_fin': (new Date()).toISOString().substring(0, 7),
+              'date_fin_effectif': (new Date()).toISOString().substring(0, 7)
+            }
           }
-        }
-        self.batches = response.data.map(b => {
-          b.altered = false
-          b.params.date_debut = (b.params.date_debut === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_debut.substring(0, 7)
-          b.params.date_fin = (b.params.date_fin === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin.substring(0, 7)
-          b.params.date_fin_effectif = (b.params.date_fin_effectif === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin_effectif.substring(0, 7)
-          return b
+          self.batches = response.data.map(b => {
+            b.altered = false
+            b.params.date_debut = (b.params.date_debut === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_debut.substring(0, 7)
+            b.params.date_fin = (b.params.date_fin === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin.substring(0, 7)
+            b.params.date_fin_effectif = (b.params.date_fin_effectif === '0001-01-01T00:00:00Z') ? (new Date()).toISOString().substring(0, 7) : b.params.date_fin_effectif.substring(0, 7)
+            b.dialog = false
+            b.files = self.types.reduce((a, h) => {
+              a[h.type] = (b.files[h.type] || [])
+              return a
+            }, {})
+            return b
+          })
         })
       })
-      axios.get(this.$api + '/admin/files').then(response => {
-        this.files = response.data.map(file => {
-          return {
-            'text': file.split('/').reverse().slice(0, 3).reverse().join('/'),
-            'value': file
-          }
-        })
-      })
+
       axios.get(this.$api + '/admin/types').then(response => { self.types = response.data.sort() })
       axios.get(this.$api + '/admin/features').then(response => { self.features = response.data })
-    },
-    attachFiles () {
-      this.attachFilesRecur(this.attachFilesID)
-    },
-    attachFilesRecur (files) {
-      var self = this
-      if (files.length > 0) {
-        axios.post(this.$api + '/admin/attach',
-          {
-            'file': files[0].value,
-            'type': self.attachTypeID,
-            'batch': self.attachBatchID
-          }).then(response => { this.attachFilesRecur(files.slice(1)) })
-      } else {
-        this.refresh()
-      }
+
+      axios.get(this.$api + '/admin/files').then(response => {
+        self.files = response.data
+      })
     }
   },
   mounted () {
@@ -109,7 +97,8 @@ export default {
   },
   data () {
     return {
-      'name': 'App',
+      'types': [],
+      'files': [],
       'viewReadonly': false,
       'batches': [],
       'newBatch': {
@@ -131,7 +120,7 @@ export default {
   components: { Batch }
 }
 </script>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+
 <style scoped>
 h1, h2 {
   font-weight: normal;
