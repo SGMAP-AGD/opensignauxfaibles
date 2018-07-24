@@ -253,14 +253,14 @@ function finalize(k, v) {
         var debit = v.debit[h]
         if (debit.part_ouvriere + debit.part_patronale > 0) {
 
-            var debit_suivant = (v.debit[debit.debit_suivant] || debit)
+            var debit_suivant = (v.debit[debit.debit_suivant] || {"date_traitement" : date_fin})
             date_limite = new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
             date_traitement_debut = new Date(
-                Date.UTC(debit.date_traitement.getFullYear(), debit.date_traitement.getUTCMonth() + (debit.date_traitement.getUTCDate() > 1 ? 1 : 0))
+                Date.UTC(debit.date_traitement.getFullYear(), debit.date_traitement.getUTCMonth())
             )
 
             date_traitement_fin = new Date(
-                Date.UTC(debit_suivant.date_traitement.getFullYear(), debit_suivant.date_traitement.getUTCMonth() + (debit_suivant.date_traitement.getUTCDate() > 1 ? 1 : 0))
+                Date.UTC(debit_suivant.date_traitement.getFullYear(), debit_suivant.date_traitement.getUTCMonth())
             )
 
             periode_debut = (date_traitement_debut.getTime() >= date_limite.getTime() ? date_limite : date_traitement_debut)
