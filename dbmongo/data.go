@@ -290,6 +290,7 @@ func compactEntreprise(c *gin.Context) {
 		Scope: bson.M{"batches": batches,
 			"types": []string{
 				"bdf",
+				"diane",
 			},
 			"deleteOld": []string{"bdf"},
 		},

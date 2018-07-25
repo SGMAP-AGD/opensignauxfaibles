@@ -63,6 +63,7 @@ type Batch struct {
 	APConso    map[string]*APConso    `json:"apconso,omitempty" bson:"apconso,omitempty"`
 	Sirene     map[string]*Sirene     `json:"sirene,omitempty" bson:"sirene,omitempty"`
 	BDF        map[string]*BDF        `json:"bdf,omitempty" bson:"bdf,omitempty"`
+	Diane      map[string]*Diane      `json:"diane,omitempty" bson:"diane,omitempty"`
 	Prediction map[string]*Prediction `json:"prediction,omitempty" bson:"prediction,omitempty"`
 	DPAE       map[string]*DPAE       `json:"dpae,omitempty" bson:"dpae,omitempty"`
 }
@@ -129,6 +130,13 @@ func (batch1 Batch) merge(batch2 Batch) {
 	}
 	for hash, bdf := range batch2.BDF {
 		batch1.BDF[hash] = bdf
+	}
+
+	if batch1.Diane == nil {
+		batch1.Diane = make(map[string]*Diane)
+	}
+	for hash, diane := range batch2.Diane {
+		batch1.Diane[hash] = diane
 	}
 
 	if batch1.DPAE == nil {
