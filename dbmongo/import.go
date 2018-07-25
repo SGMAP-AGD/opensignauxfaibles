@@ -12,8 +12,11 @@ import (
 
 func adminFiles(c *gin.Context) {
 	basePath := viper.GetString("APP_DATA")
+	b := len(basePath)
 	files, err := listFiles(basePath)
-
+	for i, f := range files {
+		files[i] = f[b:]
+	}
 	if err != nil {
 		c.JSON(500, err)
 	} else {
@@ -41,6 +44,7 @@ func listFiles(basePath string) ([]string, error) {
 			files = append(files, fmt.Sprintf("%s/%s", basePath, file.Name()))
 		}
 	}
+
 	return files, nil
 }
 

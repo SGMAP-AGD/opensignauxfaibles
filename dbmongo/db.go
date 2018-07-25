@@ -15,9 +15,12 @@ import (
 func DB() gin.HandlerFunc {
 
 	dbDial := viper.GetString("DB_DIAL")
+
 	dbDatabase := viper.GetString("DB")
 
+	mongoadmin, err := mgo.Dial(dbDial)
 	mongodb, err := mgo.Dial(dbDial)
+
 	mongodb.SetSocketTimeout(3600 * time.Second)
 	db := mongodb.DB(dbDatabase)
 
@@ -41,6 +44,7 @@ func DB() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("ChanEntreprise", chanEntreprise)
 		c.Set("ChanEtablissement", chanEtablissement)
+		c.Set("ADMINSESSION", mongoadmin)
 		c.Set("DBSESSION", mongodb)
 		c.Set("DB", db)
 		c.Next()
@@ -203,4 +207,20 @@ func declareServerFunctions(db *mgo.Database) {
 		Value: bson.JavaScript{Code: `function(date, nbMonth) {var result = new Date(date.getTime());result.setUTCMonth(result.getUTCMonth() + nbMonth);return result;}`},
 	}
 	f.Add(db)
+}
+
+// DBStatus statut de la base de données
+type DBStatus struct {
+	ID      AdminID `json:"id" bson:"_id"`
+	Working bool    `json:"working" bson:"working"`
+}
+
+func (status *DBStatus) load(db *mgo.Database) error {
+	db.C("Admin").Find(bson.M{"_id.type": "status"}).One(status)
+	return nil
+}
+
+func (status *DBStatus) check(db *mgo.Database) (bool, error) {
+	err := db.C("Admin").Find(bson.M{"_id.type": "status"}).One(status)
+	return status.Working, err
 }

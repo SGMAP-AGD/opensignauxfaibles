@@ -1,12 +1,21 @@
 package main
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo"
 )
 
+type debugType struct {
+	Test int `json:"test" bson:"test"`
+}
+
 func debug(c *gin.Context) {
-	naf, err := loadNAF()
-	spew.Dump(naf)
-	spew.Dump(err)
+	db := c.Keys["DB"].(*mgo.Database)
+	a := 1
+	t1 := debugType{
+		Test: a,
+	}
+	t2 := debugType{}
+	db.C("test").Insert(t1)
+	db.C("test").Insert(t2)
 }

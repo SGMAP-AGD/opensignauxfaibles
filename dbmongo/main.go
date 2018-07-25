@@ -36,7 +36,6 @@ func main() {
 		api.OPTIONS("/auth", auth)
 
 		api.GET("/purge", purge)
-
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
@@ -65,6 +64,7 @@ func main() {
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/data/naf", getNAF)
 		api.GET("/debug/", debug)
+		api.GET("/rncs", rncs)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
