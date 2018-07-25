@@ -120,8 +120,9 @@ func importBatch(c *gin.Context) {
 			err := fn(&batch)
 			if err != nil {
 				c.JSON(500, err)
+				return
 			}
-			return
+
 		}
 	} else {
 		c.JSON(403, "Ce lot est fermé, import impossible.")
