@@ -53,6 +53,7 @@ func GetFileList(basePath string, period string) (map[string][]string, error) {
 		"apdemande",
 		"apconso",
 		"bdf",
+		"diane",
 		"ccsf",
 		"cotisation",
 		"debit",
@@ -89,6 +90,7 @@ func importAll(c *gin.Context) {
 var importFunctions = map[string]func(*AdminBatch) error{
 	"apconso":    importAPConso,
 	"bdf":        importBDF,
+	"diane":      importDiane,
 	"cotisation": importCotisation,
 	"delai":      importDelai,
 	"dpae":       importDPAE,
