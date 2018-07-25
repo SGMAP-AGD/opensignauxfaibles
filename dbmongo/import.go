@@ -57,6 +57,7 @@ func GetFileList(basePath string, period string) (map[string][]string, error) {
 		"apdemande",
 		"apconso",
 		"bdf",
+		"diane",
 		"ccsf",
 		"cotisation",
 		"debit",
@@ -93,6 +94,7 @@ func importAll(c *gin.Context) {
 var importFunctions = map[string]func(*AdminBatch) error{
 	"apconso":    importAPConso,
 	"bdf":        importBDF,
+	"diane":      importDiane,
 	"cotisation": importCotisation,
 	"delai":      importDelai,
 	"dpae":       importDPAE,
@@ -124,8 +126,9 @@ func importBatch(c *gin.Context) {
 			err := fn(&batch)
 			if err != nil {
 				c.JSON(500, err)
+				return
 			}
-			return
+
 		}
 	} else {
 		c.JSON(403, "Ce lot est fermé, import impossible.")
