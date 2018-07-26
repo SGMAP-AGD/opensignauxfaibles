@@ -112,6 +112,7 @@
               <v-list-tile-content>Fichiers</v-list-tile-content>
                 <v-list-tile-content class="align-end">
                 <v-dialog
+                  fullscreen hide-overlay transition="dialog-bottom-transition"
                   lazy
                   scrollable
                   v-model="batch.dialog"

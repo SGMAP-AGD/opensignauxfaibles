@@ -48,7 +48,9 @@ func main() {
 		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
-
+		api.GET("/database/status", getDBStatus)
+		api.GET("/database/lock", lockDBStatus)
+		api.GET("/database/unlock", unlockDBStatus)
 		api.GET("/import/:batch", importBatch)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
@@ -64,7 +66,6 @@ func main() {
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/data/naf", getNAF)
 		api.GET("/debug/", debug)
-		api.GET("/rncs", rncs)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)

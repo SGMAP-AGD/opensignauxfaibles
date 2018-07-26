@@ -7,9 +7,10 @@
       :items="prediction"
       :pagination.sync="pagination"
       select-all
-      hide-actions
       item-key="name"
       class="elevation-1"
+      :loading="loading"
+      :rows-per-page-items="[10]"
     >
       <template slot="headers" slot-scope="props">
         <tr>
@@ -40,9 +41,14 @@
                 {{ props.item.effectif }}
               </v-btn>
               <v-card>
+                <v-toolbar center card color="indigo lighten-3">
+                <h1>EFFECTIFS {{ props.item.raisonSociale }}</h1>
+                </v-toolbar>
                 <div class="echarts">
+                  
                   <IEcharts class="chart"
-                  style="width: 1000px"
+                  style="height: 500px; width: 1900px"
+
                   :option="props.item.historyEffectif">
                   </IEcharts>
                 </div>
@@ -63,7 +69,7 @@
               >
                 {{ props.item.all_financiere[props.item.all_financiere.length -1].arrete_bilan }}
               </v-btn>
-            
+                    <v-card>
             <v-data-iterator
               :items="props.item.all_financiere"
               hide-actions
@@ -73,6 +79,7 @@
               wrap
               solid
             >
+
                   <v-toolbar
                     slot="header"
                     class="mb-2"
@@ -89,6 +96,7 @@
                       </v-btn>
                     </v-toolbar-items>
                     </v-toolbar>
+
                     <v-flex
                       slot="item"
                       slot-scope="fin"
@@ -97,6 +105,7 @@
                       md4
                       lg2
                     >
+                    <div>
                     <v-card>
                       <v-card-title><h4>{{ fin.item.annee }} ({{ fin.item.arrete_bilan }})</h4></v-card-title>
                       <v-divider></v-divider>
@@ -127,9 +136,10 @@
                         </v-list-tile>
                       </v-list>
                     </v-card>
-                  </v-flex>
-                  
+                    </div>
+                    </v-flex>
                 </v-data-iterator>
+               </v-card>  
             </v-bottom-sheet>
           </td>
         </tr>
@@ -198,6 +208,7 @@
       },
       getPrediction () {
         var self = this
+        this.loading = true
         axios.get(this.$api + '/data/prediction/' + this.actualBatch + '/algo1/0').then(response => {
           self.prediction = response.data.map(prediction => {
             var etablissement = self.flattenTypes(
@@ -218,7 +229,7 @@
             var lastTime = Object.keys(allEffectif).reduce((accu, time) => {
               return (time > accu) ? time : accu
             })
-
+            self.loading = false
             return {
               'siret': prediction._id.siret,
               'score': prediction.score,
@@ -250,6 +261,8 @@
                 yAxis: {},
                 series: [{
                   type: 'line',
+                  smooth: true,
+                  color: 'blue',
                   data: Object.entries(allEffectif)
                     .sort((a, b) => b[0] > a[0])
                     .map(entry => [new Date(parseInt(entry[0])), entry[1]])

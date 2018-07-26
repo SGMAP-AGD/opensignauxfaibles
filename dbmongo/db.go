@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
@@ -17,11 +18,17 @@ func DB() gin.HandlerFunc {
 	dbDial := viper.GetString("DB_DIAL")
 
 	dbDatabase := viper.GetString("DB")
-
+	mongostatus, err := mgo.Dial(dbDial)
 	mongoadmin, err := mgo.Dial(dbDial)
 	mongodb, err := mgo.Dial(dbDial)
 
+	mongoadmin.SetSocketTimeout(3600 * time.Second)
+	mongostatus.SetSocketTimeout(3600 * time.Second)
 	mongodb.SetSocketTimeout(3600 * time.Second)
+
+	dbstatus := DBStatus{}
+	dbstatus.create(mongostatus.DB(dbDatabase))
+
 	db := mongodb.DB(dbDatabase)
 
 	// pousse les fonctions partagées JS
@@ -46,6 +53,7 @@ func DB() gin.HandlerFunc {
 		c.Set("ChanEtablissement", chanEtablissement)
 		c.Set("ADMINSESSION", mongoadmin)
 		c.Set("DBSESSION", mongodb)
+		c.Set("DBSTATUS", &dbstatus)
 		c.Set("DB", db)
 		c.Next()
 	}
@@ -211,16 +219,55 @@ func declareServerFunctions(db *mgo.Database) {
 
 // DBStatus statut de la base de données
 type DBStatus struct {
-	ID      AdminID `json:"id" bson:"_id"`
-	Working bool    `json:"working" bson:"working"`
+	ID      AdminID       `json:"id" bson:"_id"`
+	Working bool          `json:"working" bson:"working"`
+	Db      *mgo.Database `json:"-" bson:"-"`
 }
 
-func (status *DBStatus) load(db *mgo.Database) error {
-	db.C("Admin").Find(bson.M{"_id.type": "status"}).One(status)
-	return nil
+func (status *DBStatus) read() error {
+	err := status.Db.C("Admin").Find(bson.M{"_id": status.ID}).One(&status)
+	return err
 }
 
-func (status *DBStatus) check(db *mgo.Database) (bool, error) {
-	err := db.C("Admin").Find(bson.M{"_id.type": "status"}).One(status)
-	return status.Working, err
+func (status *DBStatus) create(db *mgo.Database) error {
+	status.ID.Key = "lock"
+	status.ID.Type = "lock"
+	status.Working = false
+	status.Db = db
+	_, err := db.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
+	return err
+}
+
+func (status *DBStatus) lock() (*mgo.ChangeInfo, error) {
+	info, err := status.Db.C("Admin").Upsert(bson.M{"_id": status.ID}, bson.M{"_id": status.ID, "working": true})
+	status.read()
+	return info, err
+}
+
+func (status *DBStatus) unlock(db *mgo.Database) (*mgo.ChangeInfo, error) {
+	info, err := status.Db.C("Admin").Upsert(bson.M{"_id": status.ID}, bson.M{"_id": status.ID, "working": false})
+	status.read()
+	return info, err
+}
+
+func getDBStatus(c *gin.Context) {
+	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
+	dbstatus.read()
+	c.JSON(200, dbstatus.Working)
+}
+
+func lockDBStatus(c *gin.Context) {
+	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
+	info, err := dbstatus.lock()
+	spew.Dump(info)
+	spew.Dump(err)
+	c.JSON(200, dbstatus.Working)
+}
+
+func unlockDBStatus(c *gin.Context) {
+	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
+	info, err := dbstatus.lock()
+	spew.Dump(info)
+	spew.Dump(err)
+	c.JSON(200, dbstatus.Working)
 }
