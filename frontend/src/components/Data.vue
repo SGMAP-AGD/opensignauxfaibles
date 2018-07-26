@@ -8,7 +8,29 @@
       >
         <v-toolbar>
           <v-switch label="Lots verrouillés" v-model="viewReadonly"></v-switch>
-          <v-spacer></v-spacer><v-btn>compacter</v-btn>
+          <v-spacer></v-spacer>
+
+          <v-dialog
+            transition="dialog-bottom-transition"
+            lazy
+            width="20%"
+            scrollable>
+          <v-btn slot="activator">compactage</v-btn>
+          
+          <v-card>
+            <v-card-title  primary-title class="justify-center">
+              <v-icon large color="error">fa-exclamation-triangle</v-icon>
+            </v-card-title>
+            <v-card-text>
+              Cette opération verrouillera tous les lots déjà importés !
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-action>
+              <v-btn flat color="success">Confirmer</v-btn>
+              <v-btn flat color="error">Annuler</v-btn>
+            </v-card-action>
+          </v-card>
+          </v-dialog>
         </v-toolbar>
       </v-flex>
     </v-layout>

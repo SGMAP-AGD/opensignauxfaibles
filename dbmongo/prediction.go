@@ -27,8 +27,8 @@ func predictionBrowse(c *gin.Context) {
 
 	pipeline = append(pipeline, bson.M{"$match": bson.M{"_id.batch": batch, "_id.algo": algo}})
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{"score": -1}})
-	pipeline = append(pipeline, bson.M{"$skip": 50 * page})
-	pipeline = append(pipeline, bson.M{"$limit": 50})
+	pipeline = append(pipeline, bson.M{"$skip": 10 * page})
+	pipeline = append(pipeline, bson.M{"$limit": 10})
 	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
 		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
 	}})

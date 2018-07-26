@@ -10,6 +10,12 @@ Vue.use(Vuetify)
 
 Vue.config.productionTip = false
 
+// Prod
+// npm run build
+// cp dist/* ../dbmongo/static -r
+Vue.prototype.$api = '/api'
+
+// Dev - commenter pour la prod
 Vue.prototype.$api = 'http://localhost:3000/api'
 
 /* eslint-disable no-new */

@@ -47,7 +47,7 @@
                 <div class="echarts">
                   
                   <IEcharts class="chart"
-                  style="height: 500px; width: 1900px"
+                  style="height: 500px; width: 1300px"
 
                   :option="props.item.historyEffectif">
                   </IEcharts>
@@ -87,7 +87,7 @@
                     dark
                     flat
                   >
-                    <v-toolbar-title>Ratios Financiers</v-toolbar-title>
+                    <v-toolbar-title>Ratios Financiers {{ props.item.raisonSociale }}</v-toolbar-title>
                     <v-spacer></v-spacer>
                     <v-toolbar-items>
                       <v-btn flat @click="fichart = !fichart">
@@ -263,8 +263,9 @@
                   type: 'line',
                   smooth: true,
                   color: 'blue',
-                  data: Object.entries(allEffectif)
-                    .sort((a, b) => b[0] > a[0])
+                  data: (Object.keys(allEffectif))
+                    .map(key => [key, allEffectif[key]])
+                    .sort((a, b) => parseInt(b[0]) - parseInt(a[0]))
                     .map(entry => [new Date(parseInt(entry[0])), entry[1]])
                     .slice(0, 14)
                 }]

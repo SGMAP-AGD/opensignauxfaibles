@@ -5,7 +5,7 @@
       :clipped-left="clipped"
     >
     <v-menu open-on-hover top offset-y transition="slide-x-transition">
-      <v-btn slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
+      <v-btn  slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
       <v-list>
         <v-list-tile v-for="(item, index) in items" 
         :key="index" 
@@ -24,12 +24,13 @@
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
-    <v-btn icon>
-      <img height="28px" src="/static/favicon.png"/>
+    <v-btn icon @click="logout()">
+      <img height="28px" src="/static/favicon.png" />
     </v-btn>
     </v-toolbar>
     <v-content>
-      <router-view/>
+      <Login v-if="!login.state" :state="login"/>
+      <router-view v-if="login.state" />
     </v-content>
 
     <v-footer>
@@ -45,18 +46,27 @@
 </template>
 
 <script>
+import Login from '@/components/Login'
+
 export default {
   methods: {
     setMenu (key) {
       this.menu.title = this.items[key].title
       this.menu.color = this.items[key].color
+    },
+    logout () {
+      this.login.state = false
     }
   },
+  components: { Login },
   data () {
     return {
+      login: {state: false},
       clipped: false,
       fixed: false,
       drawer: false,
+      username: '',
+      password: '',
       menu: {
         title: 'Accueil',
         color: 'light-green darken-4'
@@ -70,13 +80,14 @@ export default {
           color: 'indigo darken-4' },
         { title: 'Données',
           action: '/data',
-          color: 'grey darken-2' },
-        { title: 'Visites',
-          action: '/workflow',
-          color: 'red darken-4' },
-        { title: 'Admin',
-          action: '/admin',
-          color: 'black' }
+          color: 'grey darken-2' }
+        //   ,
+        // { title: 'Visites',
+        //   action: '/workflow',
+        //   color: 'red darken-4' },
+        // { title: 'Admin',
+        //   action: '/admin',
+        //   color: 'black' }
       ]
     }
   },

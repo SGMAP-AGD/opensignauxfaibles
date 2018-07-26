@@ -8,7 +8,7 @@
           <v-menu 
             offset-y
             v-if="!newBatch">
-            <v-btn 
+            <v-btn
               :color="(batch.readonly)?'deep-purple lighten-2':(batch.altered)?'red darken-1':(newBatch)?'orange darken-1':'teal darken-1'"
               dark
               slot="activator">
@@ -41,16 +41,7 @@
                 </v-list-tile-action>
                 <v-list-tile-content>Import</v-list-tile-content>
               </v-list-tile>
-              <v-list-tile 
-                key="import"
-                @click="test()"
-                
-                >
-                <v-list-tile-action>
-                  <v-icon>fa-compress</v-icon>
-                </v-list-tile-action>
-                <v-list-tile-content>Compactage</v-list-tile-content>
-              </v-list-tile>
+
               <v-list-tile 
                 @click="test()"
                 key="reduce"
@@ -91,8 +82,9 @@
               <v-spacer></v-spacer>
               <v-flex xs2>
               <v-btn 
+               v-if="!newBatch"
                 icon
-                :color="(batch.readonly)?'deep-purple lighten-2':(batch.altered)?'red darken-1':(newBatch)?'orange darken-1':'teal darken-1'"
+                :color="(batch.readonly)?'deep-purple lighten-2':(batch.altered)?'red darken-1':'teal darken-1'"
                 :disabled="(!batch.altered || batch.readonly) && !newBatch || batch.id.key=='' || duplicateBatchKey() != true || newBatchKey() != true"
                 :flat="(!batch.altered || batch.readonly) && !newBatch"
                 raised
@@ -107,12 +99,20 @@
 
         </v-toolbar>
         <v-divider></v-divider>
-          <v-list dense>
+          <v-btn
+          v-if="newBatch"
+          depressed
+          fab
+          large
+          @click="saveBatch(batch)">
+            <v-icon>fa-plus</v-icon>
+          </v-btn>
+          <v-list dense v-if="!newBatch">
             <v-list-tile>
               <v-list-tile-content>Fichiers</v-list-tile-content>
                 <v-list-tile-content class="align-end">
                 <v-dialog
-                  fullscreen hide-overlay transition="dialog-bottom-transition"
+                  transition="dialog-bottom-transition"
                   lazy
                   scrollable
                   v-model="batch.dialog"
