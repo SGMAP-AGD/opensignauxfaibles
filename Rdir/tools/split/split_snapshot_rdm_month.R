@@ -77,8 +77,9 @@ split_snapshot_rdm_month <-
 
 
     if (frac_eyeball > 0) {
+      sample_eyeball_sirets <- sample_frac(tbl = unique(remaining['siret']), size = frac_eyeball / (1 - frac_train - frac_val))
       sample_eyeball <- remaining %>%
-        sample_frac(frac_eyeball / (1 - frac_train - frac_val))
+        semi_join(sample_eyeball_sirets, by = 'siret')
     } else {
       sample_eyeball <-
         tibble(siret = character(), periode = as.Date(character()))

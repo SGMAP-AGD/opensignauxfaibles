@@ -1,0 +1,617 @@
+---
+title: "Untitled"
+author: "Pierre Camilleri"
+date: "25 juillet 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Libraries
+library(tidyverse)
+library(tricky)
+library(lubridate)
+library(assertthat)
+library(mongolite)
+library(mice)
+library(caret)
+library(broom)
+library(keras)
+library(randomForest)
+library(MLmetrics)
+library(tibbletime)
+library(PRROC)
+library(broom)
+library(rprojroot)
+library(groupdata2)
+library(h2o)
+
+# Sources
+source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
+source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
+source(find_rstudio_root_file('tools','data_prep','normalize_df.R'))
+source(find_rstudio_root_file('tools','data_prep','feature_engineering.R'))
+source(find_rstudio_root_file('tools','data_prep','monthly_to_yearly.R'))
+source(find_rstudio_root_file('tools','data_prep','df_to_RNN_input.R'))
+source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
+source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
+source(find_rstudio_root_file('tools','objective','set_objective.R'))
+source(find_rstudio_root_file('tools','split','oversample.R'))
+source(find_rstudio_root_file('tools','split','split_snapshot_rdm_month.R'))
+source(find_rstudio_root_file('tools','split','generator.R'))
+source(find_rstudio_root_file('tools','split','assert_split_consistency.R'))
+source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
+source(find_rstudio_root_file('tools','utilities','AUCPR.R'))
+source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
+source(find_rstudio_root_file('tools','post_analysis','export.R'))
+source(find_rstudio_root_file('tools','utilities','pr.F1.R'))
+source(find_rstudio_root_file('tools','utilities','failure_APE.R'))
+source(find_rstudio_root_file('tools','utilities','count_etab_entr.R'))
+source(find_rstudio_root_file('tools','utilities','average_12m.R'))
+source(find_rstudio_root_file('tools','utilities','lowerWilsonBinCI.R'))
+source(find_rstudio_root_file('tools','utilities','quantile_APE.R'))
+source(find_rstudio_root_file('tools','utilities','replace_na_by.R'))
+source(find_rstudio_root_file('tools','utilities','add_past_trends.R'))
+source(find_rstudio_root_file('tools','models','benchmark_models.R'))
+source(find_rstudio_root_file('tools','models','caret_prob.R'))
+source(find_rstudio_root_file('tools','models','model_tune.R'))
+source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
+source(find_rstudio_root_file('tools','models','model_eval.R'))
+source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
+```
+
+
+```{r}
+actual_period <- as.Date("2018-06-01")
+```
+
+```{r}
+raw_data <- connect_to_database('Features', '1807', algo = 'algo2', min_effectif = 20)
+```
+
+```{r}
+raw_data <- raw_data %>%
+  objective_default_or_failure(n_months = 3, threshold = 1, lookback = 18) %>%
+  set_objective('default')
+```
+Feature engineering here
+```{r}
+  raw_data <- raw_data %>%
+    mutate_if(is.POSIXct, as.Date)
+```
+Train test split
+```{r}
+seed <- 10011
+samples <-
+  split_snapshot_rdm_month(
+    raw_data,
+    date_inf = as.Date("2015-01-01"),
+    date_sup = as.Date("2016-12-01"),
+    crossvalidation = TRUE,
+    frac_train = 0.4,
+    frac_val = 0.2,
+    frac_eyeball = 0.2,
+    seed = seed
+)
+
+
+sample_train <- samples$train %>%
+  left_join(raw_data, by = c('siret','periode'))
+
+if (!nrow(samples$validation)==0) {
+  sample_val <- samples$validation %>%
+    left_join(raw_data, by = c('siret', 'periode'))
+}
+
+cv_folds <- samples$cv_fold
+
+sample_validation <- raw_data %>%
+  semi_join(samples$eyeball, by = c('siret','periode'))
+
+sample_test <- raw_data %>%
+      semi_join(samples$test, by = c('siret','periode'))
+
+sample_train <- sample_train %>% 
+  groupdata2::fold(5, id_col = 'siret') %>% 
+  rename(fold_column = .folds) %>%
+  mutate(fold_column = as.numeric(fold_column))
+
+sample_test <- sample_test %>% 
+  mutate(fold_column = 1)
+rm(samples)
+#assert_split_consistency(sample_train,cv_folds,sample_test,sample_eyeball)
+```
+
+```{r}
+gc()
+aux_features <- feature_engineering(sample_train,sample_test,sample_validation)
+sample_train  <- aux_features[[1]]
+sample_test <- aux_features[[2]]
+sample_validation <- aux_features[[3]]
+rm(aux_features)
+```
+
+
+
+```{r}
+# If not enough memory, run systemctl restart mongod
+
+gc()
+h2o.init(ip = "localhost", port = 4444)
+train.hex <- as.h2o(sample_train)
+test.hex <- as.h2o(sample_test)
+validation.hex <- as.h2o(sample_validation)
+```
+
+
+Définition classe positive
+```{r}
+train.hex['outcome'] <- h2o.relevel(x = train.hex['outcome'], y = "non_default")
+test.hex['outcome'] <- h2o.relevel(x = test.hex['outcome'], y = "non_default")
+validation.hex['outcome'] <- h2o.relevel(x = validation.hex['outcome'], y = "non_default")
+```
+
+```{r}
+
+x_paul_antoine = c(
+  "effectif",
+  "effectif_diff_moy12",
+  "apart_heures_consommees",
+  "ratio_apart",
+  "ratio_dette",
+  "dette_any_12m",
+  "montant_part_patronale_variation_12"
+)
+
+x_minimal = c(    
+"effectif",
+"effectif_diff_moy12",
+"apart_heures_consommees",
+"ratio_apart",
+"cotisation",                                
+"montant_part_ouvriere",                    
+"montant_part_patronale",
+"ratio_dette_moy12m",
+"dette_any_12m",
+"ratio_dette",
+"poids_frng",                               
+"taux_marge",                                
+"delai_fournisseur",                         
+"dette_fiscale",                            
+"financier_court_terme",                     
+"frais_financier")
+
+ratios_diane =c(
+    "CA",
+    "resultat_net_consolide",
+    "ratio_CAF",
+    "ratio_marge_operationnelle",
+    "taux_rotation_stocks",
+    "ratio_productivite",
+    "ratio_export",
+    "ratio_delai_client",
+    "ratio_liquidite_reduite",
+    "ratio_endettement",
+    "ratio_rend_capitaux_propres",
+    "ratio_rend_des_ress_durables",
+    "ratio_RetD", 
+    "taux_marge_neg",
+    "taux_marge_extr_neg",
+    "taux_marge_extr_pos")
+
+new_variables = c("etat_proc_collective_num",   
+                    "delai",
+                    "montant_echeancier",
+                    "ratio_dette_delai",
+                    "duree_delai",
+                    "age",
+                    "productif",
+                    "indice_monoactivite",
+                    "effectif_entreprise",
+                    "apart_entreprise",
+                    "nbr_etablissements_connus",
+                    "resultat_net_consolide",
+                    "nombre_etab_secondaire",
+                    "code_naf_niveau1")
+
+variations = c(grep('variation',names(sample_train), value = TRUE),
+                 grep('diff_moy12',names(sample_train), value = TRUE))
+
+distrib = c(grep('distrib',names(sample_train), value = TRUE))
+
+x_distrib = c(x_minimal,
+              ratios_diane,
+              new_variables,
+              variations,
+              distrib)
+
+x_preface = c(x_distrib,
+              "note_preface")
+
+x_without_diane = c(x_minimal, 
+                    "delai",
+                    "montant_echeancier",
+                    "ratio_dette_delai",
+                    "duree_delai",
+                    "age",
+                    "productif",
+                    "indice_monoactivite",
+                    "effectif_entreprise",
+                    "apart_entreprise",
+                    "nbr_etablissements_connus",
+                    "resultat_net_consolide",
+                    "nombre_etab_secondaire",
+                    "code_naf_niveau1",
+                    "effectif_diff_moy12",
+                    "taux_marge_distrib_APE1",
+                    "taux_marge_distrib_APE2",
+                    "poids_frng_distrib_APE1",
+                    "poids_frng_distrib_APE2",
+                    "effectif_distrib_APE1",
+                    "effectif_distrib_APE2",
+                    "financier_court_terme_distrib_APE1",
+                    "financier_court_terme_distrib_APE2",
+                    "delai_fournisseur_distrib_APE1",
+                    "delai_fournisseur_distrib_APE2",
+                    "frais_financier_distrib_APE1",
+                    "frais_financier_distrib_APE2",
+                    "apart_heures_consommees_variation_1",
+                    "apart_heures_consommees_variation_2",
+                    "apart_heures_consommees_variation_3",
+                    "apart_heures_consommees_variation_6",
+                    "apart_heures_consommees_variation_12",
+                    "montant_part_patronale_variation_1",
+                    "montant_part_patronale_variation_2",
+                    "montant_part_patronale_variation_3",
+                    "montant_part_patronale_variation_6",
+                    "montant_part_patronale_variation_12",
+                    "montant_part_ouvriere_variation_1" ,
+                    "montant_part_ouvriere_variation_2" ,
+                    "montant_part_ouvriere_variation_3" ,
+                    "montant_part_ouvriere_variation_6" ,
+                    "montant_part_ouvriere_variation_12" )
+
+y = "outcome"
+```
+
+
+## Light gradient boosting
+### Starting point
+```{r}
+xgb_grid<- h2o.xgboost(
+                    model_id = 'LGB_model',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+```
+
+```{r}
+
+hyper_params <-
+  list(max_depth = c(2, 4, 6, 8, 10, 12, 14, 16, 18))
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_1_depth',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+
+# Optimal depth found at 4. 0.1032695
+```
+
+```{r}
+hyper_params <-
+  list(max_depth = 4,
+  reg_alpha = c(1,2))
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_2_regularization',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+
+# No improvement
+```
+
+```{r}
+hyper_params <-
+  list(max_depth = 4,
+  reg_lambda = c(0.9, 1.2, 1.5, 1.8))
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_3_regularization',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+# Slight improvement with low values
+# But almost no improv 4	1.0	LGB_tune_3_regularization_model_0	0.1032321939172359
+```
+```{r}
+hyper_params <-
+  list(max_depth = 4,
+  reg_lambda = 0, 
+  max_leaves = c(1,5,10,15,20,50))
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_4_min_node_size',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+# No improvement
+```
+
+```{r}
+hyper_params <-
+  list(max_depth = 4,
+  reg_lambda = 0, 
+  min_split_improvement = c(10e-10, 10e-8, 10e-5, 10e-3)
+  )
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_5_min_split_improvement',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    quiet_mode =  FALSE
+                )
+
+# No improvement ! 
+```
+```{r}
+# Tune 5 bis arrêt trop tôt ??
+hyper_params <-
+  list(max_depth = 4,
+  reg_lambda = 0, 
+  min_split_improvement = c(10e-3)
+  )
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_5_min_split_improvement',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 200,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 10,
+                    stopping_tolerance = 0.0001,
+                    quiet_mode =  FALSE
+                )
+```
+```{r}
+# Tune 6 subsamples*
+
+hyper_params <-
+  list(max_depth = 4,
+  col_sample_rate = 1,
+  sample_rate = 1)
+
+  
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_6_subsamples',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 120,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    stopping_tolerance = 0.001,
+                    quiet_mode =  TRUE
+                )
+
+# Rien à faire !
+```
+```{r}
+hyper_params <-
+  list(max_depth = c(3,4,5),
+  eta = c(0.05,0.075))
+
+xgb_grid<- h2o.grid(algorithm = 'xgboost',
+                    grid_id = 'LGB_tune_7_eta',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    ntrees = 120,
+                    seed = 123, 
+                    hyper_params = hyper_params,
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    stopping_tolerance = 0.001,
+                    quiet_mode =  TRUE
+                )
+
+# Best:  eta = 0.1, max_depth = 4, col_rate = sample_rate = 1
+
+```
+
+```{r}
+
+best_model <- h2o.xgboost(
+                    model_id = 'best_LGB',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    fold_column = "fold_column",
+                    learn_rate = 0.1,
+                    max_depth = 4,
+                    ntrees = 120,
+                    seed = 123, 
+                    score_each_iteration = TRUE,
+                    stopping_rounds = 4,
+                    stopping_tolerance = 0.001,
+                    quiet_mode =  TRUE,
+                    keep_cross_validation_predictions = TRUE,
+                    keep_cross_validation_fold_assignment = TRUE
+                )
+```
+```{r}
+h2o.performance(best_model, newdata = test.hex)
+```
+
+
+```{r}
+automl <- h2o.automl(
+  x = x_distrib,
+  y = y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  leaderboard_frame = test.hex,
+  fold_column = "fold_column",
+  balance_classes =  TRUE,
+  stopping_rounds = 4,
+  seed = 123
+  )
+```
+
+```{r}
+
+
+ glm_model <- h2o.glm( 
+                    model_id = 'glm_model',
+                    x= x_distrib, 
+                    y =y,
+                    keep_cross_validation_predictions = TRUE,
+                    keep_cross_validation_fold_assignment = TRUE,
+                    training_frame = train.hex,
+                    fold_column = "fold_column",
+                    standardize = TRUE,
+                    balance_classes =  TRUE,
+                    family = 'binomial',
+                    lambda_search = TRUE,
+                    seed = 123
+                )
+
+```
+
+```{r}
+regpath <- h2o.getGLMFullRegularizationPath(glm_model)
+# ICI faire une routine qui plot le chemin. 
+
+```
+```{r}
+glm_model <- h2o.getModel('glm_model')
+lgb_model <- h2o.getModel('best_LGB')
+ensemble <- h2o.stackedEnsemble(
+  metalearner_algorithm = "glm",
+  base_models = list(glm_model@model_id,lgb_model@model_id),
+  x = x_distrib,
+  y = y, 
+  metalearner_fold_column = 'fold_column',
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  seed = 123
+)
+```
+
+```{r}
+# Random forest
+
+new_rf_model <- h2o.randomForest(
+                    model_id = 'RF_model',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train.hex,
+                    balance_classes = TRUE,
+                    ntrees = 200,
+                    seed = 123, 
+                    score_each_iteration = TRUE,
+                    fold_column = 'fold_column',
+                    stopping_rounds = 4,
+                    stopping_tolerance = 0.001,
+                    keep_cross_validation_predictions = TRUE,
+                    keep_cross_validation_fold_assignment = TRUE
+                )
+```
+
+```{r}
+ensemble <- h2o.stackedEnsemble(
+  metalearner_algorithm = "glm",
+  base_models = list(new_rf_model@model_id,lgb_model@model_id),
+  x = x_distrib,
+  y = y, 
+  metalearner_fold_column = 'fold_column',
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  seed = 123
+)
+```
+
