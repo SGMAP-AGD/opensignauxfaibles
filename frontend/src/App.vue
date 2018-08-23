@@ -24,13 +24,15 @@
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
-    <v-btn icon @click="logout()">
-      <img height="28px" src="/static/favicon.png" />
+    <v-btn icon @click="logout()" v-if="login">
+      <v-icon>fa-sign-out-alt</v-icon>
     </v-btn>
     </v-toolbar>
     <v-content>
-      <Login v-if="!login.state" :state="login"/>
-      <router-view v-if="login.state" />
+      <v-fade-transition>
+        <Login v-if="!login" :state="login"/>
+        <router-view v-if="login" />
+      </v-fade-transition>
     </v-content>
 
     <v-footer>
@@ -55,13 +57,18 @@ export default {
       this.menu.color = this.items[key].color
     },
     logout () {
-      this.login.state = false
+      this.$store.commit('logout')
     }
   },
   components: { Login },
+  computed: {
+    login () {
+      console.log(this.$store.state.token)
+      return this.$store.state.token != null
+    }
+  },
   data () {
     return {
-      login: {state: false},
       clipped: false,
       fixed: false,
       drawer: false,
@@ -81,13 +88,6 @@ export default {
         { title: 'Données',
           action: '/data',
           color: 'grey darken-2' }
-        //   ,
-        // { title: 'Visites',
-        //   action: '/workflow',
-        //   color: 'red darken-4' },
-        // { title: 'Admin',
-        //   action: '/admin',
-        //   color: 'black' }
       ]
     }
   },

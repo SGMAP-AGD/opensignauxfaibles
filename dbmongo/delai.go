@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cnf/structhash"
@@ -76,7 +77,7 @@ func parseDelai(paths []string) chan *Delai {
 				delai.Denomination = row[field["Denomination"]]
 				delai.Indic6m = row[field["Indic6m"]]
 				delai.AnneeCreation, err = strconv.Atoi(row[field["AnneeCreation"]])
-				delai.MontantEcheancier, err = strconv.ParseFloat(row[field["MontantEcheancier"]], 64)
+				delai.MontantEcheancier, err = strconv.ParseFloat(strings.Replace(row[field["MontantEcheancier"]], ",", ".", -1), 64)
 				delai.NumeroStructure = row[field["NumeroStructure"]]
 				delai.Stade = row[field["Stade"]]
 				delai.Action = row[field["Action"]]

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
+	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -21,19 +23,72 @@ func main() {
 	go r()
 
 	r := gin.Default()
+	r.Use(gin.Recovery())
 	r.Use(DB())
 	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8080"}
-	config.AddAllowMethods([]string{"GET", "POST", "PUT", "HEAD", "DELETE"}...)
+	config.AddAllowHeaders("Authorization")
+	config.AddAllowMethods("GET", "POST", "PUT", "HEAD", "DELETE")
+
 	r.Use(cors.New(config))
+
+	authMiddleware := &jwt.GinJWTMiddleware{
+		Realm:      "test zone",
+		Key:        []byte("secret key"),
+		Timeout:    time.Hour,
+		MaxRefresh: time.Hour,
+		Authenticator: func(userId string, password string, c *gin.Context) (interface{}, bool) {
+			if (userId == "admin" && password == "admin") || (userId == "test" && password == "test") {
+				return &User{
+					UserName:  userId,
+					LastName:  "Bo-Yi",
+					FirstName: "Wu",
+				}, true
+			}
+
+			return nil, false
+		},
+		Authorizator: func(user interface{}, c *gin.Context) bool {
+			if v, ok := user.(string); ok && v == "admin" {
+				return true
+			}
+
+			return false
+		},
+		Unauthorized: func(c *gin.Context, code int, message string) {
+			c.JSON(code, gin.H{
+				"code":    code,
+				"message": message,
+			})
+		},
+		// TokenLookup is a string in the form of "<source>:<name>" that is used
+		// to extract token from the request.
+		// Optional. Default value "header:Authorization".
+		// Possible values:
+		// - "header:<name>"
+		// - "query:<name>"
+		// - "cookie:<name>"
+		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+		// TokenLookup: "query:token",
+		// TokenLookup: "cookie:token",
+
+		// TokenHeadName is a string in the header. Default value is "Bearer"
+		TokenHeadName: "Bearer",
+
+		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
+		TimeFunc: time.Now,
+	}
 
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
+	r.POST("/login", authMiddleware.LoginHandler)
+
 	api := r.Group("api")
+	api.Use(authMiddleware.MiddlewareFunc())
 	{
-		api.OPTIONS("/auth", auth)
+		api.GET("/refresh_token", authMiddleware.RefreshHandler)
 
 		api.GET("/purge", purge)
 		api.GET("/kanboard/get/projects", listProjects)

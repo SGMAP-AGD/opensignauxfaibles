@@ -151,7 +151,6 @@
 </template>
 
 <script>
-  import axios from 'axios'
   import IEcharts from 'vue-echarts-v3/src/full.js'
 
   export default {
@@ -192,7 +191,7 @@
     methods: {
       getNAF () {
         var self = this
-        axios.get(this.$api + '/data/naf').then(response => { self.naf = response.data })
+        this.$axios.get(this.$api + '/data/naf').then(response => { self.naf = response.data })
       },
       toggleAll () {
         if (this.selected.length) this.selected = []
@@ -209,7 +208,8 @@
       getPrediction () {
         var self = this
         this.loading = true
-        axios.get(this.$api + '/data/prediction/' + this.actualBatch + '/algo1/0').then(response => {
+        console.log(this.$store.getters.axiosConfig)
+        this.$axios.get(this.$api + '/data/prediction/' + this.actualBatch + '/algo1/0', this.$store.getters.axiosConfig).then(response => {
           self.prediction = response.data.map(prediction => {
             var etablissement = self.flattenTypes(
               self.projectBatch(

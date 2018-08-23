@@ -184,7 +184,7 @@ func reduce(c *gin.Context) {
 	c.JSON(200, result)
 
 }
-
+	
 func compactEtablissement(c *gin.Context) {
 	db, _ := c.Keys["DB"].(*mgo.Database)
 	batches := getBatchesID(db)
