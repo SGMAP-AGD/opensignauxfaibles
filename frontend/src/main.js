@@ -17,7 +17,21 @@ Vue.config.productionTip = false
 // cp dist/* ../dbmongo/static -r
 // Vue.prototype.$api = '/api'
 
-Vue.prototype.$axios = axios
+Vue.prototype.$axios = axios.create(
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    baseURL: process.env.API_URL
+  }
+)
+
+Vue.prototype.$axios.interceptors.request.use(
+  config => {
+    if (store.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.state.token
+    return config
+  }
+)
 
 // Dev - commenter pour la prod
 Vue.prototype.$api = 'http://localhost:3000/api'

@@ -1,8 +1,9 @@
 <template>
-  <v-app>
+  <v-app id="app">
     <v-toolbar
-      app
-      :clipped-left="clipped"
+    class="toolbar"
+    color="blue-grey lighten-4"
+    app
     >
     <v-menu open-on-hover top offset-y transition="slide-x-transition">
       <v-btn  slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
@@ -23,10 +24,11 @@
       
     </v-toolbar-title>
     <v-spacer></v-spacer>
-    
-    <v-btn icon @click="logout()" v-if="login">
-      <v-icon>fa-sign-out-alt</v-icon>
-    </v-btn>
+    <v-slide-x-reverse-transition>
+      <v-btn icon @click="logout()" v-if="login">
+        <v-icon>fa-sign-out-alt</v-icon>
+      </v-btn>
+    </v-slide-x-reverse-transition>
     </v-toolbar>
     <v-content>
       <v-fade-transition>
@@ -63,13 +65,14 @@ export default {
   components: { Login },
   computed: {
     login () {
-      console.log(this.$store.state.token)
       return this.$store.state.token != null
+    },
+    batches () {
+      return JSON.stringify(this.$store.state.batches, null, 2)
     }
   },
   data () {
     return {
-      clipped: false,
       fixed: false,
       drawer: false,
       username: '',
@@ -135,3 +138,13 @@ v-list {
 }
 </style>
 
+<style>
+.toolbar {
+  background-image: url("/static/bgtoolbar.png");
+  color: "black";
+}
+#app {
+  background-image: url("/static/bgapp.png");
+  background-color: "blue-grey lighten-5";
+}
+</style>

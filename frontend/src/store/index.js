@@ -5,30 +5,74 @@ import createPersistedState from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
+var axiosClient = axios.create(
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    baseURL: 'http://localhost:3000'
+  }
+)
+
+axiosClient.interceptors.request.use(
+  config => {
+    if (store.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.state.token
+    return config
+  }
+)
+
 const store = new Vuex.Store({
   plugins: [createPersistedState({storage: window.sessionStorage})],
   state: {
-    api: 'http://localhost:3000/',
     credentials: {
       username: null,
       password: null
     },
-    token: null
+    token: null,
+    types: null,
+    features: null,
+    files: null,
+    batches: [],
+    currentBatchKey: 0
   },
   mutations: {
     login (state) {
-      axios.post(state.api + 'login', state.credentials).then(response => { state.token = response.data.token })
+      axiosClient.post('/login', state.credentials).then(response => {
+        state.token = response.data.token
+      })
+    },
+    refreshToken (state) {
+      axiosClient.get('/api/refreshToken').then(response => {
+        state.token = response.data.token
+      })
     },
     logout (state) {
       state.credentials.username = null
       state.credentials.password = null
       state.token = null
+      state.types = null
+      state.features = null
+      state.files = null
+      state.batches = []
     },
     setUser (state, username) {
       state.credentials.username = username
     },
     setPassword (state, password) {
       state.credentials.password = password
+    },
+    updateBatches (state) {
+      axiosClient.get('/api/admin/batch').then(response => {
+        state.batches = response.data
+      })
+    },
+    updateRefs (state) {
+      axiosClient.get('/api/admin/types').then(response => { state.types = response.data.sort() })
+      axiosClient.get('/api/admin/features').then(response => { state.features = response.data })
+      axiosClient.get('/api/admin/files').then(response => { state.files = response.data })
+    },
+    setCurrentBatchKey (state, key) {
+      state.currentBatchKey = key
     }
   },
   getters: {
@@ -38,4 +82,30 @@ const store = new Vuex.Store({
   }
 })
 
+var lastMove = 0
+setInterval(
+  function () {
+    if (store.state.token != null) {
+      axiosClient.get('/api/lastMove').then(response => {
+        if (response.data > lastMove) {
+          lastMove = response.data
+          store.commit('updateRefs')
+        }
+      }).catch(error => {
+        if (error.response.status === 401) {
+          store.commit('logout')
+        }
+        console.log(error.response)
+      })
+    }
+  },
+  1000)
+
+setInterval(
+    function () {
+      if (store.state.token != null) {
+        store.commit('refreshToken')
+      }
+    },
+    600000)
 export default store

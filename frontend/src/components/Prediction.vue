@@ -208,7 +208,6 @@
       getPrediction () {
         var self = this
         this.loading = true
-        console.log(this.$store.getters.axiosConfig)
         this.$axios.get(this.$api + '/data/prediction/' + this.actualBatch + '/algo1/0', this.$store.getters.axiosConfig).then(response => {
           self.prediction = response.data.map(prediction => {
             var etablissement = self.flattenTypes(

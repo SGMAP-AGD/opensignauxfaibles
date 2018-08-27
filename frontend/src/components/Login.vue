@@ -3,16 +3,17 @@
   <v-layout center>
     <v-flex xs4 offset-xs4>
       <v-card>
-        <v-toolbar card color="light-blue lighten-2">
-          Authentification
+        <v-toolbar class="toolbar" id="toolbar" card color="indigo darken-1">
+          <v-spacer> </v-spacer>
+            Identification
+          <v-spacer> </v-spacer>
         </v-toolbar>
         <v-card-text>
-          <v-text-field label="Nom d'utilisateur" v-model="username"></v-text-field >
-          <v-text-field type="password" label="Mot de passe" v-model="password"></v-text-field>
+          <v-text-field label="Nom d'utilisateur" v-model="username" outline></v-text-field >
+          <v-text-field type="password" label="Mot de passe" v-model="password" outline></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-btn color="blue" flat @click="login">LOGIN</v-btn>
-          {{ token }} et {{ username }} et {{ password }}
         </v-card-actions>
       </v-card>
     </v-flex>
@@ -51,3 +52,10 @@ export default {
   }
 }
 </script>
+
+<style>
+  #toolbar {
+    font-size: 25px;
+    color: white;
+  }
+</style>

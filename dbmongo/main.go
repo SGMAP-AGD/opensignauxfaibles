@@ -36,7 +36,7 @@ func main() {
 
 	authMiddleware := &jwt.GinJWTMiddleware{
 		Realm:      "test zone",
-		Key:        []byte("secret key"),
+		Key:        []byte("this is my secret key"),
 		Timeout:    time.Hour,
 		MaxRefresh: time.Hour,
 		Authenticator: func(userId string, password string, c *gin.Context) (interface{}, bool) {
@@ -88,7 +88,7 @@ func main() {
 	api := r.Group("api")
 	api.Use(authMiddleware.MiddlewareFunc())
 	{
-		api.GET("/refresh_token", authMiddleware.RefreshHandler)
+		api.GET("/refreshToken", authMiddleware.RefreshHandler)
 
 		api.GET("/purge", purge)
 		api.GET("/kanboard/get/projects", listProjects)
@@ -120,9 +120,14 @@ func main() {
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/data/naf", getNAF)
 		api.GET("/debug/", debug)
+		api.GET("/lastMove", lastMove)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
+}
+
+func lastMove(c *gin.Context) {
+	c.JSON(200, 1)
 }
 
 func loadConfig() {
