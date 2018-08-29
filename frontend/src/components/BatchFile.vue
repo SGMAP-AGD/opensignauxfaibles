@@ -2,7 +2,7 @@
   <v-card class="elevation-6" >
     <v-card-title>
       <v-list style="width: 100%">
-        <v-list-tile >
+        <v-list-tile>
           <v-list-tile-title>
             <v-combobox
               :items="files"
@@ -11,7 +11,7 @@
           </v-list-tile-title>
           <v-list-tile-content>
             <v-tooltip bottom>
-            <v-btn icon slot="activator">
+            <v-btn outline fab small slot="activator">
               <v-icon>fa-plus-square</v-icon>
             </v-btn>
             Ajouter

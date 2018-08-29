@@ -18,23 +18,37 @@
       </v-list>
     </v-menu>
     <v-toolbar-title>
-      <span id="gray">Open</span>
+      <span class="gray">Open</span>
       <span id="blue">Signaux</span>
-      <span id="red">Faibles</span>
-      
+      <span id="red">Faibles</span><br/>
+      <span class="caption gray">Plateforme de détection des entreprises fragiles</span>
     </v-toolbar-title>
     <v-spacer></v-spacer>
-    <v-slide-x-reverse-transition>
-      <v-btn icon @click="logout()" v-if="login">
-        <v-icon>fa-sign-out-alt</v-icon>
-      </v-btn>
-    </v-slide-x-reverse-transition>
+      <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus != null">
+        {{ dbstatus }}
+          <v-progress-circular slot="activator"
+            indeterminate
+            color="indigo darken-4"
+          ></v-progress-circular>
+      </v-tooltip>
+
+      <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus === null">
+        Aucune opération en cours
+          <v-icon slot="activator" color="green">fa-check
+          </v-icon>
+      </v-tooltip>
+
+      <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login" >
+      Déconnexion
+          <v-btn icon @click="logout()" slot="activator">
+            <v-icon>fa-sign-out-alt</v-icon>
+          </v-btn>
+      </v-tooltip>
+
     </v-toolbar>
     <v-content>
-      <v-fade-transition>
         <Login v-if="!login" :state="login"/>
         <router-view v-if="login" />
-      </v-fade-transition>
     </v-content>
 
     <v-footer>
@@ -69,6 +83,9 @@ export default {
     },
     batches () {
       return JSON.stringify(this.$store.state.batches, null, 2)
+    },
+    dbstatus () {
+      return this.$store.state.dbstatus
     }
   },
   data () {
@@ -84,13 +101,16 @@ export default {
       items: [
         { title: 'Accueil',
           action: '/',
-          color: 'green' },
+          color: 'green darken-3' },
         { title: 'Détection',
           action: '/prediction',
           color: 'indigo darken-4' },
         { title: 'Données',
           action: '/data',
-          color: 'grey darken-2' }
+          color: 'grey darken-2' },
+        { title: 'Admin',
+          action: '/admin',
+          color: 'black'}
       ]
     }
   },
@@ -110,7 +130,7 @@ export default {
 body {
   font-family: 'Quicksand', sans-serif;
 }
-#gray {
+.gray {
   color: #606060;
   font-family: 'Quicksand', sans-serif;
 }

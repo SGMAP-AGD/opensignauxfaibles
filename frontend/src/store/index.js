@@ -33,14 +33,17 @@ const store = new Vuex.Store({
     features: null,
     files: null,
     batches: [],
+    dbstatus: null,
     currentBatchKey: 0,
-    lastmove: 0
+    lastMove: 0
   },
   mutations: {
     login (state) {
       axiosClient.post('/login', state.credentials).then(response => {
         state.token = response.data.token
         store.commit('updateRefs')
+        store.commit('updateBatches')
+        store.commit('updateDbStatus')
       })
     },
     refreshToken (state) {
@@ -67,6 +70,11 @@ const store = new Vuex.Store({
     updateBatches (state) {
       axiosClient.get('/api/admin/batch').then(response => {
         state.batches = response.data
+      })
+    },
+    updateDbStatus (state) {
+      axiosClient.get('/api/database/status').then(response => {
+        state.dbstatus = response.data
       })
     },
     setLastMove (state, lastMove) {
@@ -96,6 +104,7 @@ setInterval(
           store.commit('setLastMove', response.data)
           store.commit('updateRefs')
           store.commit('updateBatches')
+          store.commit('updateDbStatus')
         }
       }).catch(error => {
         if (error.response.status === 401) {
@@ -116,5 +125,7 @@ setInterval(
     60000)
 
 store.commit('updateRefs')
+store.commit('updateDbStatus')
+store.commit('updateBatches')
 
 export default store

@@ -50,7 +50,7 @@ export default {
       }
     },
     batches () {
-      return this.$store.state.batches.map(batch => batch.id.key)
+      return this.$store.state.batches.filter(b => b.readonly === true).map(batch => batch.id.key)
     }
   },
   components: { PredictionTable },

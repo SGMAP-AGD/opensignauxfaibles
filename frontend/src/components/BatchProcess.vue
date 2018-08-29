@@ -15,6 +15,7 @@
   </v-card-text>
   <v-card-actions>
     <v-btn
+    :disabled="dbstatus != null"
     @click.stop="dialog = true"
     block>LANCER</v-btn>
     
@@ -42,7 +43,7 @@
           <v-btn
             color="green darken-1"
             flat="flat"
-            @click="dialog = false"
+            @click="mock(); dialog = false"
           >
             LANCER
           </v-btn>
@@ -59,6 +60,16 @@ export default {
   data () {
     return {
       dialog: false
+    }
+  },
+  computed: {
+    dbstatus () {
+      return this.$store.state.dbstatus
+    }
+  },
+  methods: {
+    mock () {
+      this.$axios.get('http://localhost:3000/api/mock/compact')
     }
   }
 }

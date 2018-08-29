@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
@@ -26,8 +25,7 @@ func DB() gin.HandlerFunc {
 	mongostatus.SetSocketTimeout(3600 * time.Second)
 	mongodb.SetSocketTimeout(3600 * time.Second)
 
-	dbstatus := DBStatus{}
-	dbstatus.create(mongostatus.DB(dbDatabase))
+	dbstatus := mongostatus.DB(dbDatabase)
 
 	db := mongodb.DB(dbDatabase)
 
@@ -53,7 +51,7 @@ func DB() gin.HandlerFunc {
 		c.Set("ChanEtablissement", chanEtablissement)
 		c.Set("ADMINSESSION", mongoadmin)
 		c.Set("DBSESSION", mongodb)
-		c.Set("DBSTATUS", &dbstatus)
+		c.Set("DBSTATUS", dbstatus)
 		c.Set("DB", db)
 		c.Next()
 	}
@@ -219,55 +217,13 @@ func declareServerFunctions(db *mgo.Database) {
 
 // DBStatus statut de la base de données
 type DBStatus struct {
-	ID      AdminID       `json:"id" bson:"_id"`
-	Working bool          `json:"working" bson:"working"`
-	Db      *mgo.Database `json:"-" bson:"-"`
-}
-
-func (status *DBStatus) read() error {
-	err := status.Db.C("Admin").Find(bson.M{"_id": status.ID}).One(&status)
-	return err
-}
-
-func (status *DBStatus) create(db *mgo.Database) error {
-	status.ID.Key = "lock"
-	status.ID.Type = "lock"
-	status.Working = false
-	status.Db = db
-	_, err := db.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
-	return err
-}
-
-func (status *DBStatus) lock() (*mgo.ChangeInfo, error) {
-	info, err := status.Db.C("Admin").Upsert(bson.M{"_id": status.ID}, bson.M{"_id": status.ID, "working": true})
-	status.read()
-	return info, err
-}
-
-func (status *DBStatus) unlock(db *mgo.Database) (*mgo.ChangeInfo, error) {
-	info, err := status.Db.C("Admin").Upsert(bson.M{"_id": status.ID}, bson.M{"_id": status.ID, "working": false})
-	status.read()
-	return info, err
+	ID     AdminID `json:"id" bson:"_id"`
+	Status *string `json:"status" bson:"status"`
 }
 
 func getDBStatus(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
-	dbstatus.read()
-	c.JSON(200, dbstatus.Working)
-}
-
-func lockDBStatus(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
-	info, err := dbstatus.lock()
-	spew.Dump(info)
-	spew.Dump(err)
-	c.JSON(200, dbstatus.Working)
-}
-
-func unlockDBStatus(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*DBStatus)
-	info, err := dbstatus.lock()
-	spew.Dump(info)
-	spew.Dump(err)
-	c.JSON(200, dbstatus.Working)
+	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
+	var status DBStatus
+	dbstatus.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&status)
+	c.JSON(200, status.Status)
 }

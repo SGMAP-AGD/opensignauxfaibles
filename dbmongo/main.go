@@ -66,21 +66,11 @@ func main() {
 				"message": message,
 			})
 		},
-		// TokenLookup is a string in the form of "<source>:<name>" that is used
-		// to extract token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-		// TokenLookup: "query:token",
-		// TokenLookup: "cookie:token",
 
-		// TokenHeadName is a string in the header. Default value is "Bearer"
+		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+
 		TokenHeadName: "Bearer",
 
-		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
 		TimeFunc: time.Now,
 	}
 
@@ -107,8 +97,7 @@ func main() {
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
 		api.GET("/database/status", getDBStatus)
-		api.GET("/database/lock", lockDBStatus)
-		api.GET("/database/unlock", unlockDBStatus)
+		api.GET("/mock/compact", mockCompact)
 		api.GET("/import/:batch", importBatch)
 
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
@@ -130,16 +119,56 @@ func main() {
 }
 
 func lastMove(c *gin.Context) {
-	session := c.Keys["ADMINSESSION"].(*mgo.Session)
-	db := session.DB(viper.GetString("DB"))
+	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
+
 	var lastMove struct {
 		ID       AdminID `json:"id" bson:"_id"`
 		LastMove int     `json:"last_move" bson:"last_move"`
 	}
 
-	db.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
+	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
 
 	c.JSON(200, lastMove.LastMove)
+}
+
+func mockCompact(c *gin.Context) {
+	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
+	var status DBStatus
+	dbstatus.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&status)
+	s := "Traitement du lot 1807"
+	status.Status = &s
+	dbstatus.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
+
+	var lastMove struct {
+		ID       AdminID `json:"id" bson:"_id"`
+		LastMove int     `json:"last_move" bson:"last_move"`
+	}
+
+	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
+	lastMove.LastMove++
+	dbstatus.C("Admin").Upsert(bson.M{"_id": lastMove.ID}, lastMove)
+
+	go func() {
+		time.Sleep(30 * time.Second)
+		mockFree(c)
+	}()
+}
+
+func mockFree(c *gin.Context) {
+	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
+	var status DBStatus
+	dbstatus.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&status)
+	status.Status = nil
+	dbstatus.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
+
+	var lastMove struct {
+		ID       AdminID `json:"id" bson:"_id"`
+		LastMove int     `json:"last_move" bson:"last_move"`
+	}
+
+	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
+	lastMove.LastMove++
+	dbstatus.C("Admin").Upsert(bson.M{"_id": lastMove.ID}, lastMove)
 }
 
 func loadConfig() {

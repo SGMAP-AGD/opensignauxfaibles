@@ -55,7 +55,7 @@
               </v-card>
             </v-bottom-sheet>
           </td>
-          <td class="text-xs-right">{{ props.item.dette_urssaf }}</td>
+          <td class="text-xs-right">{{ (props.item.dette_urssaf>0)?"oui":"non" }}</td>
           <td class="text-xs-right">{{ props.item.activite_partielle }}</td>
           <td class="text-xs-right">
             <v-bottom-sheet
