@@ -1,8 +1,8 @@
 <template>
-  <v-card>
+  <v-card class="elevation-6" >
     <v-card-title>
-      <v-list>
-        <v-list-tile>
+      <v-list style="width: 100%">
+        <v-list-tile >
           <v-list-tile-title>
             <v-combobox
               :items="files"
@@ -10,9 +10,12 @@
             ></v-combobox>
           </v-list-tile-title>
           <v-list-tile-content>
-            <v-btn icon>
+            <v-tooltip bottom>
+            <v-btn icon slot="activator">
               <v-icon>fa-plus-square</v-icon>
             </v-btn>
+            Ajouter
+            </v-tooltip>
           </v-list-tile-content>
         </v-list-tile>
         <v-list-tile

@@ -8,23 +8,21 @@
     show-arrows
     next-icon="fa-arrow-alt-circle-right"
     prev-icon="fa-arrow-alt-circle-left"
+
   >
     <v-tab
       v-for="batch in batches"
       :key="batch"
       ripple
     >
-      {{ batch }}
-
+      {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
     </v-tab>
     <v-tab-item
       v-for="batch in batches"
       :key="batch"
-      transparent
+      lazy
     >
-      <v-card flat>
-        <Batch :batchKey="batch"/><br/>
-      </v-card>
+        <Batch :batchKey="batch"/>
     </v-tab-item>
   </v-tabs> 
 </div>

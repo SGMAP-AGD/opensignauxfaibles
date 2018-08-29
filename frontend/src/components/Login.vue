@@ -3,6 +3,8 @@
   <v-layout center>
     <v-flex xs4 offset-xs4>
       <v-card>
+                  <v-form @submit="login">
+
         <v-toolbar class="toolbar" id="toolbar" card color="indigo darken-1">
           <v-spacer> </v-spacer>
             Identification
@@ -13,8 +15,10 @@
           <v-text-field type="password" label="Mot de passe" v-model="password" outline></v-text-field>
         </v-card-text>
         <v-card-actions>
-          <v-btn color="blue" flat @click="login">LOGIN</v-btn>
+          <v-btn color="blue" flat type="submit">LOGIN</v-btn>
         </v-card-actions>
+                  </v-form>
+
       </v-card>
     </v-flex>
   </v-layout>

@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
+
 	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
@@ -127,7 +130,16 @@ func main() {
 }
 
 func lastMove(c *gin.Context) {
-	c.JSON(200, 1)
+	session := c.Keys["ADMINSESSION"].(*mgo.Session)
+	db := session.DB(viper.GetString("DB"))
+	var lastMove struct {
+		ID       AdminID `json:"id" bson:"_id"`
+		LastMove int     `json:"last_move" bson:"last_move"`
+	}
+
+	db.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
+
+	c.JSON(200, lastMove.LastMove)
 }
 
 func loadConfig() {

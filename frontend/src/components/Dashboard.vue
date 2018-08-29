@@ -5,10 +5,10 @@
         
         <v-flex xs4>
           <v-card>
-            <v-card-title>
-              <h2>Intégration des données</h2>
+            <v-card-title class="headline font-weight-thin">
+              Intégration des données
             </v-card-title>
-                        <v-divider></v-divider>
+            <v-divider/>
             <v-card-text>
               <v-list>
                 <v-list-tile avatar>
@@ -23,9 +23,10 @@
         </v-flex>
         <v-flex xs4>
           <v-card>
-            <v-card-title>
-              <h2>Calcul prédictions</h2>
+            <v-card-title class="headline font-weight-thin" >
+              Calcul prédictions
             </v-card-title>
+            <v-divider/>
             <v-card-text>
               <v-list>
                 <v-list-tile avatar>
@@ -41,9 +42,10 @@
         </v-flex>
         <v-flex xs4>
           <v-card>
-            <v-card-title>
-              <h2>Visites d'entreprises</h2>
+            <v-card-title  class="headline font-weight-thin">
+              Visites d'entreprises
             </v-card-title>
+            <v-divider/>
             <v-card-text>
               <v-list>
                 <v-list-tile avatar>

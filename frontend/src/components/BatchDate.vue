@@ -1,5 +1,6 @@
 <template>
   <v-date-picker
+  landscape
   color="red darken-4"
   v-model="currentDate">
   </v-date-picker>
