@@ -15,7 +15,7 @@
           <v-text-field type="password" label="Mot de passe" v-model="password" outline></v-text-field>
         </v-card-text>
         <v-card-actions>
-          <v-btn block outline color="indigo darken-4" flat type="submit">LOGIN</v-btn>
+          <v-btn block outline  color="indigo darken-4" flat type="submit">LOGIN</v-btn>
         </v-card-actions>
                   </v-form>
 

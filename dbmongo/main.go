@@ -87,9 +87,9 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 
-		api.POST("/admin/batch", updateBatch)
+		api.POST("/admin/batch", upsertBatch)
 		api.GET("/admin/batch", listBatch)
-		api.DELETE("/admin/batch/:batchKey", dropBatch)
+		api.DELETE("/admin/batch", dropBatch)
 
 		api.GET("/admin/files", adminFiles)
 		api.POST("/admin/attach", attachFileBatch)

@@ -21,6 +21,12 @@
           </v-card-actions>
         </v-card>
       </v-flex>
+      <v-flex xs3>
+        <v-btn @click="go()">go</v-btn>
+      </v-flex>
+      <v-flex xs3>
+        {{ d }}
+      </v-flex>
     </v-layout>
   </v-container>
 </div>
@@ -34,11 +40,15 @@ export default {
     cloneDatabase () {
       axios.get('http://localhost:3000/api/admin/clone/' + this.to)
       .then(response => alert(JSON.stringify(response.data, null, 2)))
+    },
+    go () {
+      this.$axios.get('/api/debug/').then(r => { this.d = r.data })
     }
   },
   data () {
     return {
-      to: ''
+      to: '',
+      d: null
     }
   }
 }

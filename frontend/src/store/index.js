@@ -114,7 +114,7 @@ setInterval(
       })
     }
   },
-  1000)
+  5000)
 
 setInterval(
     function () {
@@ -122,7 +122,7 @@ setInterval(
         store.commit('refreshToken')
       }
     },
-    60000)
+    1800000)
 
 store.commit('updateRefs')
 store.commit('updateDbStatus')
