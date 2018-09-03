@@ -135,12 +135,14 @@ function finalize(k, v) {
 //
 
 var apart = Object.keys(v.apdemande).reduce((apart, hash) => {
-    apart[v.apdemande[hash].id_demande] = {
+    apart[v.apdemande[hash].id_demande.substring(0, 10)] = {
         "demande": hash,
         "consommation": []
     }
     return apart
 }, {})
+
+
 
 Object.keys(v.apconso).forEach(hash => {
     var valueap = v.apconso[hash]
