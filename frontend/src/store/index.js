@@ -73,7 +73,7 @@ const store = new Vuex.Store({
       })
     },
     updateDbStatus (state) {
-      axiosClient.get('/api/database/status').then(response => {
+      axiosClient.get('/api/admin/status').then(response => {
         state.dbstatus = response.data
       })
     },
@@ -114,7 +114,11 @@ setInterval(
       })
     }
   },
-  5000)
+  500)
+
+if (store.state.token != null) {
+  store.commit('refreshToken')
+}
 
 setInterval(
     function () {
@@ -122,7 +126,7 @@ setInterval(
         store.commit('refreshToken')
       }
     },
-    1800000)
+    30000)
 
 store.commit('updateRefs')
 store.commit('updateDbStatus')

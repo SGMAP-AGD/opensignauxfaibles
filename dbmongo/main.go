@@ -6,9 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
-
 	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
@@ -38,40 +35,16 @@ func main() {
 	r.Use(cors.New(config))
 
 	authMiddleware := &jwt.GinJWTMiddleware{
-		Realm:      "test zone",
-		Key:        []byte("this is my secret key"),
-		Timeout:    time.Hour,
-		MaxRefresh: time.Hour,
-		Authenticator: func(userId string, password string, c *gin.Context) (interface{}, bool) {
-			if (userId == "admin" && password == "admin") || (userId == "test" && password == "test") {
-				return &User{
-					UserName:  userId,
-					LastName:  "Bo-Yi",
-					FirstName: "Wu",
-				}, true
-			}
-
-			return nil, false
-		},
-		Authorizator: func(user interface{}, c *gin.Context) bool {
-			if v, ok := user.(string); ok && v == "admin" {
-				return true
-			}
-
-			return false
-		},
-		Unauthorized: func(c *gin.Context, code int, message string) {
-			c.JSON(code, gin.H{
-				"code":    code,
-				"message": message,
-			})
-		},
-
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-
+		Realm:         "OpenSignauxFaibles",
+		Key:           []byte(viper.GetString("JWT_SECRET")),
+		Timeout:       5 * time.Minute,
+		MaxRefresh:    5 * time.Minute,
+		Authenticator: authenticator,
+		Authorizator:  authorizator,
+		Unauthorized:  unauthorized,
+		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
 		TokenHeadName: "Bearer",
-
-		TimeFunc: time.Now,
+		TimeFunc:      time.Now,
 	}
 
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
@@ -80,95 +53,53 @@ func main() {
 
 	api := r.Group("api")
 	api.Use(authMiddleware.MiddlewareFunc())
+
 	{
 		api.GET("/refreshToken", authMiddleware.RefreshHandler)
-
 		api.GET("/purge", purge)
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
-
 		api.POST("/admin/batch", upsertBatch)
 		api.GET("/admin/batch", listBatch)
 		api.DELETE("/admin/batch", dropBatch)
-
 		api.GET("/admin/files", adminFiles)
 		api.POST("/admin/attach", attachFileBatch)
 		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
-		api.GET("/database/status", getDBStatus)
-		api.GET("/mock/compact", mockCompact)
-		api.GET("/import/:batch", importBatch)
+		api.GET("/admin/status", getDBStatus)
+		api.GET("/batch/reset", resetBatch)
+		api.GET("/batch/purge", purgeBatch)
+		api.GET("/batch/process", processBatch)
+		api.GET("/data/naf", getNAF)
+		api.GET("/lastMove", lastMove)
 
+		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
+		api.GET("/debug/", debug)
+		api.GET("/import/:batch", importBatch)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
 		api.GET("/compact/entreprise", compactEntreprise)
 		api.GET("/reduce/:algo/:batch/:siret", reduce)
 		api.GET("/reduce/:algo/:batch", reduce)
+	}
 
-		api.POST("/R/algo1", algo1)
-
-		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-		api.GET("/data/naf", getNAF)
-		api.GET("/debug/", debug)
-		api.GET("/lastMove", lastMove)
+	debugAPI := r.Group("debugAPI")
+	debugAPI.Use(authMiddleware.MiddlewareFunc())
+	{
+		debugAPI.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
+		debugAPI.GET("/debug/", debug)
+		debugAPI.GET("/import/:batch", importBatch)
+		debugAPI.GET("/compact/etablissement/:siret", compactEtablissement)
+		debugAPI.GET("/compact/etablissement", compactEtablissement)
+		debugAPI.GET("/compact/entreprise/:siren", compactEntreprise)
+		debugAPI.GET("/compact/entreprise", compactEntreprise)
+		debugAPI.GET("/reduce/:algo/:batch/:siret", reduce)
+		debugAPI.GET("/reduce/:algo/:batch", reduce)
 	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
-}
-
-func lastMove(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
-
-	var lastMove struct {
-		ID       AdminID `json:"id" bson:"_id"`
-		LastMove int     `json:"last_move" bson:"last_move"`
-	}
-
-	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
-
-	c.JSON(200, lastMove.LastMove)
-}
-
-func mockCompact(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
-	var status DBStatus
-	dbstatus.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&status)
-	s := "Traitement du lot 1807"
-	status.Status = &s
-	dbstatus.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
-
-	var lastMove struct {
-		ID       AdminID `json:"id" bson:"_id"`
-		LastMove int     `json:"last_move" bson:"last_move"`
-	}
-
-	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
-	lastMove.LastMove++
-	dbstatus.C("Admin").Upsert(bson.M{"_id": lastMove.ID}, lastMove)
-
-	go func() {
-		time.Sleep(30 * time.Second)
-		mockFree(c)
-	}()
-}
-
-func mockFree(c *gin.Context) {
-	dbstatus := c.Keys["DBSTATUS"].(*mgo.Database)
-	var status DBStatus
-	dbstatus.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&status)
-	status.Status = nil
-	dbstatus.C("Admin").Upsert(bson.M{"_id": status.ID}, status)
-
-	var lastMove struct {
-		ID       AdminID `json:"id" bson:"_id"`
-		LastMove int     `json:"last_move" bson:"last_move"`
-	}
-
-	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
-	lastMove.LastMove++
-	dbstatus.C("Admin").Upsert(bson.M{"_id": lastMove.ID}, lastMove)
 }
 
 func loadConfig() {
@@ -189,3 +120,7 @@ func loadConfig() {
 	err := viper.ReadInConfig()
 	fmt.Println(err)
 }
+
+func purgeBatch(c *gin.Context) {}
+
+func resetBatch(c *gin.Context) {}

@@ -9,7 +9,7 @@ import (
 )
 
 func predictionBrowse(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 
 	batch := c.Params.ByName("batch")
 	algo := c.Params.ByName("algo")

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -68,7 +69,7 @@ func nextBatchID(batchID string) (string, error) {
 }
 
 func attachFileBatch(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
 	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
 	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
 
@@ -112,7 +113,7 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
 
 	err = batch.save(db)
 	if err != nil {
@@ -124,7 +125,7 @@ func upsertBatch(c *gin.Context) {
 }
 
 func listBatch(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
 	var batch []AdminBatch
 	err := db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
 	if err != nil {
@@ -167,10 +168,43 @@ func batchToTime(batch string) (time.Time, error) {
 	return date, err
 }
 
-// func processBatch (batch AdminBatch) err {
-// - import files
-// - compact
-// - reduce
-// - predict
-// - createNextBatch
-// }
+func processBatch(c *gin.Context) {
+	dbstatus, err := (&DBStatus{}).new(c)
+	if err != nil {
+		c.JSON(500, err)
+	}
+
+	go func() {
+
+		// - import files
+		message := "Import des fichiers"
+		err := dbstatus.setDBStatus(&message)
+		fmt.Println(err)
+		time.Sleep(5 * time.Second)
+		dbstatus.setDBStatus(nil)
+		// - compact
+		message = "Compacting batch"
+		err = dbstatus.setDBStatus(&message)
+		fmt.Println(err)
+		time.Sleep(5 * time.Second)
+		dbstatus.setDBStatus(nil)
+		// - reduce
+		message = "Reducing batch - into features"
+		err = dbstatus.setDBStatus(&message)
+		fmt.Println(err)
+		dbstatus.setDBStatus(nil)
+		// - predict
+		message = "Computing Prediction"
+		err = dbstatus.setDBStatus(&message)
+		fmt.Println(err)
+		time.Sleep(5 * time.Second)
+		dbstatus.setDBStatus(nil)
+		// - createNextBatch
+		message = "Creating next batch"
+		err = dbstatus.setDBStatus(&message)
+		fmt.Println(err)
+		time.Sleep(1 * time.Second)
+		dbstatus.setDBStatus(nil)
+	}()
+	c.JSON(200, "ok !")
+}

@@ -107,7 +107,7 @@ var importFunctions = map[string]func(*AdminBatch) error{
 }
 
 func purge(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 	db.C("Etablissement").RemoveAll(nil)
 	db.C("Entreprise").RemoveAll(nil)
 	c.String(200, "Done")
@@ -116,7 +116,7 @@ func purge(c *gin.Context) {
 func importBatch(c *gin.Context) {
 	batch := AdminBatch{}
 	batchKey := c.Params.ByName("batch")
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
 	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
 	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
 	batch.load(batchKey, db, chanEtablissement, chanEntreprise)

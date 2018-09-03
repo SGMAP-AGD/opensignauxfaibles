@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/cnf/structhash"
 	"github.com/tealeg/xlsx"
 )
@@ -118,11 +120,9 @@ func parseAPDemande(path string) chan *APDemande {
 }
 
 func importAPDemande(batch *AdminBatch) error {
-
 	for _, file := range batch.Files["apdemande"] {
-		for apdemande := range parseAPDemande(file) {
+		for apdemande := range parseAPDemande(viper.GetString("APP_DATA") + file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
-
 			value := ValueEtablissement{
 				Value: Etablissement{
 					Siret: apdemande.Siret,

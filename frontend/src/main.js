@@ -15,7 +15,6 @@ Vue.config.productionTip = false
 // Prod
 // npm run build
 // cp dist/* ../dbmongo/static -r
-// Vue.prototype.$api = '/api'
 
 Vue.prototype.$axios = axios.create(
   {
@@ -34,8 +33,6 @@ Vue.prototype.$axios.interceptors.request.use(
   }
 )
 
-// Dev - commenter pour la prod
-Vue.prototype.$api = 'http://localhost:3000/api'
 Vue.prototype.$store = store
 
 /* eslint-disable no-new */

@@ -42,7 +42,7 @@ export default {
       .then(response => alert(JSON.stringify(response.data, null, 2)))
     },
     go () {
-      this.$axios.get('/api/debug/').then(r => { this.d = r.data })
+      this.$axios.get('/api/processBatch').then(r => { this.d = r.data })
     }
   },
   data () {

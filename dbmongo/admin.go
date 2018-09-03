@@ -48,7 +48,7 @@ func listTypes(c *gin.Context) {
 }
 
 func cloneDB(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
 
 	from := viper.GetString("DB")
 	to := c.Params.ByName("to")

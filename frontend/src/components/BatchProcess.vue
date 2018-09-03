@@ -43,7 +43,7 @@
           <v-btn
             color="green darken-1"
             flat="flat"
-            @click="mock(); dialog = false"
+            @click="doprocess(); dialog = false"
           >
             LANCER
           </v-btn>
@@ -68,8 +68,8 @@ export default {
     }
   },
   methods: {
-    mock () {
-      this.$axios.get('http://localhost:3000/api/mock/compact')
+    doprocess () {
+      this.process.do(this)
     }
   }
 }

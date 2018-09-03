@@ -122,17 +122,23 @@ export default {
           color: 'red',
           key: 'reset',
           img: '/static/poubelle.png',
-          description: 'Retour au batch précédent'},
+          description: 'Retour au batch précédent',
+          do (self) { self.$axios.get('/api/batch/reset') }
+        },
         {text: 'Purger',
           color: 'blue',
           key: 'purge',
           img: '/static/gomme.svg',
-          description: 'Retour au paramétrage'},
+          description: 'Retour au paramétrage',
+          do (self) { self.$axios.get('/api/batch/purge') }
+        },
         {text: 'Calcul Prédictions',
           color: 'green',
           key: 'predict',
           img: '/static/warning.png',
-          description: 'Intégration des données et calcul des prédictions.'}
+          description: 'Intégration des données et calcul des prédictions.',
+          do (self) { self.$axios.get('/api/batch/process') }
+        }
       ]
     }
   },
