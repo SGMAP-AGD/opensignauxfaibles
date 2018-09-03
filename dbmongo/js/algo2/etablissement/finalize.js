@@ -1,11 +1,16 @@
 function finalize(k, v) {
-    
+ 
     var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()
     liste_periodes = generatePeriodSerie(date_debut, date_fin)
     
-    v = Object.keys((v.batch || {})).sort().reduce((m, batch) => {
+    v = Object.keys((v.batch || {})).sort().filter(batch => batch <= actual_batch).reduce((m, batch) => {
         Object.keys(v.batch[batch]).forEach((type) => {
             m[type] = (m[type] || {})
+            var  array_delete = (v.batch[batch].compact.delete[type]||[])
+            if (array_delete != {}) {array_delete.forEach(hash => {
+                delete m[type][hash]
+            })
+            }
             Object.assign(m[type], v.batch[batch][type])
         })
         return m
@@ -18,6 +23,7 @@ function finalize(k, v) {
     v.cotisation = (v.cotisation || {})
     v.debit = (v.debit || {})
     v.delai = (v.delai || {})
+    
     
     // relier les débits
     var ecn = Object.keys(v.debit).reduce((m, h) => {
@@ -86,25 +92,25 @@ function finalize(k, v) {
         map_effectif[effectifTime] = (map_effectif[effectifTime] || 0) + effectif.effectif
         return map_effectif
     }, {})
-    
+
     
     
     Object.keys(map_effectif).forEach(time =>{
         time_d = new Date(parseInt(time))
-        time_offset = DateAddMonth(time_d, offset_effectif)
+        time_offset = DateAddMonth(time_d, -offset_effectif -1)
         if (time_offset.getTime() in output_indexed){
-            output_indexed[time].effectif = map_effectif[time_offset.getTime()]
-            output_indexed[time].date_effectif = time_offset
+            output_indexed[time_offset.getTime()].effectif = map_effectif[time]
+            output_indexed[time_offset.getTime()].date_effectif = time_d
         }
     }
 )
 
-output_array.forEach(function (val, index) {
-    if (val.effectif == null) {
-        delete output_indexed[val.periode.getTime()]
-        delete output_array[index]
+ output_array.forEach(function (val, index) {
+     if (val.effectif == null) {
+         delete output_indexed[val.periode.getTime()]
+         delete output_array[index]
     }
-})
+ })
 
 
 // inscription des effectifs dans les périodes
@@ -373,6 +379,7 @@ Object.keys(v.apconso).forEach(
         val.region = (sirene || {"region": null}).region
         val.departement = (sirene || {"departement": null}).departement
         val.code_ape  = (sirene || { "ape": null}).ape
+        val.raison_sociale = (sirene || {"raisonsociale": null}).raisonsociale
         val.activite_saisonniere = (sirene || {"activitesaisoniere": null}).activitesaisoniere
         val.productif = (sirene || {"productif": null}).productif
         val.debut_activite = (sirene || {"debut_activite":null}).debut_activite.getFullYear()

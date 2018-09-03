@@ -2,7 +2,9 @@
 title: "Untitled"
 author: "Pierre Camilleri"
 date: "25 juillet 2018"
-output: html_document
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -24,48 +26,19 @@ library(broom)
 library(rprojroot)
 library(groupdata2)
 library(h2o)
+library(R.utils)
 
 # Sources
-source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
-source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
-source(find_rstudio_root_file('tools','data_prep','normalize_df.R'))
-source(find_rstudio_root_file('tools','data_prep','feature_engineering.R'))
-source(find_rstudio_root_file('tools','data_prep','monthly_to_yearly.R'))
-source(find_rstudio_root_file('tools','data_prep','df_to_RNN_input.R'))
-source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
-source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
-source(find_rstudio_root_file('tools','objective','set_objective.R'))
-source(find_rstudio_root_file('tools','split','oversample.R'))
-source(find_rstudio_root_file('tools','split','split_snapshot_rdm_month.R'))
-source(find_rstudio_root_file('tools','split','generator.R'))
-source(find_rstudio_root_file('tools','split','assert_split_consistency.R'))
-source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
-source(find_rstudio_root_file('tools','utilities','AUCPR.R'))
-source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
-source(find_rstudio_root_file('tools','post_analysis','export.R'))
-source(find_rstudio_root_file('tools','utilities','pr.F1.R'))
-source(find_rstudio_root_file('tools','utilities','failure_APE.R'))
-source(find_rstudio_root_file('tools','utilities','count_etab_entr.R'))
-source(find_rstudio_root_file('tools','utilities','average_12m.R'))
-source(find_rstudio_root_file('tools','utilities','lowerWilsonBinCI.R'))
-source(find_rstudio_root_file('tools','utilities','quantile_APE.R'))
-source(find_rstudio_root_file('tools','utilities','replace_na_by.R'))
-source(find_rstudio_root_file('tools','utilities','add_past_trends.R'))
-source(find_rstudio_root_file('tools','models','benchmark_models.R'))
-source(find_rstudio_root_file('tools','models','caret_prob.R'))
-source(find_rstudio_root_file('tools','models','model_tune.R'))
-source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
-source(find_rstudio_root_file('tools','models','model_eval.R'))
-source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
+sourceDirectory(find_rstudio_root_file('tools'))
 ```
 
 
 ```{r}
-actual_period <- as.Date("2018-06-01")
+actual_period <- as.Date("2018-07-01")
 ```
 
 ```{r}
-raw_data <- connect_to_database('Features', '1807', algo = 'algo2', min_effectif = 20)
+raw_data <- connect_to_database('Features', '1808', algo = 'algo2', min_effectif = 20)
 ```
 
 ```{r}
@@ -80,7 +53,7 @@ Feature engineering here
 ```
 Train test split
 ```{r}
-seed <- 10011
+seed <- 1001
 samples <-
   split_snapshot_rdm_month(
     raw_data,
@@ -445,6 +418,7 @@ xgb_grid<- h2o.grid(algorithm = 'xgboost',
                     quiet_mode =  FALSE
                 )
 ```
+
 ```{r}
 # Tune 6 subsamples*
 
@@ -474,6 +448,7 @@ xgb_grid<- h2o.grid(algorithm = 'xgboost',
 
 # Rien à faire !
 ```
+
 ```{r}
 hyper_params <-
   list(max_depth = c(3,4,5),
@@ -523,6 +498,7 @@ best_model <- h2o.xgboost(
                     keep_cross_validation_fold_assignment = TRUE
                 )
 ```
+
 ```{r}
 h2o.performance(best_model, newdata = test.hex)
 ```
@@ -567,6 +543,7 @@ regpath <- h2o.getGLMFullRegularizationPath(glm_model)
 # ICI faire une routine qui plot le chemin. 
 
 ```
+
 ```{r}
 glm_model <- h2o.getModel('glm_model')
 lgb_model <- h2o.getModel('best_LGB')

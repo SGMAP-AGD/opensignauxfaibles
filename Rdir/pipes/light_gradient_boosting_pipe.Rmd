@@ -7,11 +7,11 @@ output: html_document
 
 ## Imports
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 
 # Libraries
 library(tidyverse)
-library(tricky)
+library(h2o)
 library(lubridate)
 library(assertthat)
 library(mongolite)
@@ -24,39 +24,23 @@ library(tibbletime)
 library(PRROC)
 library(broom)
 library(rprojroot)
+library(groupdata2)
+library(R.utils)
 
-# Sources
-
-source(find_rstudio_root_file('tools','interface','connect_to_database.R'))
-source(find_rstudio_root_file('tools','interface','mark_known_sirets.R'))
-source(find_rstudio_root_file('tools','data_prep','impute_missing_data_BdF.R'))
-source(find_rstudio_root_file('tools','objective','objective_RJ_LJ_PS.R'))
-source(find_rstudio_root_file('tools','objective','objective_default_or_failure.R'))
-source(find_rstudio_root_file('tools','objective','set_objective.R'))
-source(find_rstudio_root_file('tools','split','split_snapshot_rdm_month.R'))
-source(find_rstudio_root_file('tools','split','assert_split_consistency.R'))
-source(find_rstudio_root_file('tools','utilities','elapsed_months.R'))
-source(find_rstudio_root_file('tools','post_analysis','predict_at.R'))
-source(find_rstudio_root_file('tools','post_analysis','prepare_for_export.R'))
-source(find_rstudio_root_file('tools','post_analysis','export.R'))
-source(find_rstudio_root_file('tools','models','caret_prob.R'))
-source(find_rstudio_root_file('tools','models','model_tune.R'))
-source(find_rstudio_root_file('tools','models','model_cv_eval.R'))
-source(find_rstudio_root_file('tools','post_analysis','compare_prediction_probabilities.R'))
-
-
-
+sourceDirectory(find_rstudio_root_file('tools'))
 ```
 
-## Definition periode actuelle
+## Script parameters
 ```{r}
-actual_period <- as.Date("2018-05-01")
+actual_period <- as.Date("2018-08-01")
+last_batch = '1808'
+algorithm = 'algo2'
 ```
 
 
 ## Recuperation des données dans MongoDB
 ```{r}
-raw_data <- connect_to_database('Features', '1806', algo = 'algo2' ,min_effectif = 20)
+raw_data <- connect_to_database('Features', last_batch, algo = algorithm, min_effectif = 20)
 ```
 
 ## Definition de l'objectif
@@ -66,87 +50,131 @@ raw_data <- raw_data %>%
   set_objective('default')
 ```
 
-## Feature engineering
-
+## Filter for training sample
 ```{r}
-# 
-# libelle_naf_simplifie <- raw_data$libelle_naf_niveau1 
-# libelle_naf_simplifie[libelle_naf_simplifie %in% c(
-#   'Enseignement',
-#   'Activités extra-territoriales',
-#   'Administration publique',
-#   'Agriculture, sylviculture et pêche')] <- 
-#   'autre'
-# 
-# raw_data <- raw_data %>% 
-#   mutate(libelle_naf_simplifie = libelle_naf_simplifie) 
+date_inf <- as.Date("2015-01-01")
+date_sup <- as.Date("2016-12-01")
+
+all_data <- raw_data %>% 
+  arrange(periode) %>% 
+  filter_time(actual_period %m-% months(12) ~ actual_period)
+
+raw_data <- raw_data %>%
+      arrange(periode) %>%
+      filter_time( date_inf ~ date_sup) 
 
 ```
-## Imputation des données manquantes
-
-Uniquement si les données Banque de France ont été importées
 
 ```{r}
-# seed <- 1234
-# imputed_data_long <-  impute_missing_data_BdF(raw_data,3,3,seed)
-# imputed_data <- imputed_data_long %>% filter(.imp==1) %>% select(-.imp) %>% as_tbl_time(periode)
+
+aux_features <- feature_engineering(raw_data, all_data)
+
+raw_data <- aux_features[[1]]
+all_data <- aux_features[[2]]
+
+rm(aux_features)
+
+raw_data <- raw_data %>%
+    mutate_if(is.POSIXct, as.Date)
+
+all_data <- all_data %>%
+    mutate_if(is.POSIXct, as.Date)
 ```
 
-## Split train test 
-
-Avec suréchantillonnage. Les suréchantillons seront supprimés à la main dans les échantillons d'entraînement pour s'assurer une évaluation sur le même échantillon de validation croisé. 
-
 ```{r}
-seed <- 10011
+gc()
+h2o.init(ip = "localhost", port = 4444)
+train <- as.h2o(raw_data) 
+all <- as.h2o(all_data)
 
-samples <-
-  split_snapshot_rdm_month(
-    raw_data,
-    date_inf = as.Date("2014-01-01"),
-    date_sup = as.Date("2016-01-01"),
-    frac_train = 0.7,
-    frac_val = 0.3,
-    frac_eyeball = 0,
-    seed = seed
-  )
-
-sample_train <- samples$train %>% 
-  left_join(raw_data, by = c('siret','periode'))
-
-cv_folds <- samples$cv_fold
-
-assert_split_consistency(sample_train,cv_folds)
+```
+```{r}
+train['outcome'] <- h2o.relevel(x = train['outcome'], y = "non_default")
+all['outcome'] <- h2o.relevel(x = all['outcome'], y = "non_default")
 ```
 
 ## Model
 
-Avec foret aleatoire
-
 ```{r}
-source(find_rstudio_root_file('tools','models','model_predict_random_forest.R'))
+x_minimal = c(    
+"effectif",
+"effectif_diff_moy12",
+"apart_heures_consommees",
+"ratio_apart",
+"cotisation",                                
+"montant_part_ouvriere",                    
+"montant_part_patronale",
+"ratio_dette_moy12m",
+"dette_any_12m",
+"ratio_dette",
+"poids_frng",                               
+"taux_marge",                                
+"delai_fournisseur",                         
+"dette_fiscale",                            
+"financier_court_terme",                     
+"frais_financier")
+
+ratios_diane =c(
+    "CA",
+    "resultat_net_consolide",
+    "ratio_CAF",
+    "ratio_marge_operationnelle",
+    "taux_rotation_stocks",
+    "ratio_productivite",
+    "ratio_export",
+    "ratio_delai_client",
+    "ratio_liquidite_reduite",
+    "ratio_endettement",
+    "ratio_rend_capitaux_propres",
+    "ratio_rend_des_ress_durables",
+    "ratio_RetD", 
+    "taux_marge_neg",
+    "taux_marge_extr_neg",
+    "taux_marge_extr_pos")
+
+new_variables = c("etat_proc_collective_num",   
+                    "delai",
+                    "montant_echeancier",
+                    "ratio_dette_delai",
+                    "duree_delai",
+                    "age",
+                    "productif",
+                    "indice_monoactivite",
+                    "effectif_entreprise",
+                    "apart_entreprise",
+                    "nbr_etablissements_connus",
+                    "resultat_net_consolide",
+                    "nombre_etab_secondaire",
+                    "code_naf_niveau1")
+
+variations = c(grep('variation',names(raw_data), value = TRUE),
+                 grep('diff_moy12',names(raw_data), value = TRUE))
+
+distrib = c(grep('distrib',names(raw_data), value = TRUE))
+
+x_distrib = c(x_minimal,
+              ratios_diane,
+              new_variables,
+              variations,
+              distrib)
+
+y = "outcome"
 ```
 
 
 ```{r}
-set.seed(1900)
-
-formula_with_bdf <-  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
-  taux_marge + financier_court_terme + frais_financier + delai_fournisseur + poids_frng + dette_fiscale 
-
-
-#   tune_grid = expand.grid(mtry = c(2,3,4))
-#   
-# opt_mtry <- model_tune(function(x,y,z) model_predict_random_forest(formula_with_bdf,x,y,z),
-#                        sample_train, 
-#                        cv_folds, 
-#                        tune_grid)
-
-rf <- model_predict_random_forest(formula_with_bdf,sample_train, mtry = 4)
-rf <- rf$model
-
+model <- h2o.xgboost(
+                    model_id = 'Model_train',
+                    x= x_distrib, 
+                    y =y,
+                    training_frame = train,
+                    tree_method = "hist",
+                    grow_policy = "lossguide",
+                    learn_rate = 0.1,
+                    max_depth = 4,
+                    ntrees = 60,
+                    seed = 123
+                )
 ```
 
 
@@ -154,78 +182,25 @@ rf <- rf$model
 ```{r}
 
 #provisoire: retrait NA et inf
-tw_complete_long <- imputed_data_long %>%
-  filter(.imp != 0) %>% 
-  filter(!is.infinite(log_cotisationdue_effectif)) %>%
-  filter(!is.na(log_cotisationdue_effectif))
+# tw_complete_long <- imputed_data_long %>%
+#  filter(.imp != 0) %>% 
+#  filter(!is.infinite(log_cotisationdue_effectif)) %>%
+#  filter(!is.na(log_cotisationdue_effectif))
 
 
-prediction <- predict_at(actual_period,
-                         tw_complete_long,
-                         function(x) caret_prob(rf,x))
+prediction <- as.tibble(h2o.predict(model,all))
 
-prediction_month_before <- predict_at(actual_period %m-% months(1),
-                         tw_complete_long,
-                         function(x) caret_prob(rf,x))
-
-joined <-
-  compare_prediction_probabilities(
-    sample_start = prediction_month_before,
-    sample_end = prediction,
-    only_siret = TRUE) %>%
-  left_join(raw_data, by = c('siret', 'periode')) 
+pred_data <- all_data %>% 
+  cbind(prediction %>% rename(prob = default) %>% select(predict, prob)) %>% 
+  group_by(siret) %>%
+  mutate(last_prob = lag(prob)) %>% 
+  ungroup() %>% 
+  mutate(diff = prob - last_prob) 
 
 # Export
-joined %>% 
-  prepare_for_export(additional_names = c('diff','prob_old', 'connu')) %>% 
-  export(batch = '1806')
+pred_data %>% 
+  filter(periode == '2018-07-01') %>% 
+  prepare_for_export(additional_names = c('diff', 'connu')) %>%
+  export(batch = '1808')
 ```
 
-
-# Comparing several inputs
-```{r}
-formulas <- list(
-  reference = formula_with_bdf,
-    
-  without_bdf =  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m,
-  
-  with_naf =  outcome ~ cut_effectif + cut_growthrate + lag_effectif_missing +
-  apart_last12_months + apart_consommee + apart_share_heuresconsommees +
-  log_cotisationdue_effectif +
-  ratio_dettecumulee_cotisation_12m + indicatrice_dettecumulee_12m + 
-  taux_marge + financier_court_terme + frais_financier + delai_fournisseur +   poids_frng + dette_fiscale +
-  libelle_naf_simplifie
-)
-
-
-results <-  lapply(formulas, function (formula){ 
-      output <- model_cv_eval(function(y,z) random_predict_random_forest(formula,y,z,opt_mtry),sample_train,cv_folds, opt_mtry);
-      return(output$AUCPR_default)
-  })
-
-```
-
-Compare with and without bdf
-```{r}
-
-output_with <- model_predict_random_forest(formulas$reference,sample_train,mtry = 4)
-prediction_with <- predict_at(actual_period,
-                         tw_complete_long,
-                         function(x) caret_prob(output_with$model,x))
-
-output_without <- model_predict_random_forest(formulas$without_bdf,sample_train,mtry = 4)
-prediction_without <- predict_at(actual_period,
-                         tw_complete_long,
-                         function(x) caret_prob(output_without$model,x))
-
-joined <- compare_prediction_probabilities(sample_start = prediction_without,
-                                           sample_end = prediction_with) %>% 
-  left_join(raw_data,by = c('siret','periode')) %>% 
-  prepare_for_export(additional_names = c('diff','prob_old'))
-
-joined %>% export(batch = '1806')
-```
- 

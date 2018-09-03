@@ -4,4 +4,4 @@ function map() {
      'batch': actual_batch,
      'algo': 'algo2'},
     this.value)
-}
+} 
