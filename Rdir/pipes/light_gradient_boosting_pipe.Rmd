@@ -116,6 +116,7 @@ x_minimal = c(
 
 ratios_diane =c(
     "CA",
+    "chiffre_affaires_net_lie_aux_exportations",
     "resultat_net_consolide",
     "ratio_CAF",
     "ratio_marge_operationnelle",
