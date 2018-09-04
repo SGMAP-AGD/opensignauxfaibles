@@ -147,15 +147,15 @@ feature_engineering <- function(train_set,
       mutate(code_naf_niveau1 = as.factor(code_naf_niveau1))
 
     data <- data %>%
-      select(
-        -stocks,
-        -total_immob_fin,
-        -total_immob_incorp,
-        -total_immob_corp,
-        -creances_expl,
-        -total_dettes_fin,
-        -total_dette_expl_et_divers
-      ) %>%
+      # select(
+      #    -stocks,
+      #    -total_immob_fin,
+      #    -total_immob_incorp,
+      #    -total_immob_corp,
+      #    -creances_expl,
+      #    -total_dettes_fin,
+      #    -total_dette_expl_et_divers
+      # ) %>%
       rename(
         ratio_liquidite_reduite = liquidite_reduite,
         ratio_rentabilite_nette = rentabilite_nette_pourcent,
