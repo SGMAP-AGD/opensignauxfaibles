@@ -33,6 +33,11 @@ func (batchFiles BatchFiles) attachFile(fileType string, file string) {
 	batchFiles[fileType] = append(batchFiles[fileType], file)
 }
 
+func isBatchID(batchID string) bool {
+	_, err := time.Parse("0601", batchID)
+	return err == nil
+}
+
 func (batch *AdminBatch) load(
 	batchKey string,
 	db *mgo.Database,
@@ -45,7 +50,7 @@ func (batch *AdminBatch) load(
 }
 
 func (batch *AdminBatch) save(db *mgo.Database) error {
-	err := db.C("Admin").Update(bson.M{"_id": batch.ID}, batch)
+	_, err := db.C("Admin").Upsert(bson.M{"_id": batch.ID}, batch)
 	return err
 }
 
@@ -137,10 +142,9 @@ func listBatch(c *gin.Context) {
 }
 
 func getBatchesID(db *mgo.Database) []string {
-	var batch []AdminBatch
-	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
+	batches := getBatches(db)
 	var batchesID []string
-	for _, b := range batch {
+	for _, b := range batches {
 		batchesID = append(batchesID, b.ID.Key)
 	}
 	return batchesID
@@ -150,6 +154,12 @@ func getBatches(db *mgo.Database) []*AdminBatch {
 	var batches []*AdminBatch
 	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
 	return batches
+}
+
+func getBatch(db *mgo.Database, batchID string) (*AdminBatch, error) {
+	var batch *AdminBatch
+	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchID}).Sort("_id.key").One(batch)
+	return batch, err
 }
 
 // batchToTime calcule la date de référence à partir de la référence de batch
@@ -169,10 +179,7 @@ func batchToTime(batch string) (time.Time, error) {
 }
 
 func processBatch(c *gin.Context) {
-	dbstatus, err := (&DBStatus{}).new(c)
-	if err != nil {
-		c.JSON(500, err)
-	}
+	dbstatus := c.Keys["status"].(*DBStatus)
 
 	go func() {
 

@@ -18,6 +18,7 @@
             </v-tooltip>
           </v-list-tile-content>
         </v-list-tile>
+        <v-divider/>
         <v-list-tile
         v-for="file in currentFiles"
         :key="file"

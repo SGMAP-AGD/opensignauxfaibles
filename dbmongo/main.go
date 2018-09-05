@@ -72,7 +72,7 @@ func main() {
 		api.GET("/batch/purge", purgeBatch)
 		api.GET("/batch/process", processBatch)
 		api.GET("/data/naf", getNAF)
-		api.GET("/lastMove", lastMove)
+		api.GET("/admin/epoch", epoch)
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/debug/", debug)
@@ -113,7 +113,7 @@ func loadConfig() {
 	viper.SetDefault("DB_HOST", "127.0.0.1")
 	viper.SetDefault("DB_PORT", "27017")
 	viper.SetDefault("DB", "opensignauxfaibles")
-	viper.SetDefault("JWT_SECRET", "One might change this because one day it will not be sufficient")
+	viper.SetDefault("JWT_SECRET", "Secret à changer")
 	viper.SetDefault("KANBOARD_ENDPOINT", "http://localhost/kanboard/jsonrpc.php")
 	viper.SetDefault("KANBOARD_USERNAME", "admin")
 	viper.SetDefault("KANBOARD_PASSWORD", "admin")

@@ -192,7 +192,7 @@
     methods: {
       getNAF () {
         var self = this
-        this.$axios.get(this.$api + '/data/naf').then(response => { self.naf = response.data })
+        this.$axios.get('/api/data/naf').then(response => { self.naf = response.data })
       },
       toggleAll () {
         if (this.selected.length) this.selected = []
@@ -209,7 +209,7 @@
       getPrediction () {
         var self = this
         this.loading = true
-        this.$axios.get(this.$api + '/data/prediction/' + this.batchKey + '/algo1/0', this.$store.getters.axiosConfig).then(response => {
+        this.$axios.get('/api/data/prediction/' + this.batchKey + '/algo1/0', this.$store.getters.axiosConfig).then(response => {
           self.prediction = response.data.map(prediction => {
             var etablissement = self.flattenTypes(
               self.projectBatch(

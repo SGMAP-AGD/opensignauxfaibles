@@ -34,6 +34,36 @@ func DB() gin.HandlerFunc {
 	dbstatus := mongostatus.DB(dbDatabase)
 	db := mongodb.DB(dbDatabase)
 
+	firstBatchID := viper.GetString("FIRST_BATCH")
+	if !isBatchID(firstBatchID) {
+		panic("Paramètre FIRST_BATCH incorrect, vérifiez la configuration.")
+	}
+
+	firstBatch, err := getBatch(db, firstBatchID)
+	fmt.Println(firstBatch)
+
+	if firstBatch == nil {
+		firstBatch = &AdminBatch{
+			ID: AdminID{
+				Key:  firstBatchID,
+				Type: "batch",
+			},
+		}
+		err := firstBatch.save(db)
+		if err != nil {
+			panic("Impossible de créer le premier batch: " + err.Error())
+		}
+	}
+
+	status := DBStatus{
+		DB: dbstatus,
+		ID: AdminID{
+			Key:  "status",
+			Type: "status",
+		},
+	}
+	status.write()
+
 	// pousse les fonctions partagées JS
 	err = declareServerFunctions(db)
 	if err != nil {
@@ -56,6 +86,7 @@ func DB() gin.HandlerFunc {
 		c.Set("ChanEtablissement", chanEtablissement)
 		c.Set("dbstatus", dbstatus)
 		c.Set("db", db)
+		c.Set("status", &status)
 		c.Next()
 	}
 }
@@ -248,15 +279,8 @@ func declareServerFunctions(db *mgo.Database) error {
 type DBStatus struct {
 	ID     AdminID       `json:"id" bson:"_id"`
 	Status *string       `json:"status" bson:"status"`
+	Epoch  int           `json:"epoch" bson:"epoch"`
 	DB     *mgo.Database `json:"-" bson:"-"`
-}
-
-func (*DBStatus) new(c *gin.Context) (DBStatus, error) {
-	status := DBStatus{
-		DB: c.Keys["dbstatus"].(*mgo.Database),
-	}
-	err := status.read()
-	return status, err
 }
 
 func (status *DBStatus) read() error {
@@ -268,57 +292,25 @@ func (status *DBStatus) read() error {
 }
 
 func (status *DBStatus) write() error {
+	status.Epoch++
 	_, err := status.DB.C("Admin").Upsert(bson.M{"_id.key": "status", "_id.type": "status"}, status)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	err = status.incLastMove()
 	return err
 }
 
 func getDBStatus(c *gin.Context) {
-	var status DBStatus
-	status.DB = c.Keys["dbstatus"].(*mgo.Database)
-	status.read()
+	status := c.Keys["status"].(*DBStatus)
 	c.JSON(200, status.Status)
 }
 
 func (status *DBStatus) setDBStatus(message *string) error {
-	status.read()
-	if status.Status != nil && *message != "" {
+	if status.Status != nil && message != nil {
 		return errors.New("Ne peut remplacer une activité en cours")
 	}
 	status.Status = message
-
 	return status.write()
 }
 
-// LastMove Indicateur entier signalant les mises à jours de données
-type LastMove struct {
-	ID       AdminID `json:"id" bson:"_id"`
-	LastMove int     `json:"last_move" bson:"last_move"`
-}
-
-func lastMove(c *gin.Context) {
-	dbstatus := c.Keys["dbstatus"].(*mgo.Database)
-
-	var lastMove LastMove
-
-	dbstatus.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
-	c.JSON(200, lastMove.LastMove)
-}
-
-func (status DBStatus) incLastMove() error {
-	var lastMove LastMove
-	err := status.DB.C("Admin").Find(bson.M{"_id.type": "last_move", "_id.key": "last_move"}).One(&lastMove)
-	if err != nil {
-		return err
-	}
-	lastMove.LastMove++
-	_, err = status.DB.C("Admin").Upsert(bson.M{"_id": lastMove.ID}, lastMove)
-	if err != nil {
-		return err
-	}
-	return nil
+func epoch(c *gin.Context) {
+	status := c.Keys["status"].(*DBStatus)
+	c.JSON(200, status.Epoch)
 }
