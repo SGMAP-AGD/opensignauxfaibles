@@ -73,52 +73,24 @@ func nextBatchID(batchID string) (string, error) {
 	return nextBatchTime.Format("0601"), err
 }
 
-func attachFileBatch(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
-	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
-	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
-
-	batch := AdminBatch{}
-
-	var params struct {
-		Batch    string `json:"batch"`
-		FileType string `json:"type"`
-		File     string `json:"file"`
-	}
-
-	err := c.Bind(&params)
-
-	if err != nil {
-		c.JSON(500, err)
-		return
-	}
-	err = batch.load(params.Batch, db, chanEtablissement, chanEntreprise)
-
-	if err != nil {
-		c.JSON(500, "Erreur au chargement du lot")
-		return
-	}
-	batch.Files.attachFile(params.FileType, params.File)
-
-	err = batch.save(db)
-	if err != nil {
-		c.JSON(500, "Erreur à l'enregistrement")
-		return
-	}
-	c.JSON(200, batch)
+func sp(s string) *string {
+	return &s
 }
 
 func upsertBatch(c *gin.Context) {
-	batch := AdminBatch{}
-	err := c.Bind(&batch)
-	spew.Dump(err)
+	status := c.Keys["status"].(*DBStatus)
+	err := status.setDBStatus(sp("Sauvegarde du Batch"))
+	if err != nil {
+		c.JSON(500, err)
+	}
 
+	db := c.Keys["db"].(*mgo.Database)
+	batch := AdminBatch{}
+	err = c.Bind(&batch)
 	if err != nil {
 		c.JSON(500, err)
 		return
 	}
-
-	db := c.Keys["db"].(*mgo.Database)
 
 	err = batch.save(db)
 	if err != nil {
@@ -126,6 +98,7 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
+	status.setDBStatus(nil)
 	c.JSON(200, batch)
 }
 

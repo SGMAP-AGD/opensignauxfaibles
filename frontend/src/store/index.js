@@ -35,6 +35,7 @@ const store = new Vuex.Store({
     batches: [],
     dbstatus: null,
     currentBatchKey: 0,
+    currentType: null,
     epoch: 0
   },
   mutations: {
@@ -87,6 +88,15 @@ const store = new Vuex.Store({
     },
     setCurrentBatchKey (state, key) {
       state.currentBatchKey = key
+    },
+    setCurrentType (state, type) {
+      state.currentType = type
+    }
+  },
+  actions: {
+    saveBatch (state, batch) {
+      console.log(JSON.stringify(batch, null, 2))
+      axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
     }
   },
   getters: {

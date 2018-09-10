@@ -3,6 +3,7 @@
   landscape
   locale="fr-FR"
   color="red darken-4"
+  type="month"
   v-model="currentDate">
   </v-date-picker>
   
@@ -23,7 +24,10 @@ export default {
     currentDate: {
       get () {
         if (this.$store.state.batches != null) {
-          return this.currentBatch.params[this.param.prop].substring(0, 10)
+          var date = this.currentBatch.params[this.param.prop].substring(0, 7)
+          date = (date < '1970-01') ? '1970-01' : date
+          console.log(date)
+          return date
         }
       },
       set (date) {

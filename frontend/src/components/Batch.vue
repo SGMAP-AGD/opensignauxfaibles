@@ -42,10 +42,10 @@
           <v-list-tile
           v-for="type in types"
           :key="type.text"
-          @click="setCurrentType(type)"
+          @click="setCurrentType(type.type)"
           >
             <v-list-tile-content
-            :class="(type==currentType) ? 'selected': null"
+            :class="(type.type==currentType) ? 'selected': null"
             >
               <v-list-tile-title>{{ type.text }}</v-list-tile-title>
             </v-list-tile-content>
@@ -89,7 +89,7 @@
             />
             <BatchFile 
             :type="currentType"
-            v-if="types.includes(currentType)"
+            v-if="types.map(t => t.type).includes(currentType)"
             />
             <BatchProcess
             :process="processes.filter(p => p.key === currentType)[0]"
@@ -111,7 +111,6 @@ export default {
   props: ['batchKey'],
   data () {
     return {
-      currentType: null,
       parameters: [
         {text: 'Date de début', key: 'dateDebut', prop: 'date_debut'},
         {text: 'Date de fin', key: 'dateFin', prop: 'date_fin'},
@@ -148,6 +147,10 @@ export default {
     }
   },
   computed: {
+    currentType: {
+      get () { return this.$store.state.currentType },
+      set (type) { this.$store.commit('setCurrentType', type) }
+    },
     currentBatch () {
       return this.$store.state.batches.filter(b => b.id.key === this.batchKey)
     },

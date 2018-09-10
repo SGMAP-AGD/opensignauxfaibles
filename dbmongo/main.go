@@ -37,8 +37,8 @@ func main() {
 	authMiddleware := &jwt.GinJWTMiddleware{
 		Realm:         "OpenSignauxFaibles",
 		Key:           []byte(viper.GetString("JWT_SECRET")),
-		Timeout:       5 * time.Minute,
-		MaxRefresh:    5 * time.Minute,
+		Timeout:       time.Hour,
+		MaxRefresh:    time.Hour,
 		Authenticator: authenticator,
 		Authorizator:  authorizator,
 		Unauthorized:  unauthorized,
@@ -63,7 +63,6 @@ func main() {
 		api.GET("/admin/batch", listBatch)
 		api.DELETE("/admin/batch", dropBatch)
 		api.GET("/admin/files", adminFiles)
-		api.POST("/admin/attach", attachFileBatch)
 		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
