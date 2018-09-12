@@ -95,8 +95,24 @@ const store = new Vuex.Store({
   },
   actions: {
     saveBatch (state, batch) {
-      console.log(JSON.stringify(batch, null, 2))
       axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
+    },
+    checkEpoch () {
+      if (store.state.token != null) {
+        axiosClient.get('/api/admin/epoch').then(response => {
+          if (response.data !== store.state.epoch) {
+            store.commit('setEpoch', response.data)
+            store.commit('updateRefs')
+            store.commit('updateBatches')
+            store.commit('updateDbStatus')
+          }
+        }).catch(error => {
+          if (error.response.status === 401) {
+            store.commit('logout')
+          }
+          console.log(error.response)
+        })
+      }
     }
   },
   getters: {
@@ -108,21 +124,7 @@ const store = new Vuex.Store({
 
 setInterval(
   function () {
-    if (store.state.token != null) {
-      axiosClient.get('/api/admin/epoch').then(response => {
-        if (response.data !== store.state.epoch) {
-          store.commit('setEpoch', response.data)
-          store.commit('updateRefs')
-          store.commit('updateBatches')
-          store.commit('updateDbStatus')
-        }
-      }).catch(error => {
-        if (error.response.status === 401) {
-          store.commit('logout')
-        }
-        console.log(error.response)
-      })
-    }
+    store.dispatch('checkEpoch')
   },
   2000)
 

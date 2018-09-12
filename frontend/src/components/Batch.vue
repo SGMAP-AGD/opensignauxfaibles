@@ -155,7 +155,7 @@ export default {
       return this.$store.state.batches.filter(b => b.id.key === this.batchKey)
     },
     types () {
-      return this.$store.state.types
+      return this.$store.state.types.sort((a, b) => a.text.localeCompare(b.text))
     },
     features () {
       return this.$store.state.features

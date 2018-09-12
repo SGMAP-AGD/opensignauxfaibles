@@ -12,6 +12,11 @@
 <script>
 export default {
   props: ['date', 'param'],
+  methods: {
+    monthToISO (month) {
+      return (new Date(Date.parse(month))).toISOString()
+    }
+  },
   computed: {
     currentBatchKey () {
       return this.$store.state.currentBatchKey
@@ -25,13 +30,14 @@ export default {
       get () {
         if (this.$store.state.batches != null) {
           var date = this.currentBatch.params[this.param.prop].substring(0, 7)
-          date = (date < '1970-01') ? '1970-01' : date
-          console.log(date)
+          date = (date < '1970-01') ? new Date().toISOString().substring(0, 7) : date
           return date
         }
       },
-      set (date) {
-
+      set (month) {
+        var batch = this.currentBatch
+        batch.params[this.param.prop] = this.monthToISO(month)
+        this.$store.dispatch('saveBatch', batch)
       }
     }
   }

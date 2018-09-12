@@ -12,13 +12,16 @@
         :key="index" 
         @click="setMenu(index)"
         :to="item.action"
-        :color="item.color">
-          <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+        :color="item.color"
+          style="vertical-align: middle">
+          <v-list-tile-title
+          style="vertical-align: middle">
+            {{ item.title }}
+          </v-list-tile-title>
         </v-list-tile>
       </v-list>
     </v-menu>
     <v-toolbar-title>
-      <span class="gray">Open</span>
       <span id="blue">Signaux</span>
       <span id="red">Faibles</span><br/>
       <span class="caption gray">Plateforme de détection des entreprises fragiles</span>
