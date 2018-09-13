@@ -113,7 +113,10 @@ export default {
           color: 'grey darken-2' },
         { title: 'Admin',
           action: '/admin',
-          color: 'black'}
+          color: 'black'},
+        { title: 'Test',
+          action: '/admintoto',
+          color: 'yellow'}
       ]
     }
   },

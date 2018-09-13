@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/spf13/viper"
@@ -93,10 +94,14 @@ func importBatch(c *gin.Context) {
 				c.JSON(500, err)
 				return
 			}
-
 		}
 	} else {
 		c.JSON(403, "Ce lot est fermé, import impossible.")
 	}
+}
 
+func lastOpenBatch(c *gin.Context) {
+	db := c.Keys["db"].(*mgo.Database)
+	batches := getBatches(db)
+	spew.Dump(batches)
 }

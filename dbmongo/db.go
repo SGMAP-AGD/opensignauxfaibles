@@ -293,7 +293,7 @@ func (status *DBStatus) read() error {
 
 func (status *DBStatus) write() error {
 	status.Epoch++
-	_, err := status.DB.C("Admin").Upsert(bson.M{"_id.key": "status", "_id.type": "status"}, status)
+	_, err := status.DB.C("Admin").Upsert(bson.M{"_id": bson.M{"key": "status", "type": "status"}}, status)
 	return err
 }
 

@@ -252,6 +252,13 @@ func compactEtablissement(c *gin.Context) {
 
 }
 
+func getFeatures(c *gin.Context) {
+	db := c.Keys["db"].(*mgo.Database)
+	var data []interface{}
+	db.C("Features").Find(nil).All(&data)
+	c.JSON(200, data)
+}
+
 func compactEntreprise(c *gin.Context) {
 	db, _ := c.Keys["db"].(*mgo.Database)
 	batches := getBatchesID(db)

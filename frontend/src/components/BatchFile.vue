@@ -1,7 +1,7 @@
 <template>
 
   <v-card class="elevation-6" >
-    <v-carte-title class="header">
+    <v-card-title class="header">
       <v-toolbar
         class="elevation-3"
         color="red darken-4"
@@ -10,18 +10,21 @@
       >
       <v-toolbar-title>{{ currentType.text }}</v-toolbar-title>
     </v-toolbar>
-    </v-carte-title>
+    </v-card-title>
     <v-card-text>
       <v-flex xs12>
         <v-combobox 
           multiple
           deletableChips
           chips
+          flat
           v-model="addFiles"
-          :items="filterFiles"
+          :items="files"
           item-text="filename"
+          item-value="name"
           label="Ajouter un fichier"
           ripple
+          
           append-outer-icon="fa-plus-square"
           @click:append-outer="add"
         >
@@ -29,7 +32,6 @@
             slot="item"
             slot-scope="{index, item, parent}"
           >
-            <v-list dense style="width: 100%">
               <v-list-tile style="width: 100%">
                 <v-list-tile-content>
                   <span class="strong">{{ item.filename }}</span>
@@ -40,7 +42,6 @@
                   <span class="light">{{ item.pdate }}</span>
                 </v-list-tile-action>
               </v-list-tile>
-            </v-list>
           </template>
         </v-combobox>
       </v-flex>
@@ -96,6 +97,9 @@ export default {
     }
   },
   methods: {
+    comboFilter (item, queryText, itemText) {
+      return item.name.toLowerCase().includes(queryText.toLowerCase())
+    },
     formatBytes (a, b) {
       if (a === 0) return '0 Bytes'
       var c = 1024
@@ -118,7 +122,7 @@ export default {
       this.currentBatch = batch
     },
     fileDetail (file) {
-      var candidates = this.files.filter(f => f.name === file)
+      var candidates = (this.files || []).filter(f => f.name === file)
       if (candidates.length === 1) {
         return candidates[0]
       } else {
@@ -173,7 +177,7 @@ export default {
       }
     },
     files () {
-      return this.$store.state.files.map(f => {
+      var a = (this.$store.state.files || []).map(f => {
         var arrayFile = f.name.split('/')
         var lengthArrayFile = arrayFile.length
         f = {
@@ -186,10 +190,14 @@ export default {
           date: new Date(f.date)
         }
         return f
-      }).sort((a, b) => (a.date.getTime() < b.date.getTime()) ? 1 : -1)
+      })
+      console.log(a)
+      return a
     },
     filterFiles () {
-      return this.files.filter(f => !(this.currentFiles.includes(f)))
+      return this.files.filter(f => {
+        return !(this.currentFiles.includes(f))
+      })
     }
   }
 }

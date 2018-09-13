@@ -31,7 +31,7 @@ const store = new Vuex.Store({
     token: null,
     types: null,
     features: null,
-    files: null,
+    files: [],
     batches: [],
     dbstatus: null,
     currentBatchKey: 0,
@@ -82,9 +82,9 @@ const store = new Vuex.Store({
       state.epoch = epoch
     },
     updateRefs (state) {
-      axiosClient.get('/api/admin/types').then(response => { state.types = response.data.sort() })
+      axiosClient.get('/api/admin/types').then(response => { state.types = response.data.sort((a, b) => a.text.localeCompare(b.text)) })
       axiosClient.get('/api/admin/features').then(response => { state.features = response.data })
-      axiosClient.get('/api/admin/files').then(response => { state.files = response.data })
+      axiosClient.get('/api/admin/files').then(response => { state.files = response.data.sort((a, b) => a.name.localeCompare(b.name)) })
     },
     setCurrentBatchKey (state, key) {
       state.currentBatchKey = key

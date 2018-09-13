@@ -71,6 +71,7 @@ func main() {
 		api.GET("/batch/purge", purgeBatch)
 		api.GET("/batch/process", processBatch)
 		api.GET("/data/naf", getNAF)
+		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)

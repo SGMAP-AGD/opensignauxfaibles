@@ -3,7 +3,7 @@
   <div class="fixed d-inline-block elevation-6">
     <v-navigation-drawer
     permanent
-    
+    :key="'nav' + currentBatch"
     style="z-index: 1"
     >
       <v-list dense class="pt-0">
@@ -18,7 +18,7 @@
           </v-list-tile>
           <v-list-tile
           v-for="param in parameters"
-          :key="param.key"
+          :key="batchKey + param.key"
           ripple
           @click="setCurrentType(param.key)">
             <v-list-tile-content
@@ -37,19 +37,18 @@
               Fichiers
             </v-list-tile-title>
           </v-list-tile>
-
-          <v-divider></v-divider>
           <v-list-tile
           v-for="type in types"
           :key="type.text"
           @click="setCurrentType(type.type)"
+          :class="(type.type==currentType) ? 'selected': null"
           >
             <v-list-tile-content
-            :class="(type.type==currentType) ? 'selected': null"
             >
               <v-list-tile-title>{{ type.text }}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
+          <v-divider></v-divider>
         </v-list-group>
         <v-list-group>
           <v-list-tile slot="activator">
@@ -63,7 +62,7 @@
           <v-divider></v-divider>
           <v-list-tile
           v-for="process in processes"
-          :key="process.key"
+          :key="batchKey + process.key"
           @click="setCurrentType(process.key)"
           >
             <v-list-tile-content
@@ -74,7 +73,7 @@
           </v-list-tile>
         </v-list-group>
       </v-list>
-    </v-navigation-drawer>
+    </v-navigation-drawer> 
     </div>
     <div class="flex-item">
       <v-container grid-list-xs text-xs-center>
@@ -82,16 +81,18 @@
           <v-flex xs12 >
             <BatchDate 
             class="d-inline-block elevation-6"
-
+            :key="batchKey + 'batchDate'"
             :date="currentType"
             :param="parameters.filter(p => p.key === currentType)[0]"
             v-if="parameters.map(p => p.key).includes(currentType)"
             />
             <BatchFile 
+            :key="batchKey + 'batchFile'"
             :type="currentType"
             v-if="types.map(t => t.type).includes(currentType)"
             />
             <BatchProcess
+            :key="batchKey + 'batchProcess'"
             :process="processes.filter(p => p.key === currentType)[0]"
             v-if="processes.map(p => p.key).includes(currentType)"
             />
@@ -111,6 +112,7 @@ export default {
   props: ['batchKey'],
   data () {
     return {
+      currentType: null,
       parameters: [
         {text: 'Date de début', key: 'dateDebut', prop: 'date_debut'},
         {text: 'Date de fin', key: 'dateFin', prop: 'date_fin'},
@@ -141,27 +143,20 @@ export default {
       ]
     }
   },
-  methods: {
-    setCurrentType (type) {
-      this.currentType = type
-    }
-  },
   computed: {
-    currentType: {
-      get () { return this.$store.state.currentType },
-      set (type) { this.$store.commit('setCurrentType', type) }
-    },
     currentBatch () {
       return this.$store.state.batches.filter(b => b.id.key === this.batchKey)
-    },
-    types () {
-      return this.$store.state.types.sort((a, b) => a.text.localeCompare(b.text))
     },
     features () {
       return this.$store.state.features
     },
-    files () {
-      return this.$store.state.files
+    types () {
+      return this.$store.state.types
+    }
+  },
+  methods: {
+    setCurrentType (type) {
+      this.currentType = type
     }
   },
   components: { BatchFile, BatchDate, BatchProcess }
