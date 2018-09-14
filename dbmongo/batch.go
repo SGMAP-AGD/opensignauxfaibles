@@ -79,16 +79,16 @@ func sp(s string) *string {
 
 func upsertBatch(c *gin.Context) {
 	status := c.Keys["status"].(*DBStatus)
-	err := status.setDBStatus(sp("Sauvegarde du Batch"))
-	if err != nil {
-		c.JSON(500, err)
-		fmt.Println(err)
-		return
-	}
+	// err := status.setDBStatus(sp("Sauvegarde du Batch"))
+	// if err != nil {
+	// 	c.JSON(500, err)
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
 	db := c.Keys["db"].(*mgo.Database)
 	batch := AdminBatch{}
-	err = c.Bind(&batch)
+	err := c.Bind(&batch)
 	if err != nil {
 		c.JSON(500, err)
 		fmt.Println(err)
@@ -102,7 +102,9 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
-	status.setDBStatus(nil)
+	status.Epoch++
+	status.write()
+
 	c.JSON(200, batch)
 }
 
@@ -134,9 +136,10 @@ func getBatches(db *mgo.Database) []*AdminBatch {
 }
 
 func getBatch(db *mgo.Database, batchID string) (*AdminBatch, error) {
-	var batch *AdminBatch
-	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchID}).Sort("_id.key").One(batch)
-	return batch, err
+	var batch AdminBatch
+	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchID}).One(&batch)
+	spew.Dump(batch)
+	return &batch, err
 }
 
 // batchToTime calcule la date de référence à partir de la référence de batch
@@ -160,27 +163,51 @@ func processBatch(c *gin.Context) {
 
 	go func() {
 		dbstatus.setDBStatus(sp("Import des fichiers"))
-
+		time.Sleep(10 * time.Second)
 		dbstatus.setDBStatus(nil)
-		// // - compact
-		// message = "Compacting batch"
-		// dbstatus.setDBStatus(&message)
-		// time.Sleep(5 * time.Second)
-		// dbstatus.setDBStatus(nil)
-		// // - reduce
-		// message = "Reducing batch - into features"
-		// dbstatus.setDBStatus(&message)
-		// dbstatus.setDBStatus(nil)
-		// // - predict
-		// message = "Computing Prediction"
-		// dbstatus.setDBStatus(&message)
-		// time.Sleep(5 * time.Second)
-		// dbstatus.setDBStatus(nil)
-		// // - createNextBatch
-		// message = "Creating next batch"
-		// dbstatus.setDBStatus(&message)
-		// time.Sleep(1 * time.Second)
-		// dbstatus.setDBStatus(nil)
+		// - compact
+		message := "Compactage des données"
+		dbstatus.setDBStatus(&message)
+		time.Sleep(5 * time.Second)
+		dbstatus.setDBStatus(nil)
+		// - reduce
+		message = "Calcul des variables"
+		dbstatus.setDBStatus(&message)
+		dbstatus.setDBStatus(nil)
+		// - predict
+		message = "Calcul de la prédiction"
+		dbstatus.setDBStatus(&message)
+		time.Sleep(5 * time.Second)
+		dbstatus.setDBStatus(nil)
+		// - createNextBatch
+		message = "Clôture du batch et initialisation du suivant"
+		dbstatus.setDBStatus(&message)
+		createNextBatch(c)
+		dbstatus.setDBStatus(nil)
 	}()
 	c.JSON(200, "ok !")
+}
+
+func lastBatch(db *mgo.Database) string {
+	batches := getBatches(db)
+	l := len(batches)
+	batch := batches[l-1]
+	return batch.ID.Key
+}
+
+func createNextBatch(c *gin.Context) {
+	db := c.Keys["db"].(*mgo.Database)
+	batchID, _ := nextBatchID(lastBatch(db))
+	batch := AdminBatch{
+		ID: AdminID{
+			Key:  batchID,
+			Type: "batch",
+		},
+	}
+	err := batch.save(db)
+	if err != nil {
+		c.JSON(500, err)
+	} else {
+		c.JSON(200, err)
+	}
 }

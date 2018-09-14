@@ -95,6 +95,7 @@ const store = new Vuex.Store({
   },
   actions: {
     saveBatch (state, batch) {
+      console.log(batch)
       axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
     },
     checkEpoch () {
@@ -126,7 +127,7 @@ setInterval(
   function () {
     store.dispatch('checkEpoch')
   },
-  2000)
+  500)
 
 if (store.state.token != null) {
   store.commit('refreshToken')

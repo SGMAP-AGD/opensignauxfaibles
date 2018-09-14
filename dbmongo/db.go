@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
@@ -40,9 +40,8 @@ func DB() gin.HandlerFunc {
 	}
 
 	firstBatch, err := getBatch(db, firstBatchID)
-	fmt.Println(firstBatch)
-
-	if firstBatch == nil {
+	spew.Dump(firstBatch)
+	if firstBatch.ID.Type == "" {
 		firstBatch = &AdminBatch{
 			ID: AdminID{
 				Key:  firstBatchID,
