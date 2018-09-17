@@ -40,6 +40,7 @@ function finalize(k, v) {
         }])
         return m
     }, {})
+
     Object.keys(ecn).forEach(i => {
         ecn[i].sort(compareDebit)
         var l = ecn[i].length
@@ -284,7 +285,7 @@ Object.keys(v.apconso).forEach(
         if (debit.part_ouvriere + debit.part_patronale > 0) {
 
             var debit_suivant = (v.debit[debit.debit_suivant] || {"date_traitement" : date_fin})
-            date_limite = new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
+            date_limite = date_fin//new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
             date_traitement_debut = new Date(
                 Date.UTC(debit.date_traitement.getFullYear(), debit.date_traitement.getUTCMonth())
             )
@@ -301,8 +302,7 @@ Object.keys(v.apconso).forEach(
                 value_dette[time] = (value_dette[time] || []).concat([{ "periode": debit.periode.start, "part_ouvriere": debit.part_ouvriere, "part_patronale": debit.part_patronale }])
             })
         }
-    })
-    
+    })    
 
     Object.keys(output_indexed).forEach(function (time) {
         if (time in value_cotisation){

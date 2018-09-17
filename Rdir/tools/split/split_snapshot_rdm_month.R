@@ -15,28 +15,30 @@ split_snapshot_rdm_month <-
   function(data,
            date_inf,
            date_sup,
-           crossvalidation = TRUE,
            frac_train = 0.60,
            frac_val = 0.20,
-           frac_eyeball = 0.05,
-           seed = 1010) {
-
-
+           frac_eyeball = 0) {
 
     assertthat::assert_that(
       frac_train > 0 ,
       frac_val > 0,
-      frac_eyeball >= 0,
       frac_train < 1,
-      frac_train + frac_val + frac_eyeball <= 1,
+      frac_train + frac_val <= 1,
       msg = "Fractions must be positive and not exceed 1"
     )
+
+    frac_test = 1 - (frac_train + frac_val)
+
+
     assertthat::assert_that(
       nrow(data) == n_distinct(data %>% select(siret, periode))
     )
 
+    # For reproducibility ###
+    raw_data <- raw_data %>%
+      arrange(siret,periode)
+    #########################
 
-    set.seed(seed)
 
     date_inf <- as.Date(date_inf)
     date_sup <- as.Date(date_sup)
@@ -44,49 +46,32 @@ split_snapshot_rdm_month <-
     data <- data %>%
       arrange(periode) %>%
       filter_time( date_inf ~ date_sup) %>%
-      select(siret,periode,outcome)
+      select(siret,periode)
 
-    sample_sirets_train <- sample_frac(tbl = unique(data['siret']), size = frac_train + frac_val)
+    ## TRAIN
+    sirets  <- unique(data['siret'])
 
-    sample_train <- data %>%
-      semi_join(sample_sirets_train,by = "siret")
+    sirets_groups <- split(
+      sirets,
+      sample(1:3, nrow(sirets), prob = c(frac_train,frac_val, frac_test), replace=T)
+    )
 
-    cat("Fraction of positive outcomes in sample_train:", sum(sample_train$outcome == 'default') / nrow(sample_train))
-    cat('\n')
-    cat("Fraction of sirets in sample_train:", n_distinct(sample_train$siret) / n_distinct(data$siret))
-    cat('\n')
+    partition_names <- c('train','validation','test')
+    non_empty <- c(frac_train >0, frac_val > 0, frac_test > 0)
 
-    sample_train <- sample_train %>%
-      select(siret, periode)
+    result <- lapply(1:sum(non_empty), function(x){
+      cat("Fraction of sirets (", partition_names[non_empty][x], "):", nrow(sirets_groups[[x]]) / n_distinct(data$siret))
+      cat('\n')
+      data %>% semi_join(sirets_groups[[x]], by = "siret")})
 
+    names(result) <- partition_names[non_empty]
 
-    remaining <- data %>%
-      anti_join(sample_sirets_train,by = "siret") %>%
-      select(siret, periode)
-
-    cv_folds <- list()
-    sample_val <- data.frame()
-
-    if (crossvalidation){
-      cv_folds <- groupKFold(sample_train$siret, k = 5)
-    } else {
-      val_siret <- sample_frac(tbl = unique(sample_train['siret']), size = frac_val / (frac_val + frac_train))
-      sample_val <- sample_train %>% filter(siret %in% val_siret$siret)
-      sample_train <- sample_train %>% filter(! siret %in% val_siret$siret)
-    }
+    result[[1]] <- result[[1]] %>%
+      groupdata2::fold(5, id_col = 'siret') %>%
+      rename(fold_column = .folds) %>%
+      mutate(fold_column = as.numeric(fold_column))
 
 
-    if (frac_eyeball > 0) {
-      sample_eyeball_sirets <- sample_frac(tbl = unique(remaining['siret']), size = frac_eyeball / (1 - frac_train - frac_val))
-      sample_eyeball <- remaining %>%
-        semi_join(sample_eyeball_sirets, by = 'siret')
-    } else {
-      sample_eyeball <-
-        tibble(siret = character(), periode = as.Date(character()))
-    }
 
-    sample_test <- remaining %>%
-      anti_join(sample_eyeball, by = 'siret')
-
-    return(list("train" =  sample_train,"cv_folds" = cv_folds,"validation" = sample_val, "eyeball" = sample_eyeball,  "test" = sample_test))
+    return(result)
   }

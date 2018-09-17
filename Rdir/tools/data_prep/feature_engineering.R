@@ -14,7 +14,7 @@ feature_engineering <- function(train_set,
                                 quantile = TRUE,
                                 quantile_vars = NULL,
                                 quantile_levels = NULL,
-                                failure_rate_APE = TRUE) {
+                                failure_rate_APE = FALSE) {
   arguments <- list(...)
   cat('Data preproccessing ...', '\n')
 
@@ -84,6 +84,9 @@ feature_engineering <- function(train_set,
   aux_fun <- function(data, n_impute, n_iter) {
     assertthat::assert_that(all(c('siret', 'periode') %in% names(data)))
 
+    data <- data %>%
+      mutate_if(is.POSIXct, as.Date)
+
     ##################
     ##  PreFiltering   ##
     ##################
@@ -144,7 +147,14 @@ feature_engineering <- function(train_set,
       )
 
     data <- data %>%
-      mutate(code_naf_niveau1 = as.factor(code_naf_niveau1))
+      mutate(code_naf_niveau1 = as.factor(code_naf_niveau1),
+             region = as.factor(region),
+             departement = as.factor(departement),
+             siret = as.factor(siret),
+             siren = as.factor(siren),
+             libelle_naf_niveau1 = as.factor(libelle_naf_niveau1),
+             libelle_naf_niveau5 = as.factor(libelle_naf_niveau5),
+             raison_sociale = as.factor(raison_sociale))
 
     data <- data %>%
       # select(
@@ -177,6 +187,9 @@ feature_engineering <- function(train_set,
     data <- data %>%
       mutate(age = lubridate::year(as.POSIXct.Date(periode)) - debut_activite)
 
+  # APE2
+    data <- data  %>%
+      mutate(code_ape_niveau2 = substr(code_ape,1,2))
 
     # REPLACE NA (DELAIS, COTISATION)
     assertthat::assert_that(all(

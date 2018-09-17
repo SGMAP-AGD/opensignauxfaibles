@@ -10,7 +10,7 @@ objective_default_or_failure <- function(data,n_months, threshold, lookback){
            failure_aux = etat_proc_collective %in% proc,
            default_any = any(default_urssaf | failure_aux),
            failure = with_lookback(failure_aux, lookback),
-           default = with_lookback(default_urssaf | failure_aux,lookback)) %>%
+           default = with_lookback(default_urssaf | failure_aux, lookback)) %>%
     ungroup() %>%
     select(-failure_aux, dette_cumulee_aux)
 

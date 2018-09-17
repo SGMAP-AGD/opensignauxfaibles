@@ -42,29 +42,35 @@ raw_data <- connect_to_database('Features', '1808', algo = 'algo2', min_effectif
 ```
 
 ```{r}
+# FIX ME
+# Cotisations avec un mois de décalage.
+cat('FIX ME: offset with cotisation')
+
+raw_data[ raw_data$periode == actual_period, "cotisation"] <- NA
+raw_data <- raw_data %>% 
+  arrange(siret,periode) %>% 
+  fill(cotisation)
+```
+
+```{r}
 raw_data <- raw_data %>%
   objective_default_or_failure(n_months = 3, threshold = 1, lookback = 18) %>%
   set_objective('default')
 ```
-Feature engineering here
-```{r}
-  raw_data <- raw_data %>%
-    mutate_if(is.POSIXct, as.Date)
-```
+
 Train test split
 ```{r}
 seed <- 1001
+set.seed(seed)
+
 samples <-
   split_snapshot_rdm_month(
     raw_data,
     date_inf = as.Date("2015-01-01"),
     date_sup = as.Date("2016-12-01"),
-    crossvalidation = TRUE,
-    frac_train = 0.4,
-    frac_val = 0.2,
-    frac_eyeball = 0.2,
-    seed = seed
-)
+    frac_train = 0.6,
+    frac_val = 0.2
+  )
 
 
 sample_train <- samples$train %>%
@@ -75,31 +81,26 @@ if (!nrow(samples$validation)==0) {
     left_join(raw_data, by = c('siret', 'periode'))
 }
 
-cv_folds <- samples$cv_fold
-
 sample_validation <- raw_data %>%
-  semi_join(samples$eyeball, by = c('siret','periode'))
+  semi_join(samples$validation, by = c('siret','periode'))
 
 sample_test <- raw_data %>%
-      semi_join(samples$test, by = c('siret','periode'))
+  semi_join(samples$test, by = c('siret','periode'))
 
-sample_train <- sample_train %>% 
-  groupdata2::fold(5, id_col = 'siret') %>% 
-  rename(fold_column = .folds) %>%
-  mutate(fold_column = as.numeric(fold_column))
-
-sample_test <- sample_test %>% 
-  mutate(fold_column = 1)
 rm(samples)
-#assert_split_consistency(sample_train,cv_folds,sample_test,sample_eyeball)
+assert_split_consistency(sample_train, sample_validation,sample_test)
 ```
 
 ```{r}
-gc()
+
 aux_features <- feature_engineering(sample_train,sample_test,sample_validation)
+
 sample_train  <- aux_features[[1]]
+
 sample_test <- aux_features[[2]]
+
 sample_validation <- aux_features[[3]]
+
 rm(aux_features)
 ```
 
@@ -121,6 +122,55 @@ Définition classe positive
 train.hex['outcome'] <- h2o.relevel(x = train.hex['outcome'], y = "non_default")
 test.hex['outcome'] <- h2o.relevel(x = test.hex['outcome'], y = "non_default")
 validation.hex['outcome'] <- h2o.relevel(x = validation.hex['outcome'], y = "non_default")
+```
+
+Target encoding APE
+```{r}
+te_map <- h2o.target_encode_create(
+  train.hex, 
+  x = list(c('code_naf_niveau1'), c('code_ape')), 
+  y = 'outcome',
+  fold_column = 'fold_column')
+
+
+train.hex <- h2o.target_encode_apply(
+  train.hex, 
+  x = list(c('code_naf_niveau1'), c('code_ape')), 
+  y = 'outcome',
+  target_encode_map = te_map,
+  holdout_type = 'KFold',
+  fold_column = 'fold_column',
+  blended_avg = TRUE,
+  seed = 1234)
+
+validation.hex <- h2o.target_encode_apply(
+  validation.hex,
+  x = list(c('code_naf_niveau1'), c('code_ape')),
+  y = 'outcome',
+  target_encode_map = te_map, 
+  holdout_type = 'None',
+  blended_avg = FALSE,
+  fold_column = 'fold_column',
+  noise_level = 0)
+
+test.hex <- h2o.target_encode_apply(
+  test.hex,
+  x = list(c('code_naf_niveau1'), c('code_ape')),
+  y = 'outcome',
+  target_encode_map = te_map, 
+  holdout_type = 'None',
+  blended_avg = FALSE, 
+  fold_column = 'fold_column',
+  noise_level = 0)
+```
+
+```{r}
+### Validation sur les signaux faibles uniquement
+
+validation.hex <- validation.hex[(validation.hex[,'etat_proc_collective'] == 'in_bonis') && (as.numeric(validation.hex[,'default_urssaf']) == 0),]
+
+test.hex <- test.hex[(test.hex[,'etat_proc_collective'] == 'in_bonis') && (as.numeric(test.hex[,'default_urssaf']) == 0),]
+
 ```
 
 ```{r}
@@ -155,6 +205,7 @@ x_minimal = c(
 
 ratios_diane =c(
   "CA",
+  "chiffre_affaires_net_lie_aux_exportations",
   "resultat_net_consolide",
   "ratio_CAF",
   "ratio_marge_operationnelle",
@@ -184,13 +235,15 @@ new_variables = c(
   "apart_entreprise",
   "nbr_etablissements_connus",
   "resultat_net_consolide",
-  "nombre_etab_secondaire",
-  "code_naf_niveau1")
+  "nombre_etab_secondaire")#,
+  #"code_naf_niveau1")
 
 variations = c(grep('variation',names(sample_train), value = TRUE),
                grep('diff_moy12',names(sample_train), value = TRUE))
 
-distrib = c(grep('distrib',names(sample_train), value = TRUE))
+distrib = c(grep('distrib',names(sample_train), value = TRUE),
+          'TargetEncode_code_naf_niveau1')
+          #'TargetEncode_code_ape')
 
 x_distrib = c(x_minimal,
               ratios_diane,
@@ -246,346 +299,309 @@ x_without_diane = c(
   "montant_part_ouvriere_variation_6" ,
   "montant_part_ouvriere_variation_12" )
 
+x_without_urssaf = c(
+  "effectif",
+  "effectif_diff_moy12",
+  "apart_heures_consommees",
+  "ratio_apart",
+  "cotisation",                        
+  "ratio_dette_moy12m",
+  "poids_frng",                               
+  "taux_marge",                                
+  "delai_fournisseur",                         
+  "dette_fiscale",                            
+  "financier_court_terme",                     
+  "frais_financier",
+  "delai",
+  "montant_echeancier",
+  "ratio_dette_delai",
+  "duree_delai",
+  "age",
+  "productif",
+  "indice_monoactivite",
+  "effectif_entreprise",
+  "apart_entreprise",
+  "nbr_etablissements_connus",
+  "resultat_net_consolide",
+  "nombre_etab_secondaire",
+  "code_naf_niveau1",
+  "effectif_diff_moy12",
+  "taux_marge_distrib_APE1",
+  "taux_marge_distrib_APE2",
+  "poids_frng_distrib_APE1",
+  "poids_frng_distrib_APE2",
+  "effectif_distrib_APE1",
+  "effectif_distrib_APE2",
+  "financier_court_terme_distrib_APE1",
+  "financier_court_terme_distrib_APE2",
+  "delai_fournisseur_distrib_APE1",
+  "delai_fournisseur_distrib_APE2",
+  "frais_financier_distrib_APE1",
+  "frais_financier_distrib_APE2",
+  "apart_heures_consommees_variation_1",
+  "apart_heures_consommees_variation_2",
+  "apart_heures_consommees_variation_3",
+  "apart_heures_consommees_variation_6",
+  "apart_heures_consommees_variation_12",
+  ratios_diane)
+
 y = "outcome"
 ```
 
 
+## Logistic regression
+```{r logistic ridge regression }
+
+# glm_ridge <- h2o.glm(
+#   model_id = 'GLM_ridge',
+#   x= x_distrib,
+#   y =y,
+#   training_frame = train.hex,
+#   validation_frame = validation.hex,
+#   family = "binomial",
+#   alpha = 0, #ridge
+#   lambda_search = TRUE,
+#   standardize = TRUE,
+#   missing_values_handling = "MeanImputation",
+#   seed = 123,
+#   score_each_iteration = TRUE
+# )
+```
+
+```{r logistic lasso regression }
+
+# glm_lasso <- h2o.glm(
+#   model_id = 'GLM_lasso',
+#   x= x_distrib, 
+#   y =y,
+#   training_frame = train.hex,
+#   validation_frame = validation.hex,
+#   family = "binomial",
+#   alpha = 1, #LASSO
+#   lambda_search = TRUE,
+#   standardize = TRUE,
+#   missing_values_handling = "MeanImputation",
+#   seed = 123, 
+#   score_each_iteration = TRUE 
+# )
+# 
+# path <- h2o.getGLMFullRegularizationPath(glm_lasso)
+# 
+# toPlot <- cbind(lambdas = path$lambdas, 
+#                 path$coefficients) %>% 
+#   as.tibble() %>% 
+#   gather(myVariable, myValue, - lambdas )
+# 
+# gg <-  ggplot(toPlot, aes(x = lambdas, y = myValue, color = myVariable)) + theme(legend.position = "none") + geom_line_interactive(aes(tooltip = myVariable))  
+# ggiraph(code = print(gg), zoom_max = 10)
+# 
+# classement <- toPlot %>% 
+#   filter(abs(myValue) > 0.0001) %>%
+#   group_by(myVariable) %>% 
+#   arrange(desc(lambdas)) %>% 
+#   summarize_all(first) %>%  
+#   arrange(desc(lambdas))
+
+```
 ## Light gradient boosting
 ### Starting point
-```{r}
-xgb_grid<- h2o.xgboost(
-                    model_id = 'LGB_model',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-```
+```{r light gradient boosting}
 
-```{r}
-
-hyper_params <-
-  list(max_depth = c(2, 4, 6, 8, 10, 12, 14, 16, 18))
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_1_depth',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-
-# Optimal depth found at 4. 0.1032695
-```
-
-```{r}
-hyper_params <-
-  list(max_depth = 4,
-  reg_alpha = c(1,2))
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_2_regularization',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-
-# No improvement
-```
-
-```{r}
-hyper_params <-
-  list(max_depth = 4,
-  reg_lambda = c(0.9, 1.2, 1.5, 1.8))
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_3_regularization',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-# Slight improvement with low values
-# But almost no improv 4	1.0	LGB_tune_3_regularization_model_0	0.1032321939172359
-```
-```{r}
-hyper_params <-
-  list(max_depth = 4,
-  reg_lambda = 0, 
-  max_leaves = c(1,5,10,15,20,50))
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_4_min_node_size',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-# No improvement
-```
-
-```{r}
-hyper_params <-
-  list(max_depth = 4,
-  reg_lambda = 0, 
-  min_split_improvement = c(10e-10, 10e-8, 10e-5, 10e-3)
-  )
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_5_min_split_improvement',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    quiet_mode =  FALSE
-                )
-
-# No improvement ! 
-```
-```{r}
-# Tune 5 bis arrêt trop tôt ??
-hyper_params <-
-  list(max_depth = 4,
-  reg_lambda = 0, 
-  min_split_improvement = c(10e-3)
-  )
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_5_min_split_improvement',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 200,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 10,
-                    stopping_tolerance = 0.0001,
-                    quiet_mode =  FALSE
-                )
-```
-
-```{r}
-# Tune 6 subsamples*
-
-hyper_params <-
-  list(max_depth = 4,
-  col_sample_rate = 1,
-  sample_rate = 1)
-
-  
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_6_subsamples',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 120,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    stopping_tolerance = 0.001,
-                    quiet_mode =  TRUE
-                )
-
-# Rien à faire !
-```
-
-```{r}
-hyper_params <-
-  list(max_depth = c(3,4,5),
-  eta = c(0.05,0.075))
-
-xgb_grid<- h2o.grid(algorithm = 'xgboost',
-                    grid_id = 'LGB_tune_7_eta',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    ntrees = 120,
-                    seed = 123, 
-                    hyper_params = hyper_params,
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    stopping_tolerance = 0.001,
-                    quiet_mode =  TRUE
-                )
-
-# Best:  eta = 0.1, max_depth = 4, col_rate = sample_rate = 1
-
-```
-
-```{r}
-
-best_model <- h2o.xgboost(
-                    model_id = 'best_LGB',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    tree_method = "hist",
-                    grow_policy = "lossguide",
-                    fold_column = "fold_column",
-                    learn_rate = 0.1,
-                    max_depth = 4,
-                    ntrees = 120,
-                    seed = 123, 
-                    score_each_iteration = TRUE,
-                    stopping_rounds = 4,
-                    stopping_tolerance = 0.001,
-                    quiet_mode =  TRUE,
-                    keep_cross_validation_predictions = TRUE,
-                    keep_cross_validation_fold_assignment = TRUE
-                )
-```
-
-```{r}
-h2o.performance(best_model, newdata = test.hex)
-```
-
-
-```{r}
-automl <- h2o.automl(
-  x = x_distrib,
-  y = y,
+xgb_start <- h2o.xgboost(
+  model_id = 'LGB_model_start',
+  x= x_distrib, 
+  y =y,
   training_frame = train.hex,
   validation_frame = validation.hex,
-  leaderboard_frame = test.hex,
-  fold_column = "fold_column",
-  balance_classes =  TRUE,
+  tree_method = "hist",
+  grow_policy = "lossguide",
+  learn_rate = 0.1,
+  max_depth = 4,
+  ntrees = 60,
+  seed = 123, 
+  score_each_iteration = TRUE,
   stopping_rounds = 4,
-  seed = 123
-  )
+  quiet_mode =  FALSE
+)
+
+cat(xgb_start@model$validation_metrics@metrics$pr_auc)
+
+plotPR(xgb_start)
 ```
 
-```{r}
+
+## Feature reduction ?
+```{r lgb feature reduction}
+classement_v <- classement[['myVariable']]
+
+classement_v <- classement_v[-c(1,17,18,31,41,44,45)] %>%
+  c("taux_marge_neg","dette_any_12m","code_naf_niveau1")
 
 
- glm_model <- h2o.glm( 
-                    model_id = 'glm_model',
-                    x= x_distrib, 
-                    y =y,
-                    keep_cross_validation_predictions = TRUE,
-                    keep_cross_validation_fold_assignment = TRUE,
-                    training_frame = train.hex,
-                    fold_column = "fold_column",
-                    standardize = TRUE,
-                    balance_classes =  TRUE,
-                    family = 'binomial',
-                    lambda_search = TRUE,
-                    seed = 123
-                )
-
-```
-
-```{r}
-regpath <- h2o.getGLMFullRegularizationPath(glm_model)
-# ICI faire une routine qui plot le chemin. 
-
-```
-
-```{r}
-glm_model <- h2o.getModel('glm_model')
-lgb_model <- h2o.getModel('best_LGB')
-ensemble <- h2o.stackedEnsemble(
-  metalearner_algorithm = "glm",
-  base_models = list(glm_model@model_id,lgb_model@model_id),
-  x = x_distrib,
-  y = y, 
-  metalearner_fold_column = 'fold_column',
+xgb_feature_reduction <- h2o.xgboost(
+  model_id = 'LGB_model_Feature_reduction',
+  x= classement_v, 
+  y =y,
   training_frame = train.hex,
   validation_frame = validation.hex,
-  seed = 123
+  tree_method = "hist",
+  grow_policy = "lossguide",
+  learn_rate = 0.05,
+  max_depth = 4,
+  ntrees = 120,
+  seed = 123, 
+  score_each_iteration = TRUE,
+  stopping_rounds = 4,
+  quiet_mode =  FALSE
 )
-```
+``` 
 
-```{r}
+
+```{r random forest}
 # Random forest
 
 new_rf_model <- h2o.randomForest(
-                    model_id = 'RF_model',
-                    x= x_distrib, 
-                    y =y,
-                    training_frame = train.hex,
-                    balance_classes = TRUE,
-                    ntrees = 200,
-                    seed = 123, 
-                    score_each_iteration = TRUE,
-                    fold_column = 'fold_column',
-                    stopping_rounds = 4,
-                    stopping_tolerance = 0.001,
-                    keep_cross_validation_predictions = TRUE,
-                    keep_cross_validation_fold_assignment = TRUE
-                )
+  model_id = 'RF_model',
+  x= x_distrib, 
+  y =y,
+  training_frame = train.hex,
+  balance_classes = TRUE,
+  ntrees = 200,
+  seed = 123, 
+  score_each_iteration = TRUE,
+  stopping_rounds = 4,
+  stopping_tolerance = 0.001,
+  keep_cross_validation_predictions = TRUE
+)
+```
+
+
+
+
+## Model ensembling
+
+```{r}
+xgb_ensemble <- h2o.xgboost(
+  model_id = 'LGB_model_for_ensemble',
+  x= x_distrib, 
+  y =y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  tree_method = "hist",
+  grow_policy = "lossguide",
+  fold_column = "fold_column",
+  learn_rate = 0.1,
+  max_depth = 4,
+  ntrees = 60,
+  seed = 123, 
+  score_each_iteration = TRUE,
+  stopping_rounds = 4,
+  quiet_mode =  FALSE,
+  keep_cross_validation_predictions = TRUE, 
+  keep_cross_validation_fold_assignment = TRUE
+)
+
+cat(xgb_ensemble@model$validation_metrics@metrics$pr_auc)
+plotPR(xgb_ensemble)
+```
+
+```{r}
+glm_ridge_ensemble <- h2o.glm(
+  model_id = 'GLM_ridge_for_ensemble',
+  x= x_distrib,
+  y =y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  fold_column = "fold_column",
+  family = "binomial",
+  alpha = 0, #ridge
+  lambda_search = TRUE,
+  standardize = TRUE,
+  missing_values_handling = "MeanImputation",
+  seed = 123,
+  score_each_iteration = TRUE,
+  keep_cross_validation_predictions = TRUE, 
+  keep_cross_validation_fold_assignment = TRUE
+)
+
+cat(glm_ridge_ensemble@model$validation_metrics@metrics$pr_auc)
+```
+
+```{r}
+glm_lasso_without_diane_ensemble <- h2o.glm(
+  model_id = 'GLM_lasso_financial_for_ensemble',
+  x= x_without_diane,
+  y =y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  fold_column = "fold_column",
+  family = "binomial",
+  alpha = 1, #lasso
+  lambda_search = TRUE,
+  standardize = TRUE,
+  missing_values_handling = "MeanImputation",
+  seed = 123,
+  score_each_iteration = TRUE,
+  keep_cross_validation_predictions = TRUE, 
+  keep_cross_validation_fold_assignment = TRUE
+)
+
+cat(glm_ridge_ensemble@model$validation_metrics@metrics$pr_auc)
+```
+
+```{r}
+glm_lasso_financial_ensemble <- h2o.glm(
+  model_id = 'GLM_lasso_financial_for_ensemble',
+  x= x_without_urssaf,
+  y =y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  fold_column = "fold_column",
+  family = "binomial",
+  alpha = 1, #lasso
+  lambda_search = TRUE,
+  standardize = TRUE,
+  missing_values_handling = "MeanImputation",
+  seed = 123,
+  score_each_iteration = TRUE,
+  keep_cross_validation_predictions = TRUE, 
+  keep_cross_validation_fold_assignment = TRUE
+)
+
+cat(glm_ridge_ensemble@model$validation_metrics@metrics$pr_auc)
+```
+
+```{r}
+xgb_ensemble_without_urssaf <- h2o.xgboost(
+  model_id = 'LGB_model_for_ensemble',
+  x= x_without_urssaf, 
+  y =y,
+  training_frame = train.hex,
+  validation_frame = validation.hex,
+  tree_method = "hist",
+  grow_policy = "lossguide",
+  fold_column = "fold_column",
+  learn_rate = 0.1,
+  max_depth = 4,
+  ntrees = 60,
+  seed = 123, 
+  score_each_iteration = TRUE,
+  stopping_rounds = 4,
+  quiet_mode =  FALSE,
+  keep_cross_validation_predictions = TRUE, 
+  keep_cross_validation_fold_assignment = TRUE
+)
+
+cat(xgb_ensemble@model$validation_metrics@metrics$pr_auc)
+plotPR(xgb_ensemble)
 ```
 
 ```{r}
 ensemble <- h2o.stackedEnsemble(
   metalearner_algorithm = "glm",
-  base_models = list(new_rf_model@model_id,lgb_model@model_id),
+  base_models = list(
+    glm_ridge_ensemble
+    ),
   x = x_distrib,
   y = y, 
   metalearner_fold_column = 'fold_column',
@@ -593,5 +609,9 @@ ensemble <- h2o.stackedEnsemble(
   validation_frame = validation.hex,
   seed = 123
 )
+
+
+plotPR(ensemble, F)
 ```
+
 

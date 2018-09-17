@@ -48,15 +48,6 @@ prepare_for_export <- function(data, additional_names = NULL){
   cat("Préparation à l'export ... \n")
   cat(paste0('Dernière période connue: ',max(data$periode, na.rm = TRUE),'\n'))
 
-  # Variables N-1
-  data <- data %>%
-    group_by(siret) %>%
-    arrange(periode) %>%
-    mutate(CA_N_moins_1 = lag(CA,12),
-           resultat_net_consolide_N_moins_1 = lag(resultat_net_consolide,12),
-           resultat_expl_N_moins_1 = lag(resultat_expl,12)) %>%
-    ungroup()
-
 
   # Report des dernières infos financieres connues
   derniers_bilans_connus <- data %>%
