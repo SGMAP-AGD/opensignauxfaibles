@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/cnf/structhash"
 	"github.com/tealeg/xlsx"
 )
@@ -66,21 +68,12 @@ func parseAPDemande(path string) chan *APDemande {
 			"EFF_ENT",
 			"EFF_ETAB",
 			"DATE_STATUT",
-			// "TX_PC",
-			// "TX_PC_UNEDIC_DARES",
-			// "TX_PC_ETAT_DARES",
 			"DATE_DEB",
 			"DATE_FIN",
 			"HTA",
-			// "MTA",
 			"EFF_AUTO",
-			// "PROD_HTA_EFF",
 			"MOTIF_RECOURS_SE",
-			//"PERIMETRE_AP",
-			// "RECOURS_ANTERIEUR",
-			// "AVIS_CE",
 			"S_HEURE_CONSOM_TOT",
-			// "S_MONTANT_CONSOM_TOT",
 			"S_EFF_CONSOM_TOT",
 		}
 		minLength := 0
@@ -103,9 +96,6 @@ func parseAPDemande(path string) chan *APDemande {
 				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[f["EFF_ENT"]].Value)
 				apdemande.Effectif, _ = strconv.Atoi(row.Cells[f["EFF_ETAB"]].Value)
 				apdemande.DateStatut, _ = excelToTime(row.Cells[f["DATE_STATUT"]].Value)
-				// apdemande.TxPC, _ = strconv.ParseFloat(row.Cells[f["TX_PC"]].Value, 64)
-				// apdemande.TxPCUnedicDares, _ = strconv.ParseFloat(row.Cells[f["TX_PC_UNEDIC_DARES"]].Value, 64)
-				// apdemande.TxPCEtatDares, _ = strconv.ParseFloat(row.Cells[f["TX_PC_ETAT_DARES"]].Value, 64)
 				periodStart, _ := excelToTime(row.Cells[f["DATE_DEB"]].Value)
 				periodEnd, _ := excelToTime(row.Cells[f["DATE_FIN"]].Value)
 				apdemande.Periode = Periode{
@@ -113,15 +103,9 @@ func parseAPDemande(path string) chan *APDemande {
 					End:   periodEnd,
 				}
 				apdemande.HTA, _ = strconv.ParseFloat(row.Cells[f["HTA"]].Value, 64)
-				// apdemande.MTA, _ = strconv.ParseFloat(row.Cells[f["MTA"]].Value, 64)
 				apdemande.EffectifAutorise, _ = strconv.Atoi(row.Cells[f["EFF_AUTO"]].Value)
-				// apdemande.ProdHTAEffectif, _ = strconv.ParseFloat(row.Cells[f["PROD_HTA_EFF"]].Value, 64)
 				apdemande.MotifRecoursSE, _ = strconv.Atoi(row.Cells[f["MOTIF_RECOURS_SE"]].Value)
-				//apdemande.Perimetre, _ = strconv.Atoi(row.Cells[f["PERIMETRE_AP"]].Value)
-				// apdemande.RecoursAnterieur, _ = strconv.Atoi(row.Cells[f["RECOURS_ANTERIEUR"]].Value)
-				// apdemande.AvisCE, _ = strconv.Atoi(row.Cells[f["AVIS_CE"]].Value)
 				apdemande.HeureConsommee, _ = strconv.ParseFloat(row.Cells[f["S_HEURE_CONSOM_TOT"]].Value, 64)
-				// apdemande.MontantConsomme, _ = strconv.ParseFloat(row.Cells[f["S_MONTANT_CONSOM_TOT"]].Value, 64)
 				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
 
 				outputChannel <- &apdemande
@@ -136,11 +120,9 @@ func parseAPDemande(path string) chan *APDemande {
 }
 
 func importAPDemande(batch *AdminBatch) error {
-
 	for _, file := range batch.Files["apdemande"] {
-		for apdemande := range parseAPDemande(file) {
+		for apdemande := range parseAPDemande(viper.GetString("APP_DATA") + file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
-
 			value := ValueEtablissement{
 				Value: Etablissement{
 					Siret: apdemande.Siret,

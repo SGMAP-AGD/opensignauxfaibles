@@ -5,12 +5,35 @@ import App from './App'
 import router from './router'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
+import store from './store'
+import axios from 'axios'
 
 Vue.use(Vuetify)
 
 Vue.config.productionTip = false
 
-Vue.prototype.$api = 'http://localhost:3000/api'
+// Prod
+// npm run build
+// cp dist/* ../dbmongo/static -r
+
+Vue.prototype.$axios = axios.create(
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    baseURL: process.env.API_URL
+  }
+)
+
+Vue.prototype.$axios.interceptors.request.use(
+  config => {
+    config.baseURL = 'http://localhost:3000'
+    if (store.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.state.token
+    return config
+  }
+)
+
+Vue.prototype.$store = store
 
 /* eslint-disable no-new */
 new Vue({

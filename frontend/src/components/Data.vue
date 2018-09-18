@@ -1,198 +1,61 @@
 <template>
 <div>
-  <v-container grid-list-md text-xs-center>
-    <v-layout>
-      <v-flex key="import" xs9>
-        <v-expansion-panel>
-          <v-expansion-panel-content
-            v-for="b in batches"
-            :key="b.id.key"
-          >
-            <div slot="header">Lot {{b.id.key}} - {{ Object.keys(b.files).reduce((m,n) => { return m + b.files[n].length }, 0) }} fichiers</div>
-            <v-card>
-              <Batch v-bind:key="b.id.key" :batch="b"></Batch>
-            </v-card>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-flex>
-      <v-flex key="reduce" xs3>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Import</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-            v-model="importBatchID"
-            :items="batches"
-            item-text="id.key"
-            item-value="id.key"
-            label="Batch"
-            required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="importData()">Import</v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Compactage</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-btn @click="compactEtablissement()">Etablissement</v-btn>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="compactEntreprise()">Entreprise</v-btn>
-          </v-card-actions>
-        </v-card>
-                <v-card>
-          <v-card-title>
-            <div>
-              <span>Supprimer le dernier batch</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-btn @click="dropBatch()">Delete</v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card>
-          <v-card-title>
-            <div>
-              <span>Calcul des variables</span><br>
-            </div>
-          </v-card-title>
-          <v-card-actions>
-            <v-select
-              v-model="reduceFeatureID"
-              :items="features"
-              label="Algorithme"
-              required
-            ></v-select>
-            <v-select
-              v-model="reduceBatchID"
-              :items="batches"
-              item-text="id.key"
-              item-value="id.key"
-              label="Batch"
-              required
-            ></v-select>
-          </v-card-actions>
-          <v-card-actions>
-            <v-btn @click="reduce()">Reduce !</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-flex>
-    </v-layout>
-  </v-container>
+  <v-tabs
+    v-model="currentBatchKey"
+    color="indigo darken-4"
+    dark
+    slider-color="red accent-2"
+    show-arrows
+    next-icon="fa-arrow-alt-circle-right"
+    prev-icon="fa-arrow-alt-circle-left"
+    
+  >
+    <v-tab
+      v-for="batch in batches"
+      :key="batch"
+      ripple
+      lazy
+    >
+      {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
+    </v-tab>
+    <v-tab-item
+      v-for="(batch, rank) in batches"
+      :key="rank"
+      lazy
+    >
+        <Batch 
+        :batchKey="batch"/>
+    </v-tab-item>
+  </v-tabs> 
 </div>
 </template>
 
 <script>
 import Batch from '@/components/Batch'
 
-import axios from 'axios'
 export default {
-  methods: {
-    setMenu (key) {
-      this.menu.title = this.items[key].title
-      this.menu.color = this.items[key].color
-    },
-    reduce () {
-      axios.get(this.$api + '/reduce/' + this.reduceFeatureID + '/' + this.reduceBatchID).then(response => alert('coucou'))
-    },
-    compactEtablissement () {
-      axios.get(this.$api + '/compact/etablissement').then()
-    },
-    compactEntreprise () {
-      axios.get(this.$api + '/compact/entreprise').then()
-    },
-    dropBatch () {
-      axios.delete(this.$api + '/admin/batch')
-    },
-    importData () {
-      var self = this
-      axios.get(this.$api + '/import/' + self.importBatchID)
-    },
-    createBatch () {
-      var self = this
-      axios.put(this.$api + '/admin/batch/' + this.createBatchID)
-      .then(response => self.refresh())
-    },
-    refresh () {
-      var self = this
-      axios.get(this.$api + '/admin/batch').then(response => {
-        self.batches = response.data
-      })
-      axios.get(this.$api + '/admin/files').then(response => {
-        this.files = response.data.map(file => {
-          return {
-            'text': file.split('/').reverse().slice(0, 3).reverse().join('/'),
-            'value': file
-          }
-        })
-      })
-      axios.get(this.$api + '/admin/types').then(response => { self.types = response.data.sort() })
-      axios.get(this.$api + '/admin/features').then(response => { self.features = response.data })
-    },
-    attachFiles () {
-      this.attachFilesRecur(this.attachFilesID)
-    },
-    attachFilesRecur (files) {
-      var self = this
-      if (files.length > 0) {
-        axios.post(this.$api + '/admin/attach',
-          {
-            'file': files[0].value,
-            'type': self.attachTypeID,
-            'batch': self.attachBatchID
-          }).then(response => { this.attachFilesRecur(files.slice(1)) })
-      } else {
-        this.refresh()
-      }
-    }
-  },
   mounted () {
-    this.refresh()
+    this.$store.commit('updateBatches')
   },
-  data () {
-    return {
-      name: 'App',
-      createBatchID: '',
-      features: [],
-      importBatchID: '',
-      reduceBatchID: '',
-      reduceFeatureID: '',
-      files: [],
-      fileID: '',
-      types: [],
-      attachTypeID: '',
-      batches: [],
-      attachBatchID: '',
-      attachFilesID: [],
-      viewFiles: {}
+  methods: {
+    setCurrentBatchKey (batchKey) {
+      this.currentBatchKey = batchKey
     }
   },
-  components: { Batch }
+  computed: {
+    currentBatchKey: {
+      get () {
+        return this.$store.state.currentBatchKey
+      },
+      set (value) {
+        this.$store.commit('setCurrentBatchKey', value)
+      }
+    },
+    batches () {
+      return this.$store.state.batches.map(batch => batch.id.key)
+    }
+  },
+  components: { Batch },
+  name: 'Data'
 }
 </script>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
