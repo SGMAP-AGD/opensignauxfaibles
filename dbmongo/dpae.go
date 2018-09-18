@@ -77,9 +77,9 @@ func importDPAE(batch *AdminBatch) error {
 							DPAE: map[string]*DPAE{
 								hash: dpae,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

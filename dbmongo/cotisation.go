@@ -91,9 +91,9 @@ func importCotisation(batch *AdminBatch) error {
 							Cotisation: map[string]*Cotisation{
 								hash: cotisation,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

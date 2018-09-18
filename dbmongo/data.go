@@ -68,20 +68,17 @@ func dataPrediction(c *gin.Context) {
 	var etablissement []ValueEtablissement
 	var siret []string
 
-	db, _ := c.Keys["db"].(*mgo.Database)
-	db.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
+	db.DB.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
 	for _, r := range prediction {
 		siret = append(siret, r.Siret)
 	}
 
 	query := bson.M{"_id": bson.M{"$in": siret}}
-	db.C("Etablissement").Find(query).All(&etablissement)
+	db.DB.C("Etablissement").Find(query).All(&etablissement)
 	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
 }
 
 func reduce(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
-
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
 	dateFin, _ := time.Parse("2006-01-02", "2018-08-01")
 	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
@@ -91,7 +88,7 @@ func reduce(c *gin.Context) {
 	batch := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
 
-	db.C("Features").RemoveAll(bson.M{"_id.batch": batch, "_id.algo": algo})
+	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch, "_id.algo": algo})
 
 	var queryEtablissement interface{}
 	var queryEntreprise interface{}
@@ -136,7 +133,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err := db.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
+	_, err := db.DB.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -150,7 +147,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err = db.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
+	_, err = db.DB.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -165,9 +162,9 @@ func reduce(c *gin.Context) {
 	}
 
 	if output == nil {
-		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, &result)
+		_, err = db.DB.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, &result)
 	} else {
-		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, nil)
+		_, err = db.DB.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, nil)
 	}
 
 	if err != nil {
@@ -175,7 +172,7 @@ func reduce(c *gin.Context) {
 		return
 	}
 
-	err = db.C("MRWorkspace").DropCollection()
+	err = db.DB.C("MRWorkspace").DropCollection()
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -186,8 +183,7 @@ func reduce(c *gin.Context) {
 }
 
 func compactEtablissement(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
-	batches := getBatchesID(db)
+	batches := getBatchesID()
 
 	// Détermination scope traitement
 	var query interface{}
@@ -239,9 +235,9 @@ func compactEtablissement(c *gin.Context) {
 
 	err := errors.New("")
 	if output == nil {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, &etablissement)
+		_, err = db.DB.C("Etablissement").Find(query).MapReduce(job, &etablissement)
 	} else {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
+		_, err = db.DB.C("Etablissement").Find(query).MapReduce(job, nil)
 	}
 
 	if err != nil {
@@ -253,15 +249,13 @@ func compactEtablissement(c *gin.Context) {
 }
 
 func getFeatures(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
 	var data []interface{}
-	db.C("Features").Find(nil).All(&data)
+	db.DB.C("Features").Find(nil).All(&data)
 	c.JSON(200, data)
 }
 
 func compactEntreprise(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
-	batches := getBatchesID(db)
+	batches := getBatchesID()
 
 	// Détermination scope traitement
 	var query interface{}
@@ -306,9 +300,9 @@ func compactEntreprise(c *gin.Context) {
 	var err error
 
 	if output == nil {
-		_, err = db.C("Entreprise").Find(query).MapReduce(job, &etablissement)
+		_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, &etablissement)
 	} else {
-		_, err = db.C("Entreprise").Find(query).MapReduce(job, nil)
+		_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, nil)
 	}
 
 	if err != nil {
@@ -320,11 +314,8 @@ func compactEntreprise(c *gin.Context) {
 }
 
 func dropBatch(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
 	batchKey := c.Params.ByName("batchKey")
-
-	change, err := db.C("Admin").RemoveAll(bson.M{"_id.key": batchKey, "_id.type": "batch"})
-
+	change, err := db.DB.C("Admin").RemoveAll(bson.M{"_id.key": batchKey, "_id.type": "batch"})
 	c.JSON(200, []interface{}{err, change})
 
 }

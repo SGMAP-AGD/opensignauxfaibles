@@ -5,9 +5,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
 )
 
@@ -72,35 +71,41 @@ var importFunctions = map[string]func(*AdminBatch) error{
 }
 
 func purge(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
-	db.C("Etablissement").RemoveAll(nil)
-	db.C("Entreprise").RemoveAll(nil)
+	db.DB.C("Etablissement").RemoveAll(nil)
+	db.DB.C("Entreprise").RemoveAll(nil)
 	c.String(200, "Done")
 }
 
-func importBatch(c *gin.Context) {
-	batch := AdminBatch{}
+func importBatchHandler(c *gin.Context) {
 	batchKey := c.Params.ByName("batch")
-	db := c.Keys["db"].(*mgo.Database)
-	chanEtablissement := c.Keys["ChanEtablissement"].(chan *ValueEtablissement)
-	chanEntreprise := c.Keys["ChanEntreprise"].(chan *ValueEntreprise)
-	batch.load(batchKey, db, chanEtablissement, chanEntreprise)
+	batch := AdminBatch{}
+	batch.load(batchKey)
+	go importBatch(&batch)
+}
 
+func importBatch(batch *AdminBatch) {
 	if !batch.Readonly {
 		for _, fn := range importFunctions {
-			err := fn(&batch)
+			err := fn(batch)
 			if err != nil {
-				c.JSON(500, err)
-				return
+				journal("Erreur à l'import du fichier: "+err.Error(), "Critique")
 			}
 		}
 	} else {
-		c.JSON(403, "Ce lot est fermé, import impossible.")
+		journal("Ce lot est fermé, import impossible.", "Critique")
 	}
 }
 
-func lastOpenBatch(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
-	batches := getBatches(db)
-	spew.Dump(batches)
+func journal(event string, priority string) {
+	entry := struct {
+		ID       bson.ObjectId `json:"id" bson:"_id"`
+		Date     time.Time     `json:"date" bson:"date"`
+		Event    string        `json:"event" bson:"event"`
+		Priority string        `json:"priority" bson:"priority"`
+	}{
+		Date:     time.Now(),
+		Event:    event,
+		Priority: priority,
+	}
+	db.DB.C("Journal").Insert(entry)
 }

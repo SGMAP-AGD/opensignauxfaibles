@@ -73,8 +73,8 @@ func importBDF(batch *AdminBatch) error {
 						BDF: map[string]*BDF{
 							hash: bdf,
 						}}}}}
-		batch.ChanEntreprise <- &value
+		db.ChanEntreprise <- &value
 	}
-	batch.ChanEntreprise <- &ValueEntreprise{}
+	db.ChanEntreprise <- &ValueEntreprise{}
 	return nil
 }

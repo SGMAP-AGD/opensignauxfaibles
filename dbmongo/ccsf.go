@@ -85,10 +85,10 @@ func importCCSF(batch *AdminBatch) error {
 								CCSF: map[string]*CCSF{
 									hash: ccsf,
 								}}}}}
-				batch.ChanEtablissement <- &value
+				db.ChanEtablissement <- &value
 			}
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

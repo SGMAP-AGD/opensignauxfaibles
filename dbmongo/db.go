@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +12,19 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// DB contient des méthodes pour accéder à la base de données
+type DB struct {
+	DB                *mgo.Database
+	DBStatus          *mgo.Database
+	Status            Status
+	ChanEntreprise    chan *ValueEntreprise
+	ChanEtablissement chan *ValueEtablissement
+}
+
 // DB Initialisation de la connexion MongoDB
-func DB() gin.HandlerFunc {
+func initDB() DB {
+	loadConfig()
+
 	dbDial := viper.GetString("DB_DIAL")
 	dbDatabase := viper.GetString("DB")
 
@@ -39,22 +49,25 @@ func DB() gin.HandlerFunc {
 		panic("Paramètre FIRST_BATCH incorrect, vérifiez la configuration.")
 	}
 
-	firstBatch, err := getBatch(db, firstBatchID)
-	spew.Dump(firstBatch)
+	// firstBatch, err := getBatch(db, firstBatchID)
+	var firstBatch AdminBatch
+	err = db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": firstBatchID}).One(&firstBatch)
+
 	if firstBatch.ID.Type == "" {
-		firstBatch = &AdminBatch{
+		firstBatch = AdminBatch{
 			ID: AdminID{
 				Key:  firstBatchID,
 				Type: "batch",
 			},
 		}
-		err := firstBatch.save(db)
+		_, err := db.C("Admin").Upsert(bson.M{"_id": firstBatchID}, firstBatch)
+
 		if err != nil {
 			panic("Impossible de créer le premier batch: " + err.Error())
 		}
 	}
 
-	status := DBStatus{
+	status := Status{
 		DB: dbstatus,
 		ID: AdminID{
 			Key:  "status",
@@ -80,13 +93,12 @@ func DB() gin.HandlerFunc {
 		}
 	}()
 
-	return func(c *gin.Context) {
-		c.Set("ChanEntreprise", chanEntreprise)
-		c.Set("ChanEtablissement", chanEtablissement)
-		c.Set("dbstatus", dbstatus)
-		c.Set("db", db)
-		c.Set("status", &status)
-		c.Next()
+	return DB{
+		DB:                db,
+		DBStatus:          dbstatus,
+		ChanEntreprise:    chanEntreprise,
+		ChanEtablissement: chanEtablissement,
+		Status:            status,
 	}
 }
 
@@ -274,34 +286,33 @@ func declareServerFunctions(db *mgo.Database) error {
 	return nil
 }
 
-// DBStatus statut de la base de données
-type DBStatus struct {
+// Status statut de la base de données
+type Status struct {
 	ID     AdminID       `json:"id" bson:"_id"`
 	Status *string       `json:"status" bson:"status"`
 	Epoch  int           `json:"epoch" bson:"epoch"`
 	DB     *mgo.Database `json:"-" bson:"-"`
 }
 
-func (status *DBStatus) read() error {
-	var tempStatus DBStatus
+func (status *Status) read() error {
+	var tempStatus Status
 	err := status.DB.C("Admin").Find(bson.M{"_id.key": "status", "_id.type": "status"}).One(&tempStatus)
 	status.ID = tempStatus.ID
 	status.Status = tempStatus.Status
 	return err
 }
 
-func (status *DBStatus) write() error {
+func (status *Status) write() error {
 	status.Epoch++
 	_, err := status.DB.C("Admin").Upsert(bson.M{"_id": bson.M{"key": "status", "type": "status"}}, status)
 	return err
 }
 
 func getDBStatus(c *gin.Context) {
-	status := c.Keys["status"].(*DBStatus)
-	c.JSON(200, status.Status)
+	c.JSON(200, db.Status.Status)
 }
 
-func (status *DBStatus) setDBStatus(message *string) error {
+func (status *Status) setDBStatus(message *string) error {
 	if status.Status != nil && message != nil {
 		return errors.New("Ne peut remplacer une activité en cours")
 	}
@@ -310,6 +321,5 @@ func (status *DBStatus) setDBStatus(message *string) error {
 }
 
 func epoch(c *gin.Context) {
-	status := c.Keys["status"].(*DBStatus)
-	c.JSON(200, status.Epoch)
+	c.JSON(200, db.Status.Epoch)
 }

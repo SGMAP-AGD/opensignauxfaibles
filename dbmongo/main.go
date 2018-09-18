@@ -13,18 +13,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+var db = initDB()
+
 func main() {
 	// Lancer Rserve en background
 
 	InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
-	loadConfig()
-
 	go r()
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
-	r.Use(DB())
 	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	config := cors.DefaultConfig()
@@ -76,7 +75,7 @@ func main() {
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/debug/", debug)
-		api.GET("/import/:batch", importBatch)
+		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
 		api.GET("/compact/entreprise/:siren", compactEntreprise)
@@ -90,7 +89,7 @@ func main() {
 	{
 		debugAPI.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		debugAPI.GET("/debug/", debug)
-		debugAPI.GET("/import/:batch", importBatch)
+		debugAPI.GET("/import/:batch", importBatchHandler)
 		debugAPI.GET("/compact/etablissement/:siret", compactEtablissement)
 		debugAPI.GET("/compact/etablissement", compactEtablissement)
 		debugAPI.GET("/compact/entreprise/:siren", compactEntreprise)

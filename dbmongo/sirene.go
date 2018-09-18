@@ -118,9 +118,9 @@ func importSirene(batch *AdminBatch) error {
 						Sirene: map[string]*Sirene{
 							hash: sirene,
 						}}}}}
-		batch.ChanEtablissement <- &value
+		db.ChanEtablissement <- &value
 	}
 
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

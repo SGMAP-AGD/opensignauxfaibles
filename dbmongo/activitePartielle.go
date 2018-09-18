@@ -134,10 +134,10 @@ func importAPDemande(batch *AdminBatch) error {
 							APDemande: map[string]*APDemande{
 								hash: apdemande,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }
 
@@ -194,9 +194,9 @@ func importAPConso(batch *AdminBatch) error {
 							APConso: map[string]*APConso{
 								hash: apconso,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

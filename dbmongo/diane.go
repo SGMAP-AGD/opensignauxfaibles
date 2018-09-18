@@ -303,8 +303,8 @@ func importDiane(batch *AdminBatch) error {
 						Diane: map[string]*Diane{
 							hash: diane,
 						}}}}}
-		batch.ChanEntreprise <- &value
+		db.ChanEntreprise <- &value
 	}
-	batch.ChanEntreprise <- &ValueEntreprise{}
+	db.ChanEntreprise <- &ValueEntreprise{}
 	return nil
 }

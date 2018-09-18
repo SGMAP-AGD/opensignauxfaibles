@@ -118,10 +118,10 @@ func importEffectif(batch *AdminBatch) error {
 						batch.ID.Key: Batch{
 							Effectif: effectif,
 						}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
 
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

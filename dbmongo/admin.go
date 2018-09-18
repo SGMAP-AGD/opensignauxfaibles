@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
 )
@@ -48,20 +47,18 @@ func listTypes(c *gin.Context) {
 }
 
 func cloneDB(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
-
 	from := viper.GetString("DB")
 	to := c.Params.ByName("to")
 
 	var result interface{}
-	declareDatabaseCopy(db, from, to)
-	err := db.Run(bson.M{"eval": "copyDatabase()"}, result)
+	declareDatabaseCopy(db.DB, from, to)
+	err := db.DB.Run(bson.M{"eval": "copyDatabase()"}, result)
 	if err != nil {
 		c.JSON(500, err)
 		fmt.Println(err)
 		return
 	}
-	removeDatabaseCopy(db)
+	removeDatabaseCopy(db.DB)
 	c.JSON(200, err)
 }
 

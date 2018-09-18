@@ -8,7 +8,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -22,8 +21,6 @@ type AdminBatch struct {
 		DateFin         time.Time `json:"date_fin" bson:"date_fin"`
 		DateFinEffectif time.Time `json:"date_fin_effectif" bson:"date_fin_effectif"`
 	} `json:"params" bson:"param"`
-	ChanEtablissement chan *ValueEtablissement `json:"-" bson:"-"`
-	ChanEntreprise    chan *ValueEntreprise    `json:"-" bson:"-"`
 }
 
 // BatchFiles fichiers mappés par type
@@ -38,19 +35,13 @@ func isBatchID(batchID string) bool {
 	return err == nil
 }
 
-func (batch *AdminBatch) load(
-	batchKey string,
-	db *mgo.Database,
-	chanEtablissement chan *ValueEtablissement,
-	chanEntreprise chan *ValueEntreprise) error {
-	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(batch)
-	batch.ChanEntreprise = chanEntreprise
-	batch.ChanEtablissement = chanEtablissement
+func (batch *AdminBatch) load(batchKey string) error {
+	err := db.DB.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(batch)
 	return err
 }
 
-func (batch *AdminBatch) save(db *mgo.Database) error {
-	_, err := db.C("Admin").Upsert(bson.M{"_id": batch.ID}, batch)
+func (batch *AdminBatch) save() error {
+	_, err := db.DB.C("Admin").Upsert(bson.M{"_id": batch.ID}, batch)
 	return err
 }
 
@@ -78,7 +69,7 @@ func sp(s string) *string {
 }
 
 func upsertBatch(c *gin.Context) {
-	status := c.Keys["status"].(*DBStatus)
+	status := db.Status
 	// err := status.setDBStatus(sp("Sauvegarde du Batch"))
 	// if err != nil {
 	// 	c.JSON(500, err)
@@ -86,7 +77,6 @@ func upsertBatch(c *gin.Context) {
 	// 	return
 	// }
 
-	db := c.Keys["db"].(*mgo.Database)
 	batch := AdminBatch{}
 	err := c.Bind(&batch)
 	if err != nil {
@@ -95,7 +85,7 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
-	err = batch.save(db)
+	err = batch.save()
 	if err != nil {
 		c.JSON(500, "Erreur à l'enregistrement")
 		fmt.Println(err)
@@ -109,9 +99,8 @@ func upsertBatch(c *gin.Context) {
 }
 
 func listBatch(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
 	var batch []AdminBatch
-	err := db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
+	err := db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
 	if err != nil {
 		spew.Dump(err)
 		c.JSON(500, err)
@@ -120,8 +109,8 @@ func listBatch(c *gin.Context) {
 	c.JSON(200, batch)
 }
 
-func getBatchesID(db *mgo.Database) []string {
-	batches := getBatches(db)
+func getBatchesID() []string {
+	batches := getBatches()
 	var batchesID []string
 	for _, b := range batches {
 		batchesID = append(batchesID, b.ID.Key)
@@ -129,17 +118,10 @@ func getBatchesID(db *mgo.Database) []string {
 	return batchesID
 }
 
-func getBatches(db *mgo.Database) []*AdminBatch {
+func getBatches() []*AdminBatch {
 	var batches []*AdminBatch
-	db.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
+	db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
 	return batches
-}
-
-func getBatch(db *mgo.Database, batchID string) (*AdminBatch, error) {
-	var batch AdminBatch
-	err := db.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchID}).One(&batch)
-	spew.Dump(batch)
-	return &batch, err
 }
 
 // batchToTime calcule la date de référence à partir de la référence de batch
@@ -159,55 +141,55 @@ func batchToTime(batch string) (time.Time, error) {
 }
 
 func processBatch(c *gin.Context) {
-	dbstatus := c.Keys["status"].(*DBStatus)
+	status := db.Status
 
+	batch := lastBatch()
+	importBatch(batch)
 	go func() {
-		dbstatus.setDBStatus(sp("Import des fichiers"))
-		time.Sleep(10 * time.Second)
-		dbstatus.setDBStatus(nil)
-		// - compact
-		message := "Compactage des données"
-		dbstatus.setDBStatus(&message)
-		time.Sleep(5 * time.Second)
-		dbstatus.setDBStatus(nil)
-		// - reduce
-		message = "Calcul des variables"
-		dbstatus.setDBStatus(&message)
-		dbstatus.setDBStatus(nil)
-		// - predict
-		message = "Calcul de la prédiction"
-		dbstatus.setDBStatus(&message)
-		time.Sleep(5 * time.Second)
-		dbstatus.setDBStatus(nil)
-		// - createNextBatch
-		message = "Clôture du batch et initialisation du suivant"
-		dbstatus.setDBStatus(&message)
-		createNextBatch(c)
-		dbstatus.setDBStatus(nil)
+		status.setDBStatus(sp("Import des fichiers"))
+		// go func() {
+		// 	dbstatus.setDBStatus(sp("Import des fichiers"))
+		// 	time.Sleep(10 * time.Second)
+		// 	dbstatus.setDBStatus(nil)
+		// 	// - compact
+		// 	message := "Compactage des données"
+		// 	dbstatus.setDBStatus(&message)
+		// 	time.Sleep(5 * time.Second)
+		// 	dbstatus.setDBStatus(nil)
+		// 	// - reduce
+		// 	message = "Calcul des variables"
+		// 	dbstatus.setDBStatus(&message)
+		// 	dbstatus.setDBStatus(nil)
+		// 	// - predict
+		// 	message = "Calcul de la prédiction"
+		// 	dbstatus.setDBStatus(&message)
+		// 	time.Sleep(5 * time.Second)
+		// 	dbstatus.setDBStatus(nil)
+		// 	// - createNextBatch
+		// 	message = "Clôture du batch et initialisation du suivant"
+		// 	dbstatus.setDBStatus(&message)
+		// 	createNextBatch(c)
+		// 	dbstatus.setDBStatus(nil)
+		// }()
+		c.JSON(200, "ok !")
 	}()
-	c.JSON(200, "ok !")
 }
 
-func lastBatch(db *mgo.Database) string {
-	batches := getBatches(db)
+func lastBatch() *AdminBatch {
+	batches := getBatches()
 	l := len(batches)
 	batch := batches[l-1]
-	return batch.ID.Key
+	return batch
 }
 
-func createNextBatch(c *gin.Context) {
-	db := c.Keys["db"].(*mgo.Database)
-	batchID, _ := nextBatchID(lastBatch(db))
+func createNextBatch() error {
+	batchID, _ := nextBatchID(lastBatch().ID.Key)
 	batch := AdminBatch{
 		ID: AdminID{
 			Key:  batchID,
 			Type: "batch",
 		},
 	}
-	err := batch.save(db)
-	if err != nil {
-		c.JSON(500, err)
-	} else {
-		c.JSON(200, err)
-	}
+	err := batch.save()
+	return err
 }

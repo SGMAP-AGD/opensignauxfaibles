@@ -105,9 +105,9 @@ func importDebit(batch *AdminBatch) error {
 							Debit: map[string]*Debit{
 								hash: debit,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

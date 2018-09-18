@@ -82,8 +82,8 @@ func importAltares(batch *AdminBatch) error {
 						Altares: map[string]*Altares{
 							hash: altares,
 						}}}}}
-		batch.ChanEtablissement <- &value
+		db.ChanEtablissement <- &value
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

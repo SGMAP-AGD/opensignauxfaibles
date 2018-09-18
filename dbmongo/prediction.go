@@ -4,17 +4,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
 
 func predictionBrowse(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
-
 	batch := c.Params.ByName("batch")
 	algo := c.Params.ByName("algo")
 	paramPage := c.Params.ByName("page")
-
 	page, err := strconv.Atoi(paramPage)
 
 	if err != nil {
@@ -80,7 +76,7 @@ func predictionBrowse(c *gin.Context) {
 		"features": "$features.features"}})
 
 	var result []interface{}
-	err = db.C("Prediction").Pipe(pipeline).All(&result)
+	err = db.DB.C("Prediction").Pipe(pipeline).All(&result)
 	if err != nil {
 		c.JSON(500, err)
 		return

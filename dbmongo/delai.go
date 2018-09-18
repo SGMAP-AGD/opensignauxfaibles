@@ -107,9 +107,9 @@ func importDelai(batch *AdminBatch) error {
 							Delai: map[string]*Delai{
 								hash: delai,
 							}}}}}
-			batch.ChanEtablissement <- &value
+			db.ChanEtablissement <- &value
 		}
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }
