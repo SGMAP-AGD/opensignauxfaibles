@@ -77,10 +77,10 @@ impute_missing_data_BdF <- function(df,number_imputations = 1, number_iterations
                maxit = number_iterations,
                method = ini$meth,
                pred = ini$pred,
-               printFlag = TRUE,
+               printFlag = FALSE,
                seed = seed)
 
-    long_by_year <- mice::complete(temp_mids,'long', include = TRUE)
+    long_by_year <- mice::complete(temp_mids,'long', include = FALSE)
 
   # Expanding imputed values at each period
   long_by_periode <- df %>%

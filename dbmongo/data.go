@@ -83,7 +83,7 @@ func reduce(c *gin.Context) {
 	db, _ := c.Keys["db"].(*mgo.Database)
 
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-06-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-08-01")
 	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
 
 	// Détermination scope traitement
@@ -111,9 +111,9 @@ func reduce(c *gin.Context) {
 	MREtablissement := MapReduceJS{}
 	MREntreprise := MapReduceJS{}
 	MRUnion := MapReduceJS{}
-	errEt := MREtablissement.load("algo1", "etablissement")
-	errEn := MREntreprise.load("algo1", "entreprise")
-	errUn := MRUnion.load("algo1", "union")
+	errEt := MREtablissement.load(algo, "etablissement")
+	errEn := MREntreprise.load(algo, "entreprise")
+	errUn := MRUnion.load(algo, "union")
 
 	if errEt != nil || errEn != nil || errUn != nil {
 		c.JSON(500, "Problème d'accès aux fichiers MapReduce")

@@ -7,22 +7,30 @@ prepare_for_export <- function(data, additional_names = NULL){
   'region',
   'prob',
   'date_ccsf',
-  'proc_collective',
-  'cut_effectif',
+  'etat_proc_collective',
+  'date_proc_collective',
+  'default_urssaf',
+  'effectif',
   'libelle_naf_niveau1',
   'libelle_naf_niveau5',
   'code_ape',
   'montant_part_ouvriere',
   'montant_part_patronale',
+  'CA',
+  'CA_N_moins_1',
+  'resultat_net_consolide',
+  'resultat_net_consolide_N_moins_1',
+  'resultat_expl',
+  'resultat_expl_N_moins_1',
   'poids_frng',
   'taux_marge',
   'frais_financier',
   'financier_court_terme',
   'delai_fournisseur',
   'dette_fiscale',
-  'apart_consommee',
-  'apart_share_heuresconsommees',
-  'mean_cotisation_due'
+  'apart_heures_consommees',
+  'ratio_apart',
+  'cotisation_moy12m'
   #indicatrice_dettecumulee_12m,
   #indicatrice_croissance_dettecumulee,
   #apart_effectif_moyen,
@@ -38,7 +46,7 @@ prepare_for_export <- function(data, additional_names = NULL){
 
 
   cat("Préparation à l'export ... \n")
-  cat(paste0('Dernière période connue: ',max(data$periode, na.rm = TRUE)))
+  cat(paste0('Dernière période connue: ',max(data$periode, na.rm = TRUE),'\n'))
 
 
   # Report des dernières infos financieres connues
@@ -68,9 +76,11 @@ prepare_for_export <- function(data, additional_names = NULL){
     temp_sample <- temp_sample %>%
       mark_known_sirets(name = 'sirets_connus.csv')
 
-    export_names <- export_names[export_names %in% names(temp_sample)]
+    all_names <- names(temp_sample)
     cat('Les variables suivantes sont absentes du dataframe:','\n')
-    cat(!(export_names %in% names(temp_sample)))
+    cat(export_names[!(export_names %in% all_names)])
+    export_names <- export_names[export_names %in% all_names]
+
 
     #if (is.emp)
     toExport <- temp_sample %>%

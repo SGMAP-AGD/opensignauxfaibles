@@ -53,7 +53,6 @@ func listFiles(basePath string) ([]fileSummary, error) {
 			})
 		}
 	}
-
 	return files, nil
 }
 
