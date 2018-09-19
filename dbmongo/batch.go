@@ -70,12 +70,6 @@ func sp(s string) *string {
 
 func upsertBatch(c *gin.Context) {
 	status := db.Status
-	// err := status.setDBStatus(sp("Sauvegarde du Batch"))
-	// if err != nil {
-	// 	c.JSON(500, err)
-	// 	fmt.Println(err)
-	// 	return
-	// }
 
 	batch := AdminBatch{}
 	err := c.Bind(&batch)
@@ -118,8 +112,8 @@ func getBatchesID() []string {
 	return batchesID
 }
 
-func getBatches() []*AdminBatch {
-	var batches []*AdminBatch
+func getBatches() []AdminBatch {
+	var batches []AdminBatch
 	db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
 	return batches
 }
@@ -140,42 +134,21 @@ func batchToTime(batch string) (time.Time, error) {
 	return date, err
 }
 
-func processBatch(c *gin.Context) {
-	status := db.Status
-
-	batch := lastBatch()
-	importBatch(batch)
-	go func() {
-		status.setDBStatus(sp("Import des fichiers"))
-		// go func() {
-		// 	dbstatus.setDBStatus(sp("Import des fichiers"))
-		// 	time.Sleep(10 * time.Second)
-		// 	dbstatus.setDBStatus(nil)
-		// 	// - compact
-		// 	message := "Compactage des données"
-		// 	dbstatus.setDBStatus(&message)
-		// 	time.Sleep(5 * time.Second)
-		// 	dbstatus.setDBStatus(nil)
-		// 	// - reduce
-		// 	message = "Calcul des variables"
-		// 	dbstatus.setDBStatus(&message)
-		// 	dbstatus.setDBStatus(nil)
-		// 	// - predict
-		// 	message = "Calcul de la prédiction"
-		// 	dbstatus.setDBStatus(&message)
-		// 	time.Sleep(5 * time.Second)
-		// 	dbstatus.setDBStatus(nil)
-		// 	// - createNextBatch
-		// 	message = "Clôture du batch et initialisation du suivant"
-		// 	dbstatus.setDBStatus(&message)
-		// 	createNextBatch(c)
-		// 	dbstatus.setDBStatus(nil)
-		// }()
-		c.JSON(200, "ok !")
-	}()
+func processBatchHandler(c *gin.Context) {
+	processBatch()
+	c.JSON(200, "ok !")
 }
 
-func lastBatch() *AdminBatch {
+func processBatch() {
+	status := db.Status
+	batch := lastBatch()
+	status.setDBStatus(sp("Import des fichiers"))
+	importBatch(&batch)
+	status.setDBStatus(nil)
+
+}
+
+func lastBatch() AdminBatch {
 	batches := getBatches()
 	l := len(batches)
 	batch := batches[l-1]

@@ -91,7 +91,7 @@ func parseDebit(paths []string) chan *Debit {
 }
 
 func importDebit(batch *AdminBatch) error {
-	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
+	mapping, _ := getCompteSiretMapping(batch)
 
 	for debit := range parseDebit(batch.Files["debit"]) {
 		if siret, ok := mapping[debit.NumeroCompte]; ok {

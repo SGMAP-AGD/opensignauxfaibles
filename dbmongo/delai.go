@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -50,24 +49,25 @@ func parseDelai(paths []string) chan *Delai {
 
 	go func() {
 		for _, path := range paths {
-
+			journal("Import du fichier délais "+path, "info")
 			file, err := os.Open(path)
 			if err != nil {
-				fmt.Println("Error", err)
+				journal("Erreur à l'ouverture du fichier "+path+": "+err.Error()+", abandon", "critique")
 			}
 
 			reader := csv.NewReader(bufio.NewReader(file))
 			reader.Comma = ';'
 			reader.Read()
-
+			n := 0
 			for {
 				row, error := reader.Read()
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					journal("Erreur à la lecture du fichier '"+path+"': «"+err.Error()+"», abandon", "critique")
+					break
 				}
-
+				n++
 				delai := Delai{}
 				delai.NumeroCompte = row[field["NumeroCompte"]]
 				delai.NumeroContentieux = row[field["NumeroContentieux"]]
@@ -85,6 +85,7 @@ func parseDelai(paths []string) chan *Delai {
 				outputChannel <- &delai
 			}
 			file.Close()
+			journal("Import du fichier délais "+path+" terminé"+fmt.Sprint(n)+" lignes insérées", "info")
 		}
 		close(outputChannel)
 	}()
@@ -93,7 +94,11 @@ func parseDelai(paths []string) chan *Delai {
 }
 
 func importDelai(batch *AdminBatch) error {
-	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
+	journal("Import du batch "+batch.ID.Key+": Délai", "info")
+	mapping, err := getCompteSiretMapping(batch)
+	if err != nil {
+		journal("Erreur d'accès au mapping Siret/Compte, interruption. "+err.Error(), "critique")
+	}
 
 	for delai := range parseDelai(batch.Files["delai"]) {
 		if siret, ok := mapping[delai.NumeroCompte]; ok {
@@ -111,5 +116,6 @@ func importDelai(batch *AdminBatch) error {
 		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
+	journal("Fin de l'import du batch "+batch.ID.Key+": Délai", "info")
 	return nil
 }

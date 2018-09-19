@@ -115,7 +115,7 @@ func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
 		i := 0
 
 		for value := range source {
-			if value.Value.Siren == "" || i >= 100 {
+			if (value.Value.Siren == "" && i > 0) || i >= 100 {
 				for _, v := range buffer {
 					objects = append(objects, *v)
 				}
@@ -152,7 +152,7 @@ func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
 		i := 0
 
 		for value := range source {
-			if value.Value.Siret == "" || i >= 100 {
+			if (value.Value.Siret == "" && i > 0) || i >= 100 {
 				for _, v := range buffer {
 					objects = append(objects, *v)
 				}

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 func sliceIndex(limit int, predicate func(i int) bool) int {
@@ -91,11 +92,16 @@ func InitLogger(
 		log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-func getCompteSiretMapping(path []string) map[string]string {
+func getCompteSiretMapping(batch *AdminBatch) (map[string]string, error) {
 	compteSiretMapping := make(map[string]string)
+	path := batch.Files["admin_urssaf"]
+	basePath := viper.GetString("APP_DATA")
 
 	for _, p := range path {
-		file, _ := os.Open(p)
+		file, err := os.Open(basePath + p)
+		if err != nil {
+			return map[string]string{}, errors.New("Erreur à l'ouverture du fichier, " + err.Error())
+		}
 
 		reader := csv.NewReader(bufio.NewReader(file))
 		reader.Comma = ';'
@@ -107,11 +113,12 @@ func getCompteSiretMapping(path []string) map[string]string {
 		compteIndex := 0
 
 		for {
-			row, error := reader.Read()
-			if error == io.EOF {
+			row, err := reader.Read()
+			if err == io.EOF {
 				break
-			} else if error != nil {
-				log.Fatal(error)
+			} else if err != nil {
+				journal("Erreur à la lecture du fichier "+file.Name(), "critique")
+				return map[string]string{}, err
 			}
 			if _, err := strconv.Atoi(row[siretIndex]); err == nil && len(row[siretIndex]) == 14 {
 				compteSiretMapping[row[compteIndex]] = row[siretIndex]
@@ -119,7 +126,7 @@ func getCompteSiretMapping(path []string) map[string]string {
 		}
 		file.Close()
 	}
-	return compteSiretMapping
+	return compteSiretMapping, nil
 }
 
 func importAdminUrsaff(c *gin.Context, batch *AdminBatch) {

@@ -65,7 +65,7 @@ func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
 
 func importCCSF(batch *AdminBatch) error {
 
-	mapping := getCompteSiretMapping(batch.Files["admin_urssaf"])
+	mapping, _ := getCompteSiretMapping(batch)
 
 	dateBatch, errDate := batchToTime(batch.ID.Key)
 	if errDate != nil {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/spf13/viper"
 )
 
 // Altares Extrait du récapitulatif altarès
@@ -71,7 +72,8 @@ func parseAltares(path string) chan *Altares {
 }
 
 func importAltares(batch *AdminBatch) error {
-	for altares := range parseAltares(batch.Files["altares"][0]) {
+	fmt.Println("koukou")
+	for altares := range parseAltares(viper.GetString("APP_DATA") + batch.Files["altares"][0]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 
 		value := ValueEtablissement{

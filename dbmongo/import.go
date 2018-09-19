@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,18 +58,18 @@ func listFiles(basePath string) ([]fileSummary, error) {
 }
 
 var importFunctions = map[string]func(*AdminBatch) error{
-	"apconso":    importAPConso,
-	"bdf":        importBDF,
-	"diane":      importDiane,
-	"cotisation": importCotisation,
-	"delai":      importDelai,
-	"dpae":       importDPAE,
-	"altares":    importAltares,
-	"apdemande":  importAPDemande,
-	"ccsf":       importCCSF,
-	"debit":      importDebit,
-	"effectif":   importEffectif,
-	"sirene":     importSirene,
+	//"apconso":    importAPConso,
+	//"bdf":        importBDF,
+	// "diane":      importDiane,
+	// "cotisation": importCotisation,
+	"delai": importDelai,
+	// "dpae":       importDPAE,
+	// "altares":    importAltares,
+	// "apdemande":  importAPDemande,
+	// "ccsf":       importCCSF,
+	// "debit":      importDebit,
+	// "effectif":   importEffectif,
+	// "sirene":     importSirene,
 }
 
 func purge(c *gin.Context) {
@@ -86,6 +88,7 @@ func importBatchHandler(c *gin.Context) {
 func importBatch(batch *AdminBatch) {
 	if !batch.Readonly {
 		for _, fn := range importFunctions {
+			fmt.Println(runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name())
 			err := fn(batch)
 			if err != nil {
 				journal("Erreur à l'import du fichier: "+err.Error(), "Critique")
@@ -103,6 +106,7 @@ func journal(event string, priority string) {
 		Event    string        `json:"event" bson:"event"`
 		Priority string        `json:"priority" bson:"priority"`
 	}{
+		ID:       bson.NewObjectId(),
 		Date:     time.Now(),
 		Event:    event,
 		Priority: priority,
