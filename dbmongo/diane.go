@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 
@@ -99,7 +98,7 @@ func parseDiane(paths []string) chan *Diane {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					//log.Fatal(error)
 				}
 
 				diane := Diane{}

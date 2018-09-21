@@ -2,23 +2,49 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
+	"net/http"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
 )
 
 var db = initDB()
+var journalStore journal
+var journalChannel = journalDispatch(&journalStore)
+
+var wsupgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     checkOrigin,
+}
+
+func checkOrigin(r *http.Request) bool {
+	return true
+}
+
+func wshandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsupgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("Failed to set websocket upgrade: %+v", err)
+		return
+	}
+
+	for {
+		conn.WriteMessage(2, []byte("{test: 'coucou'}"))
+		time.Sleep(time.Second)
+	}
+
+}
 
 func main() {
 	// Lancer Rserve en background
 
-	InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	// InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
 	go r()
 
@@ -74,7 +100,6 @@ func main() {
 		api.GET("/admin/epoch", epoch)
 
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-		api.GET("/debug/", debug)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)
@@ -82,13 +107,16 @@ func main() {
 		api.GET("/compact/entreprise", compactEntreprise)
 		api.GET("/reduce/:algo/:batch/:siret", reduce)
 		api.GET("/reduce/:algo/:batch", reduce)
+
+		r.GET("/ws", func(c *gin.Context) {
+			wshandler(c.Writer, c.Request)
+		})
 	}
 
 	debugAPI := r.Group("debugAPI")
 	debugAPI.Use(authMiddleware.MiddlewareFunc())
 	{
 		debugAPI.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-		debugAPI.GET("/debug/", debug)
 		debugAPI.GET("/import/:batch", importBatchHandler)
 		debugAPI.GET("/compact/etablissement/:siret", compactEtablissement)
 		debugAPI.GET("/compact/etablissement", compactEtablissement)
@@ -117,9 +145,8 @@ func loadConfig() {
 	viper.SetDefault("KANBOARD_USERNAME", "admin")
 	viper.SetDefault("KANBOARD_PASSWORD", "admin")
 	err := viper.ReadInConfig()
-	fmt.Println(err)
+	if err != nil {
+		log(critical, "readConfig", "Erreur à la lecture de la configuration")
+		panic("Erreur à la lecture de la configuration")
+	}
 }
-
-func purgeBatch(c *gin.Context) {}
-
-func resetBatch(c *gin.Context) {}

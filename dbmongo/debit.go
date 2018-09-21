@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -61,7 +60,7 @@ func parseDebit(paths []string) chan *Debit {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					// log.Fatal(error)
 				}
 
 				debit := Debit{

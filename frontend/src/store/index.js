@@ -36,9 +36,35 @@ const store = new Vuex.Store({
     dbstatus: null,
     currentBatchKey: 0,
     currentType: null,
-    epoch: 0
+    epoch: 0,
+    socket: {
+      isConnected: false,
+      message: [],
+      reconnectError: false
+    }
   },
   mutations: {
+    SOCKET_ONOPEN (state, event) {
+      Vue.prototype.$socket = event.currentTarget
+      state.socket.isConnected = true
+    },
+    SOCKET_ONCLOSE (state, event) {
+      state.socket.isConnected = false
+    },
+    SOCKET_ONERROR (state, event) {
+      console.error(state, event)
+    },
+    // default handler called for all methods
+    SOCKET_ONMESSAGE (state, message) {
+      state.socket.message.push(message)
+    },
+    // mutations for reconnect methods
+    SOCKET_RECONNECT (state, count) {
+      console.info(state, count)
+    },
+    SOCKET_RECONNECT_ERROR (state) {
+      state.socket.reconnectError = true
+    },
     login (state) {
       axiosClient.post('/login', state.credentials).then(response => {
         state.token = response.data.token
@@ -123,11 +149,11 @@ const store = new Vuex.Store({
   }
 })
 
-setInterval(
-  function () {
-    store.dispatch('checkEpoch')
-  },
-  500)
+// setInterval(
+//   function () {
+//     store.dispatch('checkEpoch')
+//   },
+//   500)
 
 if (store.state.token != null) {
   store.commit('refreshToken')

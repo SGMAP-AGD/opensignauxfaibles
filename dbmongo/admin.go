@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -92,7 +91,7 @@ func loadNAF() (NAF, error) {
 		if error == io.EOF {
 			break
 		} else if error != nil {
-			log.Fatal(error)
+			// log.Fatal(error)
 		}
 		naf.N1[row[0]] = row[1]
 		fmt.Println(row)
@@ -111,7 +110,7 @@ func loadNAF() (NAF, error) {
 		if error == io.EOF {
 			break
 		} else if error != nil {
-			log.Fatal(error)
+			// log.Fatal(error)
 		}
 		naf.N5to1[row[0]] = row[1]
 	}
@@ -129,7 +128,7 @@ func loadNAF() (NAF, error) {
 		if error == io.EOF {
 			break
 		} else if error != nil {
-			log.Fatal(error)
+			// log.Fatal(error)
 		}
 
 		naf.N5[row[0]] = row[1]

@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
@@ -46,7 +45,7 @@ func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
 			if error == io.EOF {
 				break
 			} else if error != nil {
-				log.Fatal(error)
+				// log.Fatal(error)
 			}
 
 			ccsf := CCSF{}

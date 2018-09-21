@@ -166,3 +166,7 @@ func createNextBatch() error {
 	err := batch.save()
 	return err
 }
+
+func purgeBatch(c *gin.Context) {}
+
+func resetBatch(c *gin.Context) {}

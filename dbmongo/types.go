@@ -7,14 +7,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// Value Objet racine pour le stockage établissement.
-// En insertion, ID est un ObjectId généré automatiquement, puis devient un siret après mapReduce
-// Value est une map des lots d'intégration à ordonner par ordre alphanumérique
-// type Value struct {
-// 	ID    bson.ObjectId `json:"id" bson:"_id"`
-// 	Value Etablissement `json:"value" bson:"value"`
-// }
-
 // Prediction prediction
 type Prediction struct {
 	Siret      string  `json:"siret" bson:"siret"`

@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"reflect"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
 )
 
@@ -88,28 +85,12 @@ func importBatchHandler(c *gin.Context) {
 func importBatch(batch *AdminBatch) {
 	if !batch.Readonly {
 		for _, fn := range importFunctions {
-			fmt.Println(runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name())
 			err := fn(batch)
 			if err != nil {
-				journal("Erreur à l'import du fichier: "+err.Error(), "Critique")
+				log(critical, "importMain", "Erreur à l'importation")
 			}
 		}
 	} else {
-		journal("Ce lot est fermé, import impossible.", "Critique")
+		log(critical, "importMain", "Le lot "+batch.ID.Key+" est fermé, import impossible.")
 	}
-}
-
-func journal(event string, priority string) {
-	entry := struct {
-		ID       bson.ObjectId `json:"id" bson:"_id"`
-		Date     time.Time     `json:"date" bson:"date"`
-		Event    string        `json:"event" bson:"event"`
-		Priority string        `json:"priority" bson:"priority"`
-	}{
-		ID:       bson.NewObjectId(),
-		Date:     time.Now(),
-		Event:    event,
-		Priority: priority,
-	}
-	db.DB.C("Journal").Insert(entry)
 }

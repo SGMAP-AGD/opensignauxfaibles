@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -62,7 +61,7 @@ func parseSirene(paths []string) chan *Sirene {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					// log.Fatal(error)
 				}
 
 				if !(ignoreSirene.contains(row[71])) {

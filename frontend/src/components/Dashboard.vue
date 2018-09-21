@@ -10,14 +10,7 @@
             </v-card-title>
             <v-divider/>
             <v-card-text>
-              <v-list>
-                <v-list-tile avatar>
-                  Chiffre 1
-                </v-list-tile>
-                <v-list-tile avatar>
-                  Chiffre 2
-                </v-list-tile>
-              </v-list>
+              {{ message }}
             </v-card-text>
           </v-card>
         </v-flex>
@@ -66,6 +59,15 @@
   </v-container>
 </template>
 
+<script>
+export default {
+  computed: {
+    message () {
+      return this.$store.state.socket.message
+    }
+  }
+}
+</script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h1, h2 {

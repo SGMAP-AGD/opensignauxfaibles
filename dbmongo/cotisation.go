@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -54,7 +53,7 @@ func parseCotisation(paths []string) chan *Cotisation {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					// log.Fatal(error)
 				}
 
 				cotisation := Cotisation{}

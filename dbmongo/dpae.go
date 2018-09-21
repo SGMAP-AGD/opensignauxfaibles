@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -40,7 +39,7 @@ func parseDPAE(path string) chan *DPAE {
 			if error == io.EOF {
 				break
 			} else if error != nil {
-				log.Fatal(error)
+				// log.Fatal(error)
 			}
 
 			date, err := time.Parse("20060102", row[1]+row[2]+"01")

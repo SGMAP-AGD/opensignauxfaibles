@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
+
 	"os"
 	"strconv"
 	"time"
@@ -61,7 +61,7 @@ func parseEffectif(paths []string) chan map[string]*Effectif {
 			periods, err := parseEffectifPeriod(fields[0:boundaryIndex])
 
 			if err != nil {
-				log.Panic("Aborting: could not read a period:", err)
+				// log.Panic("Aborting: could not read a period:", err)
 			}
 
 			for {
@@ -69,7 +69,7 @@ func parseEffectif(paths []string) chan map[string]*Effectif {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					// log.Fatal(error)
 				}
 
 				i := 0

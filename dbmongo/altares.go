@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
@@ -47,7 +46,7 @@ func parseAltares(path string) chan *Altares {
 			if error == io.EOF {
 				break
 			} else if error != nil {
-				log.Fatal(error)
+				// log.Fatal(error)
 			}
 
 			dateEffet, err := time.Parse("2006-01-02", row[dateEffetIndex])

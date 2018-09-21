@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/spf13/viper"
@@ -31,12 +30,12 @@ func initDB() DB {
 	// définition de 3 connexions pour isoler les curseurs
 	mongostatus, err := mgo.Dial(dbDial)
 	if err != nil {
-		log.Panic(err)
+		// log.Panic(err)
 	}
 
 	mongodb, err := mgo.Dial(dbDial)
 	if err != nil {
-		log.Panic(err)
+		// log.Panic(err)
 	}
 
 	mongostatus.SetSocketTimeout(3600 * time.Second)
@@ -79,7 +78,7 @@ func initDB() DB {
 	// pousse les fonctions partagées JS
 	err = declareServerFunctions(db)
 	if err != nil {
-		log.Panic(err)
+		// log.Panic(err)
 	}
 
 	chanEntreprise := insertEntreprise(db)

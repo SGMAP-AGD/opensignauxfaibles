@@ -7,6 +7,13 @@ import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
 import store from './store'
 import axios from 'axios'
+import VueNativeSock from 'vue-native-websocket'
+Vue.use(VueNativeSock, 'ws://localhost:3000/ws', {
+  store: store,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000
+})
 
 Vue.use(Vuetify)
 

@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -61,37 +60,6 @@ func excelToTime(excel string) (time.Time, error) {
 	return time.Unix((excelInt-25569)*3600*24, 0), nil
 }
 
-var (
-	trace    *log.Logger
-	info     *log.Logger
-	warning  *log.Logger
-	logerror *log.Logger
-)
-
-// InitLogger initialise les variables permettant l'écriture des messages de log
-func InitLogger(
-	traceHandle io.Writer,
-	infoHandle io.Writer,
-	warningHandle io.Writer,
-	errorHandle io.Writer) {
-
-	trace = log.New(traceHandle,
-		"TRACE: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	info = log.New(infoHandle,
-		"INFO: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	warning = log.New(warningHandle,
-		"WARNING: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	logerror = log.New(errorHandle,
-		"ERROR: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-}
-
 func getCompteSiretMapping(batch *AdminBatch) (map[string]string, error) {
 	compteSiretMapping := make(map[string]string)
 	path := batch.Files["admin_urssaf"]
@@ -117,7 +85,7 @@ func getCompteSiretMapping(batch *AdminBatch) (map[string]string, error) {
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				journal("Erreur à la lecture du fichier "+file.Name(), "critique")
+				log(critical, "importCompteSiret", "Erreur à la lecture du fichier "+file.Name())
 				return map[string]string{}, err
 			}
 			if _, err := strconv.Atoi(row[siretIndex]); err == nil && len(row[siretIndex]) == 14 {

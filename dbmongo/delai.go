@@ -49,10 +49,10 @@ func parseDelai(paths []string) chan *Delai {
 
 	go func() {
 		for _, path := range paths {
-			journal("Import du fichier délais "+path, "info")
+			log(info, "importDelais", "Import du fichier délais "+path)
 			file, err := os.Open(path)
 			if err != nil {
-				journal("Erreur à l'ouverture du fichier "+path+": "+err.Error()+", abandon", "critique")
+				log(critical, "importDelais", "Erreur à l'ouverture du fichier "+path+": "+err.Error()+", abandon")
 			}
 
 			reader := csv.NewReader(bufio.NewReader(file))
@@ -64,7 +64,7 @@ func parseDelai(paths []string) chan *Delai {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					journal("Erreur à la lecture du fichier '"+path+"': «"+err.Error()+"», abandon", "critique")
+					log(critical, "importDelais", "Erreur à la lecture du fichier '"+path+"': «"+err.Error()+"», abandon")
 					break
 				}
 				n++
@@ -85,7 +85,7 @@ func parseDelai(paths []string) chan *Delai {
 				outputChannel <- &delai
 			}
 			file.Close()
-			journal("Import du fichier délais "+path+" terminé"+fmt.Sprint(n)+" lignes insérées", "info")
+			log(critical, "importDelais", "Import du fichier délais "+path+" terminé"+fmt.Sprint(n)+" lignes insérées")
 		}
 		close(outputChannel)
 	}()
@@ -94,10 +94,10 @@ func parseDelai(paths []string) chan *Delai {
 }
 
 func importDelai(batch *AdminBatch) error {
-	journal("Import du batch "+batch.ID.Key+": Délai", "info")
+	log(info, "importDelai", "Import du batch "+batch.ID.Key+": Délai")
 	mapping, err := getCompteSiretMapping(batch)
 	if err != nil {
-		journal("Erreur d'accès au mapping Siret/Compte, interruption. "+err.Error(), "critique")
+		log(critical, "importDelai", "Erreur d'accès au mapping Siret/Compte, interruption. "+err.Error())
 	}
 
 	for delai := range parseDelai(batch.Files["delai"]) {
@@ -116,6 +116,6 @@ func importDelai(batch *AdminBatch) error {
 		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
-	journal("Fin de l'import du batch "+batch.ID.Key+": Délai", "info")
+	log(info, "importDelai", "Importation du batch "+batch.ID.Key+" terminée")
 	return nil
 }
