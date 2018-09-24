@@ -1,0 +1,3 @@
+siret
+periode
+effectif
