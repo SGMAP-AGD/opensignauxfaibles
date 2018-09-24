@@ -48,16 +48,13 @@ const store = new Vuex.Store({
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
-      console.log('connexion effectuée au websocket')
       Vue.prototype.$socket = event.currentTarget
       state.socket.isConnected = true
     },
     SOCKET_ONCLOSE (state, event) {
-      console.log('disconnect')
       state.socket.isConnected = false
     },
     SOCKET_ONERROR (state, event) {
-      console.log('error')
       console.error(state, event)
     },
     // default handler called for all methods
@@ -67,7 +64,7 @@ const store = new Vuex.Store({
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
-      console.log('reconnexion')
+      console.info(state, count)
     },
     SOCKET_RECONNECT_ERROR (state) {
       wsConnect(state)
