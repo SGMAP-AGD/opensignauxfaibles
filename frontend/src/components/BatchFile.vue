@@ -177,7 +177,7 @@ export default {
       }
     },
     files () {
-      var a = (this.$store.state.files || []).map(f => {
+      var files = (this.$store.state.files || []).map(f => {
         var arrayFile = f.name.split('/')
         var lengthArrayFile = arrayFile.length
         f = {
@@ -191,8 +191,7 @@ export default {
         }
         return f
       })
-      console.log(a)
-      return a
+      return files
     },
     filterFiles () {
       return this.files.filter(f => {

@@ -9,8 +9,10 @@
               Intégration des données
             </v-card-title>
             <v-divider/>
-            <v-card-text>
-              {{ message }}
+            <v-card-text
+            v-for="m in message"
+            :key="m">
+              {{m}}
             </v-card-text>
           </v-card>
         </v-flex>

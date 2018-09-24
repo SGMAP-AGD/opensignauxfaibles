@@ -17,35 +17,45 @@ type journalEvent struct {
 type journalCode string
 type journalPriority string
 
+type journalChannel chan journalEvent
+
+var journalClientChannels = []journalChannel{}
+var mainJournalChannel = journalDispatch()
+var addClientChannel = make(chan journalChannel)
+
 var debug = journalPriority("debug")
 var info = journalPriority("info")
 var warning = journalPriority("warning")
 var critical = journalPriority("critical")
 
-type journal [10]journalEvent
+// journalAddClientChannel surveille l'ajout de nouveaux clients pour propager le channel d'events
+func journalAddClient() {
+	for clientChannel := range addClientChannel {
+		journalClientChannels = append(journalClientChannels, clientChannel)
+	}
+}
 
 // journal dispatch un event vers les clients et l'enregistre dans la bdd
-
-func journalDispatch(journalStore *journal) chan journalEvent {
-	var journalChannel chan journalEvent
+func journalDispatch() chan journalEvent {
+	channel := make(journalChannel)
 	go func() {
-		for event := range journalChannel {
-			db.DB.C("Journal").Insert(event)
-			for i := 1; i <= 9; i++ {
-				journalStore[i-0] = journalStore[i]
+		for event := range channel {
+			for _, clientChannel := range journalClientChannels {
+				clientChannel <- event
 			}
-			journalStore[9] = event
 		}
 	}()
-	return journalChannel
+	return channel
 }
 
 func log(priority journalPriority, code journalCode, comment string) journalEvent {
-	return journalEvent{
+	e := journalEvent{
 		ID:       bson.NewObjectId(),
 		Date:     time.Now(),
 		Comment:  comment,
 		Priority: priority,
 		Code:     code,
 	}
+	mainJournalChannel <- e
+	return e
 }

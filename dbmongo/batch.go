@@ -135,17 +135,19 @@ func batchToTime(batch string) (time.Time, error) {
 }
 
 func processBatchHandler(c *gin.Context) {
-	processBatch()
+	go func() {
+		processBatch()
+	}()
 	c.JSON(200, "ok !")
 }
 
 func processBatch() {
+	log("info", "processBatch", "Lancement du process 1802")
 	status := db.Status
 	batch := lastBatch()
 	status.setDBStatus(sp("Import des fichiers"))
 	importBatch(&batch)
 	status.setDBStatus(nil)
-
 }
 
 func lastBatch() AdminBatch {

@@ -2,8 +2,11 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
 import createPersistedState from 'vuex-persistedstate'
+import VueNativeSock from 'vue-native-websocket'
 
 Vue.use(Vuex)
+
+const vm = new Vue()
 
 var axiosClient = axios.create(
   {
@@ -45,6 +48,7 @@ const store = new Vuex.Store({
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
+      console.log('connexion effectuée au websocket')
       Vue.prototype.$socket = event.currentTarget
       state.socket.isConnected = true
     },
@@ -56,18 +60,22 @@ const store = new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
-      state.socket.message.push(message)
+      console.log('message reçu: ' + JSON.stringify(message.data))
+      state.socket.message = state.socket.message.slice(1, 9).concat([message.data])
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
+      console.log('reconnexion')
       console.info(state, count)
     },
     SOCKET_RECONNECT_ERROR (state) {
+      console.log('erreur de reconnexion')
       state.socket.reconnectError = true
     },
     login (state) {
       axiosClient.post('/login', state.credentials).then(response => {
         state.token = response.data.token
+        vm.$connect()
         store.commit('updateRefs')
         store.commit('updateBatches')
         store.commit('updateDbStatus')
@@ -79,6 +87,7 @@ const store = new Vuex.Store({
       })
     },
     logout (state) {
+      vm.$disconnect()
       state.credentials.username = null
       state.credentials.password = null
       state.token = null
@@ -121,7 +130,6 @@ const store = new Vuex.Store({
   },
   actions: {
     saveBatch (state, batch) {
-      console.log(batch)
       axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
     },
     checkEpoch () {
@@ -137,7 +145,6 @@ const store = new Vuex.Store({
           if (error.response.status === 401) {
             store.commit('logout')
           }
-          console.log(error.response)
         })
       }
     }
@@ -149,13 +156,16 @@ const store = new Vuex.Store({
   }
 })
 
-// setInterval(
-//   function () {
-//     store.dispatch('checkEpoch')
-//   },
-//   500)
+Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + store.state.token, {
+  store: store,
+  connectManually: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000
+})
 
 if (store.state.token != null) {
+  vm.$connect()
   store.commit('refreshToken')
 }
 

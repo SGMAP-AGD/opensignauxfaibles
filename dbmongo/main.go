@@ -14,8 +14,6 @@ import (
 )
 
 var db = initDB()
-var journalStore journal
-var journalChannel = journalDispatch(&journalStore)
 
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -27,16 +25,18 @@ func checkOrigin(r *http.Request) bool {
 	return true
 }
 
-func wshandler(w http.ResponseWriter, r *http.Request) {
+func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
+	fmt.Println("Jeton Web: " + jwt)
 	conn, err := wsupgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("Failed to set websocket upgrade: %+v", err)
 		return
 	}
+	channel := make(chan journalEvent)
+	addClientChannel <- channel
 
-	for {
-		conn.WriteMessage(2, []byte("{test: 'coucou'}"))
-		time.Sleep(time.Second)
+	for event := range channel {
+		conn.WriteJSON(event)
 	}
 
 }
@@ -47,6 +47,7 @@ func main() {
 	// InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
 	go r()
+	go journalAddClient()
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
@@ -108,8 +109,8 @@ func main() {
 		api.GET("/reduce/:algo/:batch/:siret", reduce)
 		api.GET("/reduce/:algo/:batch", reduce)
 
-		r.GET("/ws", func(c *gin.Context) {
-			wshandler(c.Writer, c.Request)
+		r.GET("/ws/:jwt", func(c *gin.Context) {
+			wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
 		})
 	}
 
@@ -146,7 +147,6 @@ func loadConfig() {
 	viper.SetDefault("KANBOARD_PASSWORD", "admin")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log(critical, "readConfig", "Erreur à la lecture de la configuration")
 		panic("Erreur à la lecture de la configuration")
 	}
 }
