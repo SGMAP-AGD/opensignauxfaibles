@@ -68,7 +68,7 @@ func dataPrediction(c *gin.Context) {
 	var etablissement []ValueEtablissement
 	var siret []string
 
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 	db.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
 	for _, r := range prediction {
 		siret = append(siret, r.Siret)
@@ -80,10 +80,10 @@ func dataPrediction(c *gin.Context) {
 }
 
 func reduce(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 
 	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-06-01")
+	dateFin, _ := time.Parse("2006-01-02", "2018-09-01")
 	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
 
 	// Détermination scope traitement
@@ -111,9 +111,9 @@ func reduce(c *gin.Context) {
 	MREtablissement := MapReduceJS{}
 	MREntreprise := MapReduceJS{}
 	MRUnion := MapReduceJS{}
-	errEt := MREtablissement.load("algo1", "etablissement")
-	errEn := MREntreprise.load("algo1", "entreprise")
-	errUn := MRUnion.load("algo1", "union")
+	errEt := MREtablissement.load(algo, "etablissement")
+	errEn := MREntreprise.load(algo, "entreprise")
+	errUn := MRUnion.load(algo, "union")
 
 	if errEt != nil || errEn != nil || errUn != nil {
 		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
@@ -186,7 +186,7 @@ func reduce(c *gin.Context) {
 }
 
 func compactEtablissement(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 	batches := getBatchesID(db)
 
 	// Détermination scope traitement
@@ -252,8 +252,15 @@ func compactEtablissement(c *gin.Context) {
 
 }
 
+func getFeatures(c *gin.Context) {
+	db := c.Keys["db"].(*mgo.Database)
+	var data []interface{}
+	db.C("Features").Find(nil).All(&data)
+	c.JSON(200, data)
+}
+
 func compactEntreprise(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
+	db, _ := c.Keys["db"].(*mgo.Database)
 	batches := getBatchesID(db)
 
 	// Détermination scope traitement
@@ -313,42 +320,18 @@ func compactEntreprise(c *gin.Context) {
 }
 
 func dropBatch(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
+	db := c.Keys["db"].(*mgo.Database)
+	batchKey := c.Params.ByName("batchKey")
 
-	batches := getBatchesID(db)
-	sort.Slice(batches, func(i, j int) bool {
-		return batches[i] > batches[j]
-	})
-	currentBatch := batches[0]
+	change, err := db.C("Admin").RemoveAll(bson.M{"_id.key": batchKey, "_id.type": "batch"})
 
-	MREtablissement := MapReduceJS{}
-	errEt := MREtablissement.load("dropBatch", "etablissement")
-	MREntreprise := MapReduceJS{}
-	errEn := MREntreprise.load("dropBatch", "entreprise")
+	c.JSON(200, []interface{}{err, change})
 
-	if errEt != nil || errEn != nil {
-		c.JSON(500, "Probleme d'accès aux ressources MapReduce")
-		return
+}
+func getNAF(c *gin.Context) {
+	naf, err := loadNAF()
+	if err != nil {
+		c.JSON(500, err)
 	}
-
-	jobEt := &mgo.MapReduce{
-		Map:      string(MREtablissement.Map),
-		Reduce:   string(MREtablissement.Reduce),
-		Finalize: string(MREtablissement.Finalize),
-		Out:      bson.M{"replace": "Etablissement"},
-		Scope:    bson.M{"currentBatch": currentBatch},
-	}
-
-	jobEn := &mgo.MapReduce{
-		Map:      string(MREntreprise.Map),
-		Reduce:   string(MREntreprise.Reduce),
-		Finalize: string(MREntreprise.Finalize),
-		Out:      bson.M{"replace": "Entreprise"},
-		Scope:    bson.M{"currentBatch": currentBatch},
-	}
-
-	_, errEt = db.C("Etablissement").Find(nil).MapReduce(jobEt, nil)
-	_, errEn = db.C("Entreprise").Find(nil).MapReduce(jobEn, nil)
-
-	c.JSON(200, currentBatch)
+	c.JSON(200, naf)
 }

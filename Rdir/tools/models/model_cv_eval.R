@@ -17,15 +17,14 @@ model_cv_eval <- function(model_fun, train_set, cv_folds){
       slice(-cv_folds[[i]])
 
     output <- model_fun(aux_train,aux_cv)
-    prediction = output$pred
+    prediction <- output$pred
 
     AUCPR_aux_failure[i] <-  AUCPR(prediction, aux_cv$failure)
     AUCPR_aux_default[i] <- AUCPR(prediction, aux_cv$default)
     F1_aux_failure[i] <- pr.F1(prediction,aux_cv$failure)
     F1_aux_default[i] <- pr.F1(prediction,aux_cv$default)
 
-    cat('Precision Recall AUC for failure', AUCPR_aux_failure[i])
-    cat('\n')
+
     cat('Precision Recall AUC for default', AUCPR_aux_default[i])
     cat('\n')
 

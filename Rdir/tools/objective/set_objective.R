@@ -8,5 +8,6 @@ data[['outcome']] <- fct_recode(
     fct_relevel(c("default","non_default"))
 
 cat("L'entraînent se fait désormais sur l'objectif suivant:",objective)
+assertthat::assert_that(!any(is.na(data$outcome)))
 return(data)
 }

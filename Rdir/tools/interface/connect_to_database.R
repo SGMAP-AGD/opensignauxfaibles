@@ -1,12 +1,17 @@
-connect_to_database <- function(collection, batch, min_effectif = 20){
+connect_to_database <- function(collection, batch, algo = "algo2", min_effectif = 20){
   cat('Connexion à la collection mongodb ...')
   dbconnection <- mongo(collection = collection, db = 'opensignauxfaibles', verbose = TRUE, url = 'mongodb://localhost:27017')
   cat(' Fini.','\n')
 
   cat('Import ...')
- ### FIX ME: batch en dur
-  cat('FIX ME')
-  data <- dbconnection$aggregate(paste0('[{"$match":{"_id.batch":"',batch,'"}},{"$unwind":{"path": "$value"}}]'))$value %>%
+  # FIX ME: intégrer algo à la requête
+  cat('FIX ME ... integration algo a la requete \n')
+  data <- dbconnection$aggregate(paste0('[{"$match":{"_id.batch":"',batch,'", "_id.algo":"',algo,'"}},{"$unwind":{"path": "$value"}}]'))$value
+
+  if (algo == 'algo1') {
+    # FIX ME: rien à faire ici
+    cat('FIX ME ... feature engineering a effectuer ailleurs\n')
+    data <- data %>%
     mutate(
       cut_growthrate = forcats::fct_relevel(
         cut_growthrate,
@@ -17,9 +22,11 @@ connect_to_database <- function(collection, batch, min_effectif = 20){
                                           c("default", "non_default")
       )
     )
+  }
 
   cat(' Fini.','\n')
-
+  assertthat::assert_that(nrow(data)>0)
+  assertthat::assert_that(all(c('periode','siret','effectif','code_ape') %in% names(data)))
   assertthat::assert_that(anyDuplicated(data %>% select(siret,periode)) == 0)
 
   table_wholesample <- data %>%
@@ -36,8 +43,13 @@ connect_to_database <- function(collection, batch, min_effectif = 20){
     group_by(siret) %>%
     mutate(toKeep = max(effectif)> min_effectif) %>%
     filter(toKeep) %>%
-    select(-toKeep) %>%
-    dplyr::mutate(proc_collective = if_else(any(!is.na(date_defaillance)),max(date_defaillance,na.rm =TRUE),as.POSIXct(NA))) %>%
+    select(-toKeep)
+
+  if (algo == "algo1") {
+   table_wholesample <- table_wholesample %>%
+    dplyr::mutate(proc_collective = if_else(any(!is.na(date_defaillance)),max(date_defaillance,na.rm =TRUE),as.POSIXct(NA)))
+  }
+  table_wholesample <- table_wholesample %>%
     ungroup()
   cat(' Fini.','\n')
   n_eta_filtered <- table_wholesample$siret %>% n_distinct()

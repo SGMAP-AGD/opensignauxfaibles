@@ -1,132 +1,180 @@
 <template>
-<div>
-  <v-card-text>
-    <v-menu
-      ref="menu_date_debut"
-      :close-on-content-click="false"
-      v-model="date_debut_status"
-      :nudge-right="40"
-      :return-value.sync="date_debut"
-      lazy
-      transition="scale-transition"
-      offset-y
-      max-width="290px"
-      min-width="290px"
+<div class="container">
+  <div class="fixed d-inline-block elevation-6">
+    <v-navigation-drawer
+    permanent
+    :key="'nav' + currentBatch"
+    style="z-index: 1"
     >
-      <v-text-field
-        slot="activator"
-        v-model="date_debut"
-        label="Date de début"
-        prepend-icon="event"
-        readonly
-      ></v-text-field>
-      <v-date-picker
-        v-model="date_debut"
-        type="month"
-        no-title
-        scrollable
-      >
-        <v-spacer></v-spacer>
-        <v-btn flat color="primary" @click="date_debut_status = false">Cancel</v-btn>
-        <v-btn flat color="primary" @click="$refs.menu_date_debut.save(date_debut)">OK</v-btn>
-      </v-date-picker>
-    </v-menu>
-
-    <v-menu
-      ref="menu_date_fin"
-      :close-on-content-click="false"
-      v-model="date_fin_status"
-      :nudge-right="40"
-      :return-value.sync="date_fin"
-      lazy
-      transition="scale-transition"
-      offset-y
-      max-width="290px"
-      min-width="290px"
-      right
-    >
-      <v-text-field
-        slot="activator"
-        v-model="date_fin"
-        label="Date de fin"
-        prepend-icon="event"
-        readonly
-      ></v-text-field>
-      <v-date-picker
-        v-model="date_fin"
-        type="month"
-        no-title
-        scrollable
-      >
-        <v-spacer></v-spacer>
-        <v-btn flat color="primary" @click="date_fin_status = false">Cancel</v-btn>
-        <v-btn flat color="primary" @click="$refs.menu_date_fin.save(date_fin)">OK</v-btn>
-      </v-date-picker>
-    </v-menu>
-
-    <v-menu
-      ref="menu_date_fin"
-      :close-on-content-click="false"
-      v-model="date_fin_effectif_status"
-      :nudge-right="40"
-      :return-value.sync="date_fin_effectif"
-      lazy
-      transition="scale-transition"
-      offset-y
-      max-width="290px"
-      min-width="290px"
-    >
-      <v-text-field
-        slot="activator"
-        v-model="date_fin_effectif"
-        label="Date de fin effectif"
-        prepend-icon="event"
-        readonly
-      ></v-text-field>
-      <v-date-picker
-        v-model="date_fin_effectif"
-        type="month"
-        no-title
-        scrollable
-      >
-        <v-spacer></v-spacer>
-        <v-btn flat color="primary" @click="date_fin_effectif_status = false">Cancel</v-btn>
-        <v-btn flat color="primary" @click="$refs.menu_date_fin.save(date_fin_effectif)">OK</v-btn>
-      </v-date-picker>
-    </v-menu>
-  </v-card-text>
-  <v-expansion-panel popout>
-    <v-expansion-panel-content
-      v-for="(files, type) in batch.files"
-      v-bind:key="type"
-    >
-      <div slot="header">{{ type }} - {{ files.length }} {{ (files.length > 1) ? "fichiers":"fichier" }} </div>
-      <v-card>
-        <v-card-text v-for="file in files" v-bind:key="file">{{ file }}</v-card-text>
-      </v-card>
-    </v-expansion-panel-content>
-  </v-expansion-panel>
-</div>
+      <v-list dense class="pt-0">
+        <v-list-group>
+          <v-list-tile slot="activator" bgcolor="red">
+            <v-list-tile-action>
+              <v-icon>fa-cogs</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content class="title">
+              Paramètres
+            </v-list-tile-content>
+          </v-list-tile>
+          <v-list-tile
+          v-for="param in parameters"
+          :key="batchKey + param.key"
+          ripple
+          @click="setCurrentType(param.key)">
+            <v-list-tile-content
+            :class="(param.key===currentType) ? 'selected': null"
+            >
+              <v-list-tile-title>{{ param.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list-group>
+        <v-list-group>
+          <v-list-tile slot="activator">
+            <v-list-tile-action>
+              <v-icon>fa-copy</v-icon>
+            </v-list-tile-action> 
+            <v-list-tile-title class="title">
+              Fichiers
+            </v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile
+          v-for="type in types"
+          :key="type.text"
+          @click="setCurrentType(type.type)"
+          :class="(type.type==currentType) ? 'selected': null"
+          >
+            <v-list-tile-content
+            >
+              <v-list-tile-title>{{ type.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+          <v-divider></v-divider>
+        </v-list-group>
+        <v-list-group>
+          <v-list-tile slot="activator">
+            <v-list-tile-action>
+              <v-icon>fa-microchip</v-icon>
+            </v-list-tile-action> 
+            <v-list-tile-title class="title">
+              Traitements
+            </v-list-tile-title>
+          </v-list-tile>
+          <v-divider></v-divider>
+          <v-list-tile
+          v-for="process in processes"
+          :key="batchKey + process.key"
+          @click="setCurrentType(process.key)"
+          >
+            <v-list-tile-content
+            :class="(process.key==currentType) ? 'selected': null"
+            >
+              <v-list-tile-title>{{ process.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list-group>
+      </v-list>
+    </v-navigation-drawer> 
+    </div>
+    <div class="flex-item">
+      <v-container grid-list-xs text-xs-center>
+        <v-layout row wrap justify-start>
+          <v-flex xs12 >
+            <BatchDate 
+            class="d-inline-block elevation-6"
+            :key="batchKey + 'batchDate'"
+            :date="currentType"
+            :param="parameters.filter(p => p.key === currentType)[0]"
+            v-if="parameters.map(p => p.key).includes(currentType)"
+            />
+            <BatchFile 
+            :key="batchKey + 'batchFile'"
+            :type="currentType"
+            v-if="types.map(t => t.type).includes(currentType)"
+            />
+            <BatchProcess
+            :key="batchKey + 'batchProcess'"
+            :process="processes.filter(p => p.key === currentType)[0]"
+            v-if="processes.map(p => p.key).includes(currentType)"
+            />
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </div>
+  </div>
 </template>
 
 <script>
+import BatchFile from '@/components/BatchFile'
+import BatchDate from '@/components/BatchDate'
+import BatchProcess from '@/components/BatchProcess'
+
 export default {
-  name: 'Batch',
-  props: {
-    batch: {
-      type: Object,
-      default: () => ({})
-    }
-  },
+  props: ['batchKey'],
   data () {
     return {
-      date_debut: this.batch.date_debut.substring(0, 7),
-      date_debut_status: false,
-      date_fin: this.batch.date_fin.substring(0, 7),
-      date_fin_status: false,
-      date_fin_effectif: this.batch.date_fin_effectif.substring(0, 7),
-      date_fin_effectif_status: false
+      currentType: null,
+      parameters: [
+        {text: 'Date de début', key: 'dateDebut', prop: 'date_debut'},
+        {text: 'Date de fin', key: 'dateFin', prop: 'date_fin'},
+        {text: 'Date de fin effectifs', key: 'dateFinEffectif', prop: 'date_fin_effectif'}
+      ],
+      processes: [
+        {text: 'Suppression',
+          color: 'red',
+          key: 'reset',
+          img: '/static/poubelle.png',
+          description: 'Retour au batch précédent',
+          do (self) { self.$axios.get('/api/batch/reset') }
+        },
+        {text: 'Purger',
+          color: 'blue',
+          key: 'purge',
+          img: '/static/gomme.svg',
+          description: 'Retour au paramétrage',
+          do (self) { self.$axios.get('/api/batch/purge') }
+        },
+        {text: 'Calcul Prédictions',
+          color: 'green',
+          key: 'predict',
+          img: '/static/warning.png',
+          description: 'Intégration des données et calcul des prédictions.',
+          do (self) { self.$axios.get('/api/batch/process') }
+        }
+      ]
     }
-  }
+  },
+  computed: {
+    currentBatch () {
+      return this.$store.state.batches.filter(b => b.id.key === this.batchKey)
+    },
+    features () {
+      return this.$store.state.features
+    },
+    types () {
+      return this.$store.state.types
+    }
+  },
+  methods: {
+    setCurrentType (type) {
+      this.currentType = type
+    }
+  },
+  components: { BatchFile, BatchDate, BatchProcess }
 }
 </script>
+
+<style>
+  .selected {
+    color: blue;
+    font-size: 14px;
+  }
+  .container{
+    display: flex;
+  }
+  .fixed{
+    width: 300px;
+  }
+  .flex-item{
+    flex-grow: 1;
+  }
+</style>
