@@ -3,13 +3,13 @@
   <v-card-text>
     
   </v-card-text>
-  <v-card-media
+  <v-img
     contain
     height="80px"
     :src="process.img"
   >
     
-  </v-card-media>
+  </v-img>
   <v-card-text>
     {{ process.description }}
   </v-card-text>

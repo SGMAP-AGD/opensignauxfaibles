@@ -93,6 +93,7 @@ func main() {
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
 		api.GET("/admin/status", getDBStatus)
+		api.GET("/admin/getLogs", getLogsHandler)
 		api.GET("/batch/reset", resetBatch)
 		api.GET("/batch/purge", purgeBatch)
 		api.GET("/batch/process", processBatchHandler)

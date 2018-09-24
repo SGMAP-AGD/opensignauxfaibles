@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -58,4 +60,19 @@ func log(priority journalPriority, code journalCode, comment string) journalEven
 	}
 	mainJournalChannel <- e
 	return e
+}
+
+func getLogs() ([]journalEvent, error) {
+	var logs []journalEvent
+	err := db.DB.C("Journal").Find(nil).Sort("-id").Limit(250).All(&logs)
+	return logs, err
+}
+
+func getLogsHandler(c *gin.Context) {
+	logs, err := getLogs()
+	if err != nil {
+		c.JSON(500, err)
+	} else {
+		c.JSON(200, logs)
+	}
 }

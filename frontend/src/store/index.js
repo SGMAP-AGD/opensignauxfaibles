@@ -60,8 +60,8 @@ const store = new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
-      console.log('message reçu: ' + JSON.stringify(message.data))
-      state.socket.message = state.socket.message.slice(1, 9).concat([message.data])
+      state.socket.message.splice(0, 1)
+      state.socket.message.push(message)
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
@@ -75,6 +75,18 @@ const store = new Vuex.Store({
     login (state) {
       axiosClient.post('/login', state.credentials).then(response => {
         state.token = response.data.token
+        let index = Vue._installedPlugins.indexOf(VueNativeSock)
+        if (index > -1) {
+          Vue._installedPlugins.splice(index, 1)
+        }
+        Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + state.token, {
+          store: store,
+          format: 'json',
+          connectManually: true,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 3000
+        })
         vm.$connect()
         store.commit('updateRefs')
         store.commit('updateBatches')
@@ -96,6 +108,7 @@ const store = new Vuex.Store({
       state.files = null
       state.batches = []
       state.epoch = 0
+      state.socket.message = []
     },
     setUser (state, username) {
       state.credentials.username = username
@@ -120,6 +133,9 @@ const store = new Vuex.Store({
       axiosClient.get('/api/admin/types').then(response => { state.types = response.data.sort((a, b) => a.text.localeCompare(b.text)) })
       axiosClient.get('/api/admin/features').then(response => { state.features = response.data })
       axiosClient.get('/api/admin/files').then(response => { state.files = response.data.sort((a, b) => a.name.localeCompare(b.name)) })
+    },
+    updateLogs (state) {
+      axiosClient.get('/api/admin/getLogs').then(response => { state.socket.message = response.data })
     },
     setCurrentBatchKey (state, key) {
       state.currentBatchKey = key
@@ -158,6 +174,7 @@ const store = new Vuex.Store({
 
 Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + store.state.token, {
   store: store,
+  format: 'json',
   connectManually: true,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -167,6 +184,10 @@ Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + store.state.token, {
 if (store.state.token != null) {
   vm.$connect()
   store.commit('refreshToken')
+  store.commit('updateRefs')
+  store.commit('updateDbStatus')
+  store.commit('updateBatches')
+  store.commit('updateLogs')
 }
 
 setInterval(
@@ -176,9 +197,5 @@ setInterval(
       }
     },
     180000)
-
-store.commit('updateRefs')
-store.commit('updateDbStatus')
-store.commit('updateBatches')
 
 export default store

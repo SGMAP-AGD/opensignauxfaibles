@@ -10,9 +10,9 @@
             </v-card-title>
             <v-divider/>
             <v-card-text
-            v-for="m in message"
-            :key="m">
-              {{m}}
+            v-for="m in message.filter(x => x.priority == 'info')"
+            :key="m.id">
+              {{m.event}}
             </v-card-text>
           </v-card>
         </v-flex>
