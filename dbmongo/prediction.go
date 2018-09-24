@@ -9,7 +9,7 @@ import (
 )
 
 func predictionBrowse(c *gin.Context) {
-	db, _ := c.Keys["db"].(*mgo.Database)
+	db, _ := c.Keys["DB"].(*mgo.Database)
 
 	batch := c.Params.ByName("batch")
 	algo := c.Params.ByName("algo")
@@ -56,15 +56,11 @@ func predictionBrowse(c *gin.Context) {
 		"entreprise": "$entreprise.value"}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from": "Features",
+		"from": "algo1",
 		"let": bson.M{"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
 			"siret": "$_id.siret"},
 		"pipeline": []interface{}{
-			bson.M{"$match": bson.M{"$expr": bson.M{"$and": []interface{}{
-				bson.M{"$eq": []interface{}{"$_id.siren", "$$siren"}},
-				bson.M{"$eq": []interface{}{"$_id.batch", batch}},
-				bson.M{"$eq": []interface{}{"$_id.algo", algo}},
-			}}}},
+			bson.M{"$match": bson.M{"$expr": bson.M{"$eq": []interface{}{"$_id", "$$siren"}}}},
 			bson.M{"$addFields": bson.M{
 				"features": bson.M{"$filter": bson.M{"input": "$value",
 					"cond": bson.M{

@@ -2,17 +2,15 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo"
 )
 
-type debugType struct {
-	Test int `json:"test" bson:"test"`
-}
-
 func debug(c *gin.Context) {
-	batchID, err := nextBatchID("1812")
-	if err != nil {
-		c.JSON(500, err)
-	} else {
-		c.JSON(200, batchID)
+	db, _ := c.Keys["DB"].(*mgo.Database)
+	batches := getBatches(db)
+	for _, b := range batches {
+		b.Open = true
+		b.Draft = true
+		b.save(db)
 	}
 }
