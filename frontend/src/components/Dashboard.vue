@@ -12,7 +12,7 @@
             <v-card-text
             v-for="m in message.filter(x => x.priority == 'info')"
             :key="m.id">
-              {{m.event}}
+              {{m.id}}
             </v-card-text>
           </v-card>
         </v-flex>

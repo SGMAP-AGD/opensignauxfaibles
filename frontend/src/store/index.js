@@ -53,9 +53,11 @@ const store = new Vuex.Store({
       state.socket.isConnected = true
     },
     SOCKET_ONCLOSE (state, event) {
+      console.log('disconnect')
       state.socket.isConnected = false
     },
     SOCKET_ONERROR (state, event) {
+      console.log('error')
       console.error(state, event)
     },
     // default handler called for all methods
@@ -66,31 +68,18 @@ const store = new Vuex.Store({
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
       console.log('reconnexion')
-      console.info(state, count)
     },
     SOCKET_RECONNECT_ERROR (state) {
-      console.log('erreur de reconnexion')
-      state.socket.reconnectError = true
+      wsConnect(state)
     },
     login (state) {
       axiosClient.post('/login', state.credentials).then(response => {
         state.token = response.data.token
-        let index = Vue._installedPlugins.indexOf(VueNativeSock)
-        if (index > -1) {
-          Vue._installedPlugins.splice(index, 1)
-        }
-        Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + state.token, {
-          store: store,
-          format: 'json',
-          connectManually: true,
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 3000
-        })
-        vm.$connect()
+        wsConnect(state)
         store.commit('updateRefs')
         store.commit('updateBatches')
         store.commit('updateDbStatus')
+        store.commit('updateLogs')
       })
     },
     refreshToken (state) {
@@ -172,17 +161,24 @@ const store = new Vuex.Store({
   }
 })
 
-Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + store.state.token, {
-  store: store,
-  format: 'json',
-  connectManually: true,
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 3000
-})
+function wsConnect (state) {
+  let index = Vue._installedPlugins.indexOf(VueNativeSock)
+  if (index > -1) {
+    Vue._installedPlugins.splice(index, 1)
+  }
+  Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + state.token, {
+    store: store,
+    format: 'json',
+    connectManually: true,
+    reconnection: true,
+    reconnectionAttempts: -1,
+    reconnectionDelay: 3000
+  })
+  vm.$connect()
+}
 
 if (store.state.token != null) {
-  vm.$connect()
+  wsConnect(store.state)
   store.commit('refreshToken')
   store.commit('updateRefs')
   store.commit('updateDbStatus')
