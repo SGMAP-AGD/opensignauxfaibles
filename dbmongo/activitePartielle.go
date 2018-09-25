@@ -120,6 +120,7 @@ func parseAPDemande(path string) chan *APDemande {
 }
 
 func importAPDemande(batch *AdminBatch) error {
+	log(info, "importAPDemande", "Import du batch "+batch.ID.Key+": APDemande")
 	for _, file := range batch.Files["apdemande"] {
 		for apdemande := range parseAPDemande(viper.GetString("APP_DATA") + file) {
 			hash := fmt.Sprintf("%x", structhash.Md5(apdemande, 1))
@@ -138,50 +139,64 @@ func importAPDemande(batch *AdminBatch) error {
 		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
+	log(info, "importAPDemande", "Import APDemande du batch "+batch.ID.Key+" terminé")
 	return nil
 }
 
 func parseAPConso(path string) chan *APConso {
 	outputChannel := make(chan *APConso)
-
-	xlFile, err := xlsx.OpenFile(path)
+	xlFile, err := xlsx.OpenFile(viper.GetString("APP_DATA") + path)
 	if err != nil {
-		fmt.Println("Error", err)
-	}
-	go func() {
-		for _, sheet := range xlFile.Sheets {
-			fields := sheet.Rows[0]
-			idxID := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ID_DA" })
-			idxSiret := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ETAB_SIRET" })
-			idxPeriode := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MOIS" })
-			idxHeureConsommee := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "HEURES" })
-			idxMontants := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MONTANTS" })
-			idxEffectifs := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "EFFECTIFS" })
+		log(critical, "importApconso", "Erreur à l'ouverture du fichier "+path+": "+err.Error())
+	} else {
+		log(debug, "importAPConso", "Ouverture du fichier "+path)
+		go func() {
+			var errorLines []int
+			n := 0
+			e := 0
+			for idx, sheet := range xlFile.Sheets {
+				log(debug, "importAPConso", "Import de la feuille "+fmt.Sprint(idx))
+				fields := sheet.Rows[0]
+				idxID := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ID_DA" })
+				idxSiret := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "ETAB_SIRET" })
+				idxPeriode := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MOIS" })
+				idxHeureConsommee := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "HEURES" })
+				idxMontants := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "MONTANTS" })
+				idxEffectifs := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "EFFECTIFS" })
 
-			for _, row := range sheet.Rows[1:] {
-				if len(row.Cells) > 0 {
-					apconso := APConso{}
-					apconso.ID = row.Cells[idxID].Value
-					apconso.Siret = row.Cells[idxSiret].Value
-					apconso.Periode, err = excelToTime(row.Cells[idxPeriode].Value)
-					apconso.HeureConsommee, err = strconv.ParseFloat(row.Cells[idxHeureConsommee].Value, 64)
-					apconso.Montant, err = strconv.ParseFloat(row.Cells[idxMontants].Value, 64)
-					apconso.Effectif, err = strconv.Atoi(row.Cells[idxEffectifs].Value)
+				for _, row := range sheet.Rows[1:] {
+					n++
+					if len(row.Cells) > 0 {
+						var errors [4]error
+						apconso := APConso{}
+						apconso.ID = row.Cells[idxID].Value
+						apconso.Siret = row.Cells[idxSiret].Value
+						apconso.Periode, errors[0] = excelToTime(row.Cells[idxPeriode].Value)
+						apconso.HeureConsommee, errors[1] = strconv.ParseFloat(row.Cells[idxHeureConsommee].Value, 64)
+						apconso.Montant, errors[2] = strconv.ParseFloat(row.Cells[idxMontants].Value, 64)
+						apconso.Effectif, errors[3] = strconv.Atoi(row.Cells[idxEffectifs].Value)
 
-					if err != nil {
-						fmt.Println(err)
+						if allErrors(errors[:], nil) {
+							outputChannel <- &apconso
+						} else {
+							e++
+							errorLines = append(errorLines, n)
+						}
 					}
-					outputChannel <- &apconso
 				}
 			}
-		}
-		close(outputChannel)
-	}()
-
+			log(debug, "importAPConso", "Import du fichier délais "+path+" terminé. "+fmt.Sprint(n)+" lignes traitée(s), "+fmt.Sprint(e)+" rejet(s)")
+			if len(errorLines) > 0 {
+				log(warning, "importAPConso", "Erreurs de conversion constatées aux lignes suivantes: "+fmt.Sprintf("%v", errorLines))
+			}
+			close(outputChannel)
+		}()
+	}
 	return outputChannel
 }
 
 func importAPConso(batch *AdminBatch) error {
+	log(info, "importAPDemande", "Import du batch "+batch.ID.Key+": APDemande")
 
 	for _, file := range batch.Files["apconso"] {
 		for apconso := range parseAPConso(file) {
@@ -198,5 +213,6 @@ func importAPConso(batch *AdminBatch) error {
 		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
+	log(info, "importAPDemande", "Fin de l'mport du batch "+batch.ID.Key+": APDemande")
 	return nil
 }

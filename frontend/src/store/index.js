@@ -59,8 +59,10 @@ const store = new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
-      state.socket.message.splice(0, 1)
-      state.socket.message.push(message)
+      state.socket.message.unshift(message)
+      if (state.socket.message > 250) {
+        state.socket.message.pop()
+      }
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
@@ -121,7 +123,7 @@ const store = new Vuex.Store({
       axiosClient.get('/api/admin/files').then(response => { state.files = response.data.sort((a, b) => a.name.localeCompare(b.name)) })
     },
     updateLogs (state) {
-      axiosClient.get('/api/admin/getLogs').then(response => { state.socket.message = response.data })
+      axiosClient.get('/api/admin/getLogs').then(response => { state.socket.message = (response.data || []) })
     },
     setCurrentBatchKey (state, key) {
       state.currentBatchKey = key
@@ -154,6 +156,12 @@ const store = new Vuex.Store({
   getters: {
     axiosConfig (state) {
       return {headers: {Authorization: 'Bearer ' + state.token}}
+    },
+    messages (state) {
+      return state.socket.message.map(m => {
+        m.date = new Date(m.date)
+        return m
+      })
     }
   }
 })

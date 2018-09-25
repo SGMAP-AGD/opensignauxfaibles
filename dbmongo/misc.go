@@ -132,3 +132,12 @@ func genereSeriePeriodeAnnuelle(debut time.Time, fin time.Time) []int {
 	}
 	return serie
 }
+
+func allErrors(slice []error, item interface{}) bool {
+	for _, i := range slice {
+		if i != item {
+			return false
+		}
+	}
+	return true
+}

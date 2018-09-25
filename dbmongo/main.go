@@ -26,7 +26,6 @@ func checkOrigin(r *http.Request) bool {
 }
 
 func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
-	fmt.Println("Jeton Web: " + jwt)
 	conn, err := wsupgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("Failed to set websocket upgrade: %+v", err)

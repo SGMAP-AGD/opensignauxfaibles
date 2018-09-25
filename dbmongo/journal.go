@@ -42,6 +42,7 @@ func journalDispatch() chan journalEvent {
 	channel := make(journalChannel)
 	go func() {
 		for event := range channel {
+			db.DB.C("Journal").Insert(event)
 			for _, clientChannel := range journalClientChannels {
 				clientChannel <- event
 			}

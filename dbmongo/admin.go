@@ -1,11 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
@@ -59,81 +55,4 @@ func cloneDB(c *gin.Context) {
 	}
 	removeDatabaseCopy(db.DB)
 	c.JSON(200, err)
-}
-
-// NAF libellés et liens N5/N1
-type NAF struct {
-	N1    map[string]string `json:"n1" bson:"n1"`
-	N5    map[string]string `json:"n5" bson:"n5"`
-	N5to1 map[string]string `json:"n5to1" bson:"n5to1"`
-}
-
-func loadNAF() (NAF, error) {
-	naf := NAF{}
-	naf.N1 = make(map[string]string)
-	naf.N5 = make(map[string]string)
-	naf.N5to1 = make(map[string]string)
-
-	NAF1 := viper.GetString("NAF_L1")
-	NAF5 := viper.GetString("NAF_L5")
-	NAF5to1 := viper.GetString("NAF_5TO1")
-
-	NAF1File, NAF1err := os.Open(NAF1)
-	if NAF1err != nil {
-		return NAF{}, NAF1err
-	}
-
-	NAF1reader := csv.NewReader(bufio.NewReader(NAF1File))
-	NAF1reader.Comma = ';'
-	NAF1reader.Read()
-	for {
-		row, error := NAF1reader.Read()
-		if error == io.EOF {
-			break
-		} else if error != nil {
-			// log.Fatal(error)
-		}
-		naf.N1[row[0]] = row[1]
-		fmt.Println(row)
-	}
-
-	NAF5to1File, NAF5to1err := os.Open(NAF5to1)
-	if NAF5to1err != nil {
-		return NAF{}, NAF1err
-	}
-
-	NAF5to1reader := csv.NewReader(bufio.NewReader(NAF5to1File))
-	NAF5to1reader.Comma = ';'
-	NAF5to1reader.Read()
-	for {
-		row, error := NAF5to1reader.Read()
-		if error == io.EOF {
-			break
-		} else if error != nil {
-			// log.Fatal(error)
-		}
-		naf.N5to1[row[0]] = row[1]
-	}
-
-	NAF5File, NAF5err := os.Open(NAF5)
-	if NAF5err != nil {
-		return NAF{}, NAF1err
-	}
-
-	NAF5reader := csv.NewReader(bufio.NewReader(NAF5File))
-	NAF5reader.Comma = ';'
-	NAF5reader.Read()
-	for {
-		row, error := NAF5reader.Read()
-		if error == io.EOF {
-			break
-		} else if error != nil {
-			// log.Fatal(error)
-		}
-
-		naf.N5[row[0]] = row[1]
-
-	}
-
-	return naf, nil
 }
