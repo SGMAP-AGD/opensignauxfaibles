@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/spf13/viper"
@@ -15,33 +14,33 @@ import (
 type APDemande struct {
 	ID                 string    `json:"id_demande" bson:"id_demande"`
 	Siret              string    `json:"-" bson:"-"`
-	EffectifEntreprise int       `json:"effectif_entreprise" bson:"effectif_entreprise"`
-	Effectif           int       `json:"effectif" bson:"effectif"`
+	EffectifEntreprise *int      `json:"effectif_entreprise" bson:"effectif_entreprise"`
+	Effectif           *int      `json:"effectif" bson:"effectif"`
 	DateStatut         time.Time `json:"date_statut" bson:"date_statut"`
-	TxPC               float64   `json:"tx_pc" bson:"tx_pc"`
-	TxPCUnedicDares    float64   `json:"tx_pc_unedic_dares" bson:"tx_pc_unedic_dares"`
-	TxPCEtatDares      float64   `json:"tx_pc_etat_dares" bson:"tx_pc_etat_dares"`
+	TxPC               *float64  `json:"tx_pc" bson:"tx_pc"`
+	TxPCUnedicDares    *float64  `json:"tx_pc_unedic_dares" bson:"tx_pc_unedic_dares"`
+	TxPCEtatDares      *float64  `json:"tx_pc_etat_dares" bson:"tx_pc_etat_dares"`
 	Periode            Periode   `json:"periode" bson:"periode"`
-	HTA                float64   `json:"hta" bson:"hta"`
-	MTA                float64   `json:"mta" bson:"mta"`
-	EffectifAutorise   int       `json:"effectif_autorise" bson:"effectif_autorise"`
-	ProdHTAEffectif    float64   `json:"prod_hta_effectif" bson:"prod_hta_effectif"`
-	MotifRecoursSE     int       `json:"motif_recours_se" bson:"motif_recours_se"`
-	Perimetre          int       `json:"perimetre" bson:"perimetre"`
-	RecoursAnterieur   int       `json:"recours_anterieur" bson:"recours_anterieur"`
-	AvisCE             int       `json:"avis_ce" bson:"avis_ce"`
-	HeureConsommee     float64   `json:"heure_consommee" bson:"heure_consommee"`
-	MontantConsomme    float64   `json:"montant_consommee" bson:"montant_consommee"`
-	EffectifConsomme   int       `json:"effectif_consomme" bson:"effectif_consomme"`
+	HTA                *float64  `json:"hta" bson:"hta"`
+	MTA                *float64  `json:"mta" bson:"mta"`
+	EffectifAutorise   *int      `json:"effectif_autorise" bson:"effectif_autorise"`
+	ProdHTAEffectif    *float64  `json:"prod_hta_effectif" bson:"prod_hta_effectif"`
+	MotifRecoursSE     *int      `json:"motif_recours_se" bson:"motif_recours_se"`
+	Perimetre          *int      `json:"perimetre" bson:"perimetre"`
+	RecoursAnterieur   *int      `json:"recours_anterieur" bson:"recours_anterieur"`
+	AvisCE             *int      `json:"avis_ce" bson:"avis_ce"`
+	HeureConsommee     *float64  `json:"heure_consommee" bson:"heure_consommee"`
+	MontantConsomme    *float64  `json:"montant_consommee" bson:"montant_consommee"`
+	EffectifConsomme   *int      `json:"effectif_consomme" bson:"effectif_consomme"`
 }
 
 // APConso Consommation d'activité partielle
 type APConso struct {
 	ID             string    `json:"id_conso" bson:"id_conso"`
 	Siret          string    `json:"-" bson:"-"`
-	HeureConsommee float64   `json:"heure_consomme" bson:"heure_consomme"`
-	Montant        float64   `json:"montant" bson:"montant"`
-	Effectif       int       `json:"effectif" bson:"effectif"`
+	HeureConsommee *float64  `json:"heure_consomme" bson:"heure_consomme"`
+	Montant        *float64  `json:"montant" bson:"montant"`
+	Effectif       *int      `json:"effectif" bson:"effectif"`
 	Periode        time.Time `json:"periode" bson:"periode"`
 }
 
@@ -49,70 +48,84 @@ func parseAPDemande(path string) chan *APDemande {
 	outputChannel := make(chan *APDemande)
 
 	go func() {
+		var errorLines []int
+		n := 0
+		e := 0
+
 		xlFile, err := xlsx.OpenFile(path)
 		if err != nil {
-			fmt.Println("parseAPDemande: Avorté " + err.Error())
+			log(critical, "importAPDemande", "Erreur à l'ouverture du fichier: "+path+", erreur: "+err.Error())
 			close(outputChannel)
-			return
-		}
-
-		sheet := xlFile.Sheets[0]
-		f := make(map[string]int)
-		for idx, cell := range sheet.Rows[0].Cells {
-			f[cell.Value] = idx
-		}
-
-		fields := []string{
-			"ID_DA",
-			"ETAB_SIRET",
-			"EFF_ENT",
-			"EFF_ETAB",
-			"DATE_STATUT",
-			"DATE_DEB",
-			"DATE_FIN",
-			"HTA",
-			"EFF_AUTO",
-			"MOTIF_RECOURS_SE",
-			"S_HEURE_CONSOM_TOT",
-			"S_EFF_CONSOM_TOT",
-		}
-		minLength := 0
-		for _, field := range fields {
-			if i, err := f[field]; err {
-				minLength = max(minLength, i)
-			} else {
-				fmt.Println("parseAPDemande: Avorté, " + field + " non trouvé.")
-				close(outputChannel)
-				return
+		} else {
+			log(debug, "importAPDemande", "Ouverture du fichier, feuille 0, "+path)
+			sheet := xlFile.Sheets[0]
+			f := make(map[string]int)
+			for idx, cell := range sheet.Rows[0].Cells {
+				f[cell.Value] = idx
 			}
-		}
 
-		// FIXME: établir une meilleure méthode pour tester la validité de la ligne
-		for _, row := range sheet.Rows[3:] {
-			if len(row.Cells) >= minLength {
-				apdemande := APDemande{}
-				apdemande.ID = row.Cells[f["ID_DA"]].Value
-				apdemande.Siret = row.Cells[f["ETAB_SIRET"]].Value
-				apdemande.EffectifEntreprise, _ = strconv.Atoi(row.Cells[f["EFF_ENT"]].Value)
-				apdemande.Effectif, _ = strconv.Atoi(row.Cells[f["EFF_ETAB"]].Value)
-				apdemande.DateStatut, _ = excelToTime(row.Cells[f["DATE_STATUT"]].Value)
-				periodStart, _ := excelToTime(row.Cells[f["DATE_DEB"]].Value)
-				periodEnd, _ := excelToTime(row.Cells[f["DATE_FIN"]].Value)
-				apdemande.Periode = Periode{
-					Start: periodStart,
-					End:   periodEnd,
+			fields := []string{
+				"ID_DA",
+				"ETAB_SIRET",
+				"EFF_ENT",
+				"EFF_ETAB",
+				"DATE_STATUT",
+				"DATE_DEB",
+				"DATE_FIN",
+				"HTA",
+				"EFF_AUTO",
+				"MOTIF_RECOURS_SE",
+				"S_HEURE_CONSOM_TOT",
+				"S_EFF_CONSOM_TOT",
+			}
+			minLength := 0
+			for _, field := range fields {
+				if i, err := f[field]; err {
+					minLength = max(minLength, i)
+				} else {
+					log(critical, "importAPDemande", "Import du fichier "+path+". "+field+" non trouvé. Abandon.")
+					close(outputChannel)
+					return
 				}
-				apdemande.HTA, _ = strconv.ParseFloat(row.Cells[f["HTA"]].Value, 64)
-				apdemande.EffectifAutorise, _ = strconv.Atoi(row.Cells[f["EFF_AUTO"]].Value)
-				apdemande.MotifRecoursSE, _ = strconv.Atoi(row.Cells[f["MOTIF_RECOURS_SE"]].Value)
-				apdemande.HeureConsommee, _ = strconv.ParseFloat(row.Cells[f["S_HEURE_CONSOM_TOT"]].Value, 64)
-				apdemande.EffectifConsomme, _ = strconv.Atoi(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
-
-				outputChannel <- &apdemande
 			}
+			fmt.Println()
+			// FIXME: établir une meilleure méthode pour tester la validité de la ligne
+			for _, row := range sheet.Rows[3:] {
+				var errors [10]error
+				if len(row.Cells) >= minLength {
+					n++
+					apdemande := APDemande{}
+					apdemande.ID = row.Cells[f["ID_DA"]].Value
+					apdemande.Siret = row.Cells[f["ETAB_SIRET"]].Value
+					apdemande.EffectifEntreprise, errors[0] = parsePInt(row.Cells[f["EFF_ENT"]].Value)
+					apdemande.Effectif, errors[1] = parsePInt(row.Cells[f["EFF_ETAB"]].Value)
+					apdemande.DateStatut, errors[2] = excelToTime(row.Cells[f["DATE_STATUT"]].Value)
+					apdemande.Periode = Periode{}
+					apdemande.Periode.Start, errors[3] = excelToTime(row.Cells[f["DATE_DEB"]].Value)
+					apdemande.Periode.End, errors[4] = excelToTime(row.Cells[f["DATE_FIN"]].Value)
+					apdemande.HTA, errors[5] = parsePFloat(row.Cells[f["HTA"]].Value)
+					apdemande.EffectifAutorise, errors[6] = parsePInt(row.Cells[f["EFF_AUTO"]].Value)
+					apdemande.MotifRecoursSE, errors[7] = parsePInt(row.Cells[f["MOTIF_RECOURS_SE"]].Value)
+					apdemande.HeureConsommee, errors[8] = parsePFloat(row.Cells[f["S_HEURE_CONSOM_TOT"]].Value)
+					apdemande.EffectifConsomme, errors[9] = parsePInt(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
 
+					if allErrors(errors[:], nil) {
+						outputChannel <- &apdemande
+					} else {
+						fmt.Println(row)
+						fmt.Println(apdemande)
+						fmt.Println(errors)
+						e++
+						errorLines = append(errorLines, n)
+					}
+				}
+
+			}
 		}
-
+		log(debug, "importAPDemande", "Import du fichier "+path+" terminé. "+fmt.Sprint(n)+" lignes traitée(s), "+fmt.Sprint(e)+" rejet(s)")
+		if len(errorLines) > 0 {
+			log(warning, "importAPDemande", "Erreurs de conversion constatées aux lignes suivantes: "+fmt.Sprintf("%v", errorLines))
+		}
 		close(outputChannel)
 	}()
 
@@ -165,16 +178,16 @@ func parseAPConso(path string) chan *APConso {
 				idxEffectifs := sliceIndex(35, func(i int) bool { return fields.Cells[i].Value == "EFFECTIFS" })
 
 				for _, row := range sheet.Rows[1:] {
-					n++
 					if len(row.Cells) > 0 {
+						n++
 						var errors [4]error
 						apconso := APConso{}
 						apconso.ID = row.Cells[idxID].Value
 						apconso.Siret = row.Cells[idxSiret].Value
 						apconso.Periode, errors[0] = excelToTime(row.Cells[idxPeriode].Value)
-						apconso.HeureConsommee, errors[1] = strconv.ParseFloat(row.Cells[idxHeureConsommee].Value, 64)
-						apconso.Montant, errors[2] = strconv.ParseFloat(row.Cells[idxMontants].Value, 64)
-						apconso.Effectif, errors[3] = strconv.Atoi(row.Cells[idxEffectifs].Value)
+						apconso.HeureConsommee, errors[1] = parsePFloat(row.Cells[idxHeureConsommee].Value)
+						apconso.Montant, errors[2] = parsePFloat(row.Cells[idxMontants].Value)
+						apconso.Effectif, errors[3] = parsePInt(row.Cells[idxEffectifs].Value)
 
 						if allErrors(errors[:], nil) {
 							outputChannel <- &apconso
@@ -196,7 +209,7 @@ func parseAPConso(path string) chan *APConso {
 }
 
 func importAPConso(batch *AdminBatch) error {
-	log(info, "importAPDemande", "Import du batch "+batch.ID.Key+": APDemande")
+	log(info, "importAPConso", "Import du batch "+batch.ID.Key+": APDemande")
 
 	for _, file := range batch.Files["apconso"] {
 		for apconso := range parseAPConso(file) {
@@ -213,6 +226,6 @@ func importAPConso(batch *AdminBatch) error {
 		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
-	log(info, "importAPDemande", "Fin de l'mport du batch "+batch.ID.Key+": APDemande")
+	log(info, "importAPConso", "Fin de l'import du batch "+batch.ID.Key+": APConso")
 	return nil
 }

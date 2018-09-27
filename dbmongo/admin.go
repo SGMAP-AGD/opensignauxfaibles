@@ -38,6 +38,7 @@ func listTypes(c *gin.Context) {
 		{"dmmo", "Déclaration Mouvement de Main d'Œuvre", "dmmo"},
 		{"effectif", "Emplois URSSAF", "Emploi"},
 		{"sirene", "Base GéoSirene", "sirene"},
+		{"diane", "Diane", "diane"},
 	})
 }
 

@@ -141,3 +141,19 @@ func allErrors(slice []error, item interface{}) bool {
 	}
 	return true
 }
+
+func parsePInt(s string) (*int, error) {
+	if s == "" {
+		return nil, nil
+	}
+	i, err := strconv.Atoi(s)
+	return &i, err
+}
+
+func parsePFloat(s string) (*float64, error) {
+	if s == "" {
+		return nil, nil
+	}
+	i, err := strconv.ParseFloat(s, 64)
+	return &i, err
+}

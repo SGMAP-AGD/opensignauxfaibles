@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/cnf/structhash"
+	"github.com/spf13/viper"
 )
 
 // Diane Information financières
@@ -82,10 +83,14 @@ func parseDiane(paths []string) chan *Diane {
 
 	go func() {
 		for _, path := range paths {
+			n := 0
 
-			file, err := os.Open(path)
+			file, err := os.Open(viper.GetString("APP_DATA") + path)
 			if err != nil {
 				fmt.Println("Error", err)
+				log(critical, "importDiane", "Erreur à l'ouverture du fichier "+path+", abandon.")
+			} else {
+				log(debug, "importDiane", "Ouverture du fichier "+path+".")
 			}
 
 			reader := csv.NewReader(bufio.NewReader(file))
@@ -96,11 +101,13 @@ func parseDiane(paths []string) chan *Diane {
 				row, error := reader.Read()
 
 				if error == io.EOF {
+					log(debug, "importDiane", "Traitement du fichier "+path+" terminé: "+fmt.Sprint(n)+" lignes traitées")
 					break
 				} else if error != nil {
-					//log.Fatal(error)
+					log(critical, "importDiane", "Erreur lors de la lecture du fichier "+path+": "+err.Error()+". Abandon !")
+					break
 				}
-
+				n++
 				diane := Diane{}
 				if i, err := strconv.Atoi(row[0]); err == nil {
 					diane.Annee = &i
@@ -108,6 +115,7 @@ func parseDiane(paths []string) chan *Diane {
 				if i, err := strconv.ParseFloat(row[1], 64); err == nil {
 					diane.Marquee = &i
 				}
+
 				diane.NomEntreprise = row[2]
 				diane.NumeroSiren = row[3]
 				diane.StatutJuridique = row[4]
@@ -196,9 +204,6 @@ func parseDiane(paths []string) chan *Diane {
 				if i, err := strconv.ParseFloat(row[33], 64); err == nil {
 					diane.TotalActif = &i
 				}
-				// if i, err := strconv.ParseFloat(row[34], 64); err == nil {
-				// 	diane.CapitalSocialOuIndividuel2 = &i
-				// }
 				if i, err := strconv.ParseFloat(row[35], 64); err == nil {
 					diane.CapitauxPropresGroupe = &i
 				}
@@ -259,9 +264,6 @@ func parseDiane(paths []string) chan *Diane {
 				if i, err := strconv.ParseFloat(row[54], 64); err == nil {
 					diane.ResultatExceptionnel = &i
 				}
-				// if i, err := strconv.ParseFloat(row[55], 64); err == nil {
-				// 	diane.ResultatNetConsolide2 = &i
-				// }
 				if i, err := strconv.ParseFloat(row[56], 64); err == nil {
 					diane.TotalDesCharges = &i
 				}
@@ -291,6 +293,7 @@ func parseDiane(paths []string) chan *Diane {
 }
 
 func importDiane(batch *AdminBatch) error {
+	log(info, "importDiane", "Import batch "+batch.ID.Key+": début import Diane")
 	for diane := range parseDiane(batch.Files["diane"]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(diane, 1))
 
@@ -305,5 +308,6 @@ func importDiane(batch *AdminBatch) error {
 		db.ChanEntreprise <- &value
 	}
 	db.ChanEntreprise <- &ValueEntreprise{}
+	log(info, "importDiane", "Import batch "+batch.ID.Key+": fin import Diane")
 	return nil
 }
