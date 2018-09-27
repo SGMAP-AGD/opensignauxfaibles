@@ -59,10 +59,15 @@ const store = new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
-      let m = message.journalEvent
-      state.socket.message.unshift(m)
-      if (state.socket.message.length > 250) {
-        state.socket.message.pop()
+      if ('journalEvent' in message) {
+        let m = message.journalEvent
+        state.socket.message.unshift(m)
+        if (state.socket.message.length > 250) {
+          state.socket.message.pop()
+        }
+      }
+      if ('batches' in message) {
+        state.batches = message.batches.reverse()
       }
     },
     // mutations for reconnect methods

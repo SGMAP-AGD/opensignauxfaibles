@@ -38,11 +38,11 @@
           ></v-progress-circular>
       </v-tooltip>
 
-      <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus === null">
+      <!-- <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus === null">
         Aucune opération en cours
           <v-icon slot="activator" color="green">fa-check
           </v-icon>
-      </v-tooltip>
+      </v-tooltip> -->
       </v-btn>
 
       <v-dialog 
@@ -175,13 +175,13 @@ export default {
           color: 'indigo darken-4' },
         { title: 'Données',
           action: '/data',
-          color: 'grey darken-2' },
-        { title: 'Admin',
-          action: '/admin',
-          color: 'black'},
-        { title: 'Test',
-          action: '/admintoto',
-          color: 'yellow'}
+          color: 'grey darken-2' }
+        // { title: 'Admin',
+        //   action: '/admin',
+        //   color: 'black'},
+        // { title: 'Test',
+        //   action: '/admintoto',
+        //   color: 'yellow'}
       ],
       avatar: {
         debug: {icon: 'fa-cogs', color: 'blue'},

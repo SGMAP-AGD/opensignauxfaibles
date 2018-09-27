@@ -87,6 +87,11 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
+	batches := getBatches()
+	mainMessageChannel <- socketMessage{
+		Batches: batches,
+	}
+
 	status.Epoch++
 	status.write()
 

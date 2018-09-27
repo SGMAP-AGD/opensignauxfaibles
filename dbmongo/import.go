@@ -56,8 +56,8 @@ func listFiles(basePath string) ([]fileSummary, error) {
 
 var importFunctions = map[string]func(*AdminBatch) error{
 	"apconso": importAPConso,
-	//"bdf":       importBDF,
-	//"delai":     importDelai,
+	"bdf":     importBDF,
+	"delai":   importDelai,
 	//"apdemande": importAPDemande,
 	//"diane": importDiane,
 	//"cotisation": importCotisation,

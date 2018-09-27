@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -38,8 +37,8 @@ var info = journalPriority("info")
 var warning = journalPriority("warning")
 var critical = journalPriority("critical")
 
-// journalAddClientChannel surveille l'ajout de nouveaux clients pour propager le channel d'events
-func journalAddClient() {
+// messageSocketAddClientChannel surveille l'ajout de nouveaux clients pour propager le channel d'events
+func messageSocketAddClient() {
 	for clientChannel := range addClientChannel {
 		messageClientChannels = append(messageClientChannels, clientChannel)
 	}
@@ -50,7 +49,7 @@ func messageDispatch() chan socketMessage {
 	channel := make(messageChannel)
 	go func() {
 		for event := range channel {
-			db.DB.C("Journal").Insert(event)
+			db.DBStatus.C("Journal").Insert(event.JournalEvent)
 			for _, clientChannel := range messageClientChannels {
 				clientChannel <- event
 			}
@@ -75,7 +74,7 @@ func log(priority journalPriority, code journalCode, comment string) journalEven
 
 func getLogs() ([]journalEvent, error) {
 	var logs []journalEvent
-	err := db.DB.C("Journal").Find(nil).Sort("-id").Limit(250).All(&logs)
+	err := db.DB.C("Journal").Find(nil).Sort("-date").Limit(250).All(&logs)
 	return logs, err
 }
 

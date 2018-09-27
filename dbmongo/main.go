@@ -46,7 +46,7 @@ func main() {
 	// InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 
 	go r()
-	go journalAddClient()
+	go messageSocketAddClient()
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
