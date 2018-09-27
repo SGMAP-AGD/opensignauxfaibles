@@ -18,12 +18,15 @@ func adminFeature(c *gin.Context) {
 	c.JSON(200, []string{"algo1", "algo2"})
 }
 
+// Types description des types de fichiers pris en charge
+type Types []struct {
+	Type    string `json:"type" bson:"type"`
+	Libelle string `json:"text" bson:"text"`
+	Filter  string `json:"filter" bson:"filter"`
+}
+
 func listTypes(c *gin.Context) {
-	c.JSON(200, []struct {
-		Type    string `json:"type" bson:"type"`
-		Libelle string `json:"text" bson:"text"`
-		Filter  string `json:"filter" bson:"filter"`
-	}{
+	c.JSON(200, Types{
 		{"admin_urssaf", "Siret/Compte URSSAF", "Liste comptes"},
 		{"apconso", "Consommation Activité Partielle", "conso"},
 		{"bdf", "Ratios Banque de France", "bdf"},

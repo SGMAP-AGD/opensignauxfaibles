@@ -16,14 +16,22 @@ type journalEvent struct {
 	Code     journalCode     `json:"code" bson:"code"`
 }
 
+type socketMessage struct {
+	JournalEvent journalEvent  `json:"journalEvent" bson:"journalEvent"`
+	Batches      []AdminBatch  `json:"batches,omitempty" bson:"batches,omitempty"`
+	Types        Types         `json:"types,omitempty" bson:"types,omitempty"`
+	Features     []string      `json:"features,omitempty" bson:"features,omitempty"`
+	Files        []fileSummary `json:"files,omitempty" bson:"files,omitempty"`
+}
+
 type journalCode string
 type journalPriority string
 
-type journalChannel chan journalEvent
+type messageChannel chan socketMessage
 
-var journalClientChannels = []journalChannel{}
-var mainJournalChannel = journalDispatch()
-var addClientChannel = make(chan journalChannel)
+var messageClientChannels = []messageChannel{}
+var mainMessageChannel = messageDispatch()
+var addClientChannel = make(chan messageChannel)
 
 var debug = journalPriority("debug")
 var info = journalPriority("info")
@@ -33,17 +41,17 @@ var critical = journalPriority("critical")
 // journalAddClientChannel surveille l'ajout de nouveaux clients pour propager le channel d'events
 func journalAddClient() {
 	for clientChannel := range addClientChannel {
-		journalClientChannels = append(journalClientChannels, clientChannel)
+		messageClientChannels = append(messageClientChannels, clientChannel)
 	}
 }
 
 // journal dispatch un event vers les clients et l'enregistre dans la bdd
-func journalDispatch() chan journalEvent {
-	channel := make(journalChannel)
+func messageDispatch() chan socketMessage {
+	channel := make(messageChannel)
 	go func() {
 		for event := range channel {
 			db.DB.C("Journal").Insert(event)
-			for _, clientChannel := range journalClientChannels {
+			for _, clientChannel := range messageClientChannels {
 				clientChannel <- event
 			}
 		}
@@ -59,7 +67,9 @@ func log(priority journalPriority, code journalCode, comment string) journalEven
 		Priority: priority,
 		Code:     code,
 	}
-	mainJournalChannel <- e
+	mainMessageChannel <- socketMessage{
+		JournalEvent: e,
+	}
 	return e
 }
 

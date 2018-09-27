@@ -31,7 +31,7 @@ func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
 		fmt.Printf("Failed to set websocket upgrade: %+v", err)
 		return
 	}
-	channel := make(chan journalEvent)
+	channel := make(chan socketMessage)
 	addClientChannel <- channel
 
 	for event := range channel {

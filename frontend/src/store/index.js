@@ -59,8 +59,9 @@ const store = new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
-      state.socket.message.unshift(message)
-      if (state.socket.message > 250) {
+      let m = message.journalEvent
+      state.socket.message.unshift(m)
+      if (state.socket.message.length > 250) {
         state.socket.message.pop()
       }
     },
