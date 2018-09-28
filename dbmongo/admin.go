@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
@@ -59,4 +61,54 @@ func cloneDB(c *gin.Context) {
 	}
 	removeDatabaseCopy(db.DB)
 	c.JSON(200, err)
+}
+
+func addFile(c *gin.Context) {
+	_, header, err := c.Request.FormFile("file")
+
+	if err != nil {
+		c.JSON(500, "Error occured: "+err.Error())
+		return
+	}
+
+	source, err := header.Open()
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+
+	defer source.Close()
+
+	destination, err := os.Create(viper.GetString("APP_DATA") + "/" + header.Filename)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	defer destination.Close()
+
+	nBytes, err := io.Copy(destination, source)
+
+	type result struct {
+		Bytes int64 `json:"bytes,omitempty"`
+		Error error `json:"error,omitempty"`
+	}
+
+	if err != nil {
+		c.JSON(500, result{nBytes, err})
+		return
+	}
+
+	basePath := viper.GetString("APP_DATA")
+	files, err := listFiles(basePath)
+
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+
+	mainMessageChannel <- socketMessage{
+		Files: files,
+	}
+
+	c.JSON(200, result{nBytes, err})
 }

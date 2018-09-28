@@ -69,6 +69,9 @@ const store = new Vuex.Store({
       if ('batches' in message) {
         state.batches = message.batches.reverse()
       }
+      if ('files' in message) {
+        state.files = message.files
+      }
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {

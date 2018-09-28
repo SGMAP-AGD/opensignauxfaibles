@@ -29,7 +29,7 @@
     </v-toolbar-title>
     <v-spacer></v-spacer>
 
-      <v-btn flat icon disabled>
+    <v-btn flat icon disabled>
       <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus != null">
         {{ dbstatus }}
           <v-progress-circular slot="activator"
@@ -37,13 +37,8 @@
             color="indigo darken-4"
           ></v-progress-circular>
       </v-tooltip>
-
-      <!-- <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus === null">
-        Aucune opération en cours
-          <v-icon slot="activator" color="green">fa-check
-          </v-icon>
-      </v-tooltip> -->
-      </v-btn>
+      
+    </v-btn>
 
       <v-dialog 
       lazy 
