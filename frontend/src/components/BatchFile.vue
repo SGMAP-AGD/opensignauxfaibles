@@ -1,45 +1,57 @@
 <template>
   <v-card class="elevation-6" >
       <v-toolbar
-        class="elevation-3"
+        class="elevation-2"
         color="red darken-4"
         dark
         card
       >
-      <v-toolbar-title>{{ currentType.text }}</v-toolbar-title>
+      <v-toolbar-title class="headline">{{ currentType.text }}</v-toolbar-title>
     </v-toolbar>
     <v-card-text>
-      <v-flex>
-        <v-btn
-        @click="fileSelect()">
-        <label 
-        ref="input-file-id"
-        for="input-file-id"  
-        class="md-button md-raised md-primary">
-          Nouveau fichier
-        </label>
-        </v-btn>
-        <input
-        style="display: none"
-        id="input-file-id"
-        ref="file"
-        multiple
-        v-on:change="handleFileUpload()"
-        type="file"/>
-        <v-btn v-on:click="submitFile()"><v-icon>fa-upload</v-icon></v-btn>
-        {{ Object.keys(filesUpload).map(f => filesUpload[f].name ) }}
-        <v-flex 
-        xs12
-        v-for="(u, index) in uploadPercentage"
-        :key="index"
-        >
-          {{ uploadPercentage[index].name }}
-          <v-progress-linear
-          :key="index"
-          :value="uploadPercentage[index].amount">
-          </v-progress-linear>
-        </v-flex>
-      </v-flex>
+      <v-tabs
+      v-model="active"
+      light
+      slider-color="indigo darken-4"
+      >
+        <v-tab ripple>
+          Upload
+        </v-tab>
+        <v-tab ripple>
+          Fichier existant
+        </v-tab>
+        <v-tab-item>
+          <v-flex>
+            <v-btn
+            @click="fileSelect()">
+            <label 
+            ref="input-file-id"
+            for="input-file-id"  
+            class="md-button md-raised md-primary">
+              Nouveau fichier
+            </label>
+            </v-btn>
+            <input
+            style="display: none"
+            id="input-file-id"
+            ref="file"
+            multiple
+            v-on:change="handleFileUpload()"
+            type="file"/>
+            <v-btn v-on:click="submitFile()"><v-icon>fa-upload</v-icon></v-btn>
+            <v-btn @click="$store.commit('resetUploads')">reset </v-btn>
+          </v-flex>
+        </v-tab-item>
+        <v-tab-item>
+          Fichier existant
+        </v-tab-item>
+      </v-tabs>
+
+
+
+
+
+      
       <v-flex xs12>
         <v-combobox 
           multiple
@@ -120,11 +132,11 @@ export default {
   props: ['type'],
   data () {
     return {
+      active: null,
       filesUpload: {},
       uploadVisible: false,
       addFiles: [],
-      removeFiles: [],
-      uploadPercentage: []
+      removeFiles: []
     }
   },
   methods: {
@@ -137,42 +149,9 @@ export default {
     submitFile () {
       Object.keys(this.filesUpload).forEach(fileID => {
         var file = this.filesUpload[fileID]
-        let formData = new FormData()
-        formData.append('file', file)
-        formData.append('batch', this.currentBatch.id.key)
-        formData.append('type', this.currentType.type)
-
-        var instance = this.uploadPercentage.push({
-          'amount': 0,
-          'name': file.name
-        }) - 1
-
-        var self = this
-        this.$axios.post(
-          '/api/admin/files',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: function (progressEvent) {
-              self.uploadPercentage[instance].amount = parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total))
-              console.log(self.uploadPercentage)
-              console.log(parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total)))
-            }
-          }
-        ).then(function (response) {
-          console.log(self.addFiles)
-          self.addFiles.push({
-            'name': '/' + self.currentBatch.id.key + '/' + self.currentType.type + '/' + file.name,
-            'pathname': '/' + self.currentBatch.id.key + '/' + self.currentType.type + '/',
-            'filename': file.name
-          })
-          console.log(self.addFiles)
-        })
-        .catch(function (response) {
-          console.log(response)
-        })
+        file.currentBatch = this.currentBatch.id.key
+        file.currentType = this.currentType
+        this.$store.dispatch('upload', file)
       })
     },
     formatBytes (a, b) {
@@ -231,6 +210,9 @@ export default {
     }
   },
   computed: {
+    uploads () {
+      return this.$store.getters.getUploads
+    },
     currentType () {
       return this.$store.state.types.filter(t => t.type === this.type)[0]
     },

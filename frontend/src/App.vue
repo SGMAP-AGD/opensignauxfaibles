@@ -2,7 +2,8 @@
   <v-app id="app">
     <v-toolbar
     class="toolbar"
-    color="blue-grey lighten-4"
+    dense
+    color="blue-grey lighten-3"
     app
     >
     <v-menu open-on-hover top offset-y transition="slide-x-transition">
@@ -23,12 +24,12 @@
       </v-list>
     </v-menu>
     <v-toolbar-title>
-      <span id="blue">Signaux</span>
-      <span id="red">Faibles</span><br/>
-      <span class="caption gray">Plateforme de détection des entreprises fragiles</span>
+      <span class="span" id="blue">Signaux</span>
+      <span class="span" id="red">Faibles</span>
+      <span class="span caption gray">Plateforme de détection des entreprises fragiles</span>
     </v-toolbar-title>
     <v-spacer></v-spacer>
-
+    
     <v-btn flat icon disabled>
       <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login && dbstatus != null">
         {{ dbstatus }}
@@ -39,13 +40,13 @@
       </v-tooltip>
       
     </v-btn>
-
+    <Uploads/>
       <v-dialog 
       lazy 
       v-model="dialog" 
       scrollable v-if="login">
         <v-btn flat lazy icon slot="activator" >
-          <v-icon>fa-newspaper</v-icon>
+          <v-icon small color="indigo darken-4">fa-bell</v-icon>
         </v-btn>
         <v-card
         style="min-height: 90vh;">
@@ -99,7 +100,7 @@
       <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login" >
       Déconnexion
           <v-btn icon @click="logout()" slot="activator">
-            <v-icon>fa-sign-out-alt</v-icon>
+            <v-icon small color="indigo darken-4">fa-sign-out-alt</v-icon>
           </v-btn>
       </v-tooltip>
 
@@ -109,7 +110,7 @@
         <router-view v-if="login" />
     </v-content>
 
-    <v-footer>
+    <v-footer class="elevation-12">
       <v-btn 
         flat 
         icon 
@@ -125,6 +126,7 @@
 
 <script>
 import Login from '@/components/Login'
+import Uploads from '@/components/Uploads'
 
 export default {
   methods: {
@@ -136,8 +138,11 @@ export default {
       this.$store.commit('logout')
     }
   },
-  components: { Login },
+  components: { Login, Uploads },
   computed: {
+    uploads () {
+      return this.$store.getters.getUploads
+    },
     login () {
       return this.$store.state.token != null
     },
@@ -170,7 +175,7 @@ export default {
           color: 'indigo darken-4' },
         { title: 'Données',
           action: '/data',
-          color: 'grey darken-2' }
+          color: 'red darken-4' }
         // { title: 'Admin',
         //   action: '/admin',
         //   color: 'black'},
@@ -237,6 +242,8 @@ v-list {
 }
 #app {
   background-image: url("/static/bgapp.png");
-  background-color: "blue-grey lighten-5";
+}
+.span {
+  max-height: 10px
 }
 </style>

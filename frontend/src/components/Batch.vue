@@ -1,6 +1,6 @@
 <template>
     <div >
-
+      
     <v-navigation-drawer
     class="elevation-6"
     absolute
@@ -22,10 +22,10 @@
           :key="batchKey + param.key"
           ripple
           @click="setCurrentType(param.key)">
-            <v-list-tile-content
-            :class="(param.key===currentType) ? 'selected': null"
-            >
-              <v-list-tile-title>{{ param.text }}</v-list-tile-title>
+            <v-list-tile-content> 
+              <v-list-tile-title
+              :class="(param.key===currentType) ? 'selected': null"
+              >{{ param.text }}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-list-group>
@@ -42,11 +42,11 @@
           v-for="type in types"
           :key="type.text"
           @click="setCurrentType(type.type)"
-          :class="(type.type==currentType) ? 'selected': null"
           >
-            <v-list-tile-content
-            >
-              <v-list-tile-title>{{ type.text }}</v-list-tile-title>
+            <v-list-tile-content>
+              <v-list-tile-title
+              :class="(type.type==currentType) ? 'selected': null">
+              {{ type.text }}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
           <v-divider></v-divider>
@@ -66,17 +66,19 @@
           :key="batchKey + process.key"
           @click="setCurrentType(process.key)"
           >
-            <v-list-tile-content
-            :class="(process.key==currentType) ? 'selected': null"
-            >
-              <v-list-tile-title>{{ process.text }}</v-list-tile-title>
+            <v-list-tile-content>
+              <v-list-tile-title
+              :class="(process.key==currentType) ? 'selected': null">
+              {{ process.text }}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-list-group>
       </v-list>
+      
+      <v-img src="/static/logo.png"> </v-img>
     </v-navigation-drawer>
 
-    <v-container>
+    <div class="widget">
       <BatchDate 
       class="elevation-6"
       :key="batchKey + 'batchDate'"
@@ -94,7 +96,7 @@
       :process="processes.filter(p => p.key === currentType)[0]"
       v-if="processes.map(p => p.key).includes(currentType)"
       />
-    </v-container>
+    </div>
 
   </div>
 </template>
@@ -160,5 +162,14 @@ export default {
 </script>
 
 <style>
-
+.selected {
+  color: #700;
+  font-size: 15px;
+}
+.widget {
+  position: absolute;
+  left: 320px;
+  top: 20px; 
+  right: 20px;
+}
 </style>

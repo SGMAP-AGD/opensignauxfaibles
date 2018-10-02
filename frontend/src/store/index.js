@@ -44,7 +44,8 @@ const store = new Vuex.Store({
       isConnected: false,
       message: [],
       reconnectError: false
-    }
+    },
+    uploads: []
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
@@ -106,6 +107,7 @@ const store = new Vuex.Store({
       state.batches = []
       state.epoch = 0
       state.socket.message = []
+      state.uploads = []
     },
     setUser (state, username) {
       state.credentials.username = username
@@ -139,11 +141,58 @@ const store = new Vuex.Store({
     },
     setCurrentType (state, type) {
       state.currentType = type
+    },
+    updateUploads (state, status) {
+      let index = state.uploads.findIndex(s => s.name === status.name)
+      state.uploads[index].amount = status.amount
+    },
+    addUpload (state, status) {
+      if (state.uploads.findIndex(s => s.name === status.name) === -1) state.uploads.push(status)
+    },
+    resetUploads (state) {
+      state.uploads = state.uploads.filter(u => u.amount < 100)
     }
   },
   actions: {
     saveBatch (state, batch) {
       axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
+    },
+    resetUploads (context) {
+      context.commit('resetUploads')
+    },
+    upload (context, file) {
+      let formData = new FormData()
+      let filename = '/' + file.currentBatch + '/' + file.currentType.type + '/' + file.name
+
+      formData.append('file', file)
+      formData.append('batch', file.currentBatch)
+      formData.append('type', file.currentType.type)
+
+      var status = {
+        'amount': 0,
+        'name': filename
+      }
+
+      context.commit('addUpload', status)
+      axiosClient.post(
+        '/api/admin/files',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          onUploadProgress: function (progressEvent) {
+            var newStatus = {
+              'amount': parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total)),
+              'name': filename
+            }
+            context.commit('updateUploads', newStatus)
+          }
+        }
+      )
+      .catch(function (response) {
+        console.log(response)
+      })
     },
     checkEpoch () {
       if (store.state.token != null) {
@@ -171,6 +220,9 @@ const store = new Vuex.Store({
         m.date = new Date(m.date)
         return m
       })
+    },
+    getUploads (state) {
+      return state.uploads
     }
   }
 })
