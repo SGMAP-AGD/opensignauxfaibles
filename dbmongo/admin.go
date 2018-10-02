@@ -64,14 +64,11 @@ func cloneDB(c *gin.Context) {
 }
 
 func addFile(c *gin.Context) {
-	_, header, err := c.Request.FormFile("file")
+	file, err := c.FormFile("file")
+	batch := c.Request.FormValue("batch")
+	fileType := c.Request.FormValue("type")
 
-	if err != nil {
-		c.JSON(500, "Error occured: "+err.Error())
-		return
-	}
-
-	source, err := header.Open()
+	source, err := file.Open()
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
@@ -79,27 +76,23 @@ func addFile(c *gin.Context) {
 
 	defer source.Close()
 
-	destination, err := os.Create(viper.GetString("APP_DATA") + "/" + header.Filename)
+	os.MkdirAll(viper.GetString("APP_DATA")+"/"+batch+"/"+fileType+"/", os.ModePerm)
+	destination, err := os.Create(viper.GetString("APP_DATA") + "/" + batch + "/" + fileType + "/" + file.Filename)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
 	defer destination.Close()
 
-	nBytes, err := io.Copy(destination, source)
-
-	type result struct {
-		Bytes int64 `json:"bytes,omitempty"`
-		Error error `json:"error,omitempty"`
-	}
+	_, err = io.Copy(destination, source)
 
 	if err != nil {
-		c.JSON(500, result{nBytes, err})
+		c.JSON(500, err.Error())
 		return
 	}
 
 	basePath := viper.GetString("APP_DATA")
-	files, err := listFiles(basePath)
+	newFiles, err := listFiles(basePath)
 
 	if err != nil {
 		c.JSON(500, err.Error())
@@ -107,8 +100,8 @@ func addFile(c *gin.Context) {
 	}
 
 	mainMessageChannel <- socketMessage{
-		Files: files,
+		Files: newFiles,
 	}
 
-	c.JSON(200, result{nBytes, err})
+	c.JSON(200, nil)
 }

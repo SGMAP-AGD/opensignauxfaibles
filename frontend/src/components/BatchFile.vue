@@ -1,7 +1,5 @@
 <template>
-  
   <v-card class="elevation-6" >
-    <v-card-title class="header">
       <v-toolbar
         class="elevation-3"
         color="red darken-4"
@@ -10,15 +8,37 @@
       >
       <v-toolbar-title>{{ currentType.text }}</v-toolbar-title>
     </v-toolbar>
-    </v-card-title>
     <v-card-text>
-      <v-flex xs12>
-        <div class="large-12 medium-12 small-12 cell">
-          <label>File
-            <input type="file" id="file" ref="file" v-on:change="handleFileUpload()"/>
-          </label>
-            <button v-on:click="submitFile()">Submit</button>
-        </div>
+      <v-flex>
+        <v-btn
+        @click="fileSelect()">
+        <label 
+        ref="input-file-id"
+        for="input-file-id"  
+        class="md-button md-raised md-primary">
+          Nouveau fichier
+        </label>
+        </v-btn>
+        <input
+        style="display: none"
+        id="input-file-id"
+        ref="file"
+        multiple
+        v-on:change="handleFileUpload()"
+        type="file"/>
+        <v-btn v-on:click="submitFile()"><v-icon>fa-upload</v-icon></v-btn>
+        {{ Object.keys(filesUpload).map(f => filesUpload[f].name ) }}
+        <v-flex 
+        xs12
+        v-for="(u, index) in uploadPercentage"
+        :key="index"
+        >
+          {{ uploadPercentage[index].name }}
+          <v-progress-linear
+          :key="index"
+          :value="uploadPercentage[index].amount">
+          </v-progress-linear>
+        </v-flex>
       </v-flex>
       <v-flex xs12>
         <v-combobox 
@@ -32,7 +52,6 @@
           item-value="name"
           label="Ajouter un fichier"
           ripple
-          
           append-outer-icon="fa-plus-square"
           @click:append-outer="add"
         >
@@ -96,37 +115,64 @@
 </template>
 
 <script>
+
 export default {
   props: ['type'],
   data () {
     return {
-      file: '',
+      filesUpload: {},
+      uploadVisible: false,
       addFiles: [],
-      removeFiles: []
+      removeFiles: [],
+      uploadPercentage: []
     }
   },
   methods: {
     handleFileUpload () {
-      this.file = this.$refs.file.files[0]
+      this.filesUpload = this.$refs.file.files
     },
     comboFilter (item, queryText, itemText) {
       return item.name.toLowerCase().includes(queryText.toLowerCase())
     },
     submitFile () {
-      let formData = new FormData()
-      formData.append('file', this.file)
-      this.$axios.post('/api/admin/files',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
+      Object.keys(this.filesUpload).forEach(fileID => {
+        var file = this.filesUpload[fileID]
+        let formData = new FormData()
+        formData.append('file', file)
+        formData.append('batch', this.currentBatch.id.key)
+        formData.append('type', this.currentType.type)
+
+        var instance = this.uploadPercentage.push({
+          'amount': 0,
+          'name': file.name
+        }) - 1
+
+        var self = this
+        this.$axios.post(
+          '/api/admin/files',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: function (progressEvent) {
+              self.uploadPercentage[instance].amount = parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total))
+              console.log(self.uploadPercentage)
+              console.log(parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total)))
+            }
           }
-        }
-      ).then(function () {
-        console.log('SUCCESS!!')
-      })
-      .catch(function () {
-        console.log('FAILURE!!')
+        ).then(function (response) {
+          console.log(self.addFiles)
+          self.addFiles.push({
+            'name': '/' + self.currentBatch.id.key + '/' + self.currentType.type + '/' + file.name,
+            'pathname': '/' + self.currentBatch.id.key + '/' + self.currentType.type + '/',
+            'filename': file.name
+          })
+          console.log(self.addFiles)
+        })
+        .catch(function (response) {
+          console.log(response)
+        })
       })
     },
     formatBytes (a, b) {
@@ -166,6 +212,9 @@ export default {
           date: 'n/a'
         }
       }
+    },
+    fileSelect () {
+      this.$refs['input-file-id'].click()
     },
     removeMark (file) {
       if (this.removeFiles.includes(file)) {

@@ -1,9 +1,10 @@
 <template>
-<div class="container">
-  <div class="fixed d-inline-block elevation-6">
+    <div >
+
     <v-navigation-drawer
+    class="elevation-6"
+    absolute
     permanent
-    :key="'nav' + currentBatch"
     style="z-index: 1"
     >
       <v-list dense class="pt-0">
@@ -73,33 +74,28 @@
           </v-list-tile>
         </v-list-group>
       </v-list>
-    </v-navigation-drawer> 
-    </div>
-    <div class="flex-item">
-      <v-container grid-list-xs text-xs-center>
-        <v-layout row wrap justify-start>
-          <v-flex xs12 >
-            <BatchDate 
-            class="d-inline-block elevation-6"
-            :key="batchKey + 'batchDate'"
-            :date="currentType"
-            :param="parameters.filter(p => p.key === currentType)[0]"
-            v-if="parameters.map(p => p.key).includes(currentType)"
-            />
-            <BatchFile 
-            :key="batchKey + 'batchFile'"
-            :type="currentType"
-            v-if="types.map(t => t.type).includes(currentType)"
-            />
-            <BatchProcess
-            :key="batchKey + 'batchProcess'"
-            :process="processes.filter(p => p.key === currentType)[0]"
-            v-if="processes.map(p => p.key).includes(currentType)"
-            />
-          </v-flex>
-        </v-layout>
-      </v-container>
-    </div>
+    </v-navigation-drawer>
+
+    <v-container>
+      <BatchDate 
+      class="elevation-6"
+      :key="batchKey + 'batchDate'"
+      :date="currentType"
+      :param="parameters.filter(p => p.key === currentType)[0]"
+      v-if="parameters.map(p => p.key).includes(currentType)"
+      />
+      <BatchFile 
+      :key="batchKey + 'batchFile'"
+      :type="currentType"
+      v-if="types.map(t => t.type).includes(currentType)"
+      />
+      <BatchProcess
+      :key="batchKey + 'batchProcess'"
+      :process="processes.filter(p => p.key === currentType)[0]"
+      v-if="processes.map(p => p.key).includes(currentType)"
+      />
+    </v-container>
+
   </div>
 </template>
 
@@ -164,17 +160,5 @@ export default {
 </script>
 
 <style>
-  .selected {
-    color: blue;
-    font-size: 14px;
-  }
-  .container{
-    display: flex;
-  }
-  .fixed{
-    width: 300px;
-  }
-  .flex-item{
-    flex-grow: 1;
-  }
+
 </style>

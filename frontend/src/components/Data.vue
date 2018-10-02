@@ -1,14 +1,13 @@
 <template>
-<div>
   <v-tabs
     v-model="currentBatchKey"
-    color="indigo darken-4"
+    color="red darken-4"
     dark
+    fixed
     slider-color="red accent-2"
     show-arrows
     next-icon="fa-arrow-alt-circle-right"
     prev-icon="fa-arrow-alt-circle-left"
-    
   >
     <v-tab
       v-for="batch in batches"
@@ -19,15 +18,16 @@
       {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
     </v-tab>
     <v-tab-item
-      v-for="(batch, rank) in batches"
-      :key="rank"
-      lazy
+    style="min-height: 85vh;"
+    
+    v-for="(batch, rank) in batches"
+    :key="rank"
+    lazy
     >
         <Batch 
         :batchKey="batch"/>
     </v-tab-item>
   </v-tabs> 
-</div>
 </template>
 
 <script>
@@ -59,3 +59,10 @@ export default {
   name: 'Data'
 }
 </script>
+
+<style scoped>
+.tabs__content
+    {
+        min-height: 100vh;
+    }
+</style>
