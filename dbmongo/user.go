@@ -1,6 +1,17 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+
+	jwt "github.com/appleboy/gin-jwt"
+	"github.com/gin-gonic/gin"
+)
+
+// login
+type login struct {
+	Username string `form:"username" json:"username" binding:"required"`
+	Password string `form:"password" json:"password" binding:"required"`
+}
 
 // User demo
 type User struct {
@@ -9,16 +20,24 @@ type User struct {
 	LastName  string
 }
 
-func authenticator(userID string, password string, c *gin.Context) (interface{}, bool) {
+func authenticator(c *gin.Context) (interface{}, error) {
+	var loginVals login
+	if err := c.ShouldBind(&loginVals); err != nil {
+		return "", jwt.ErrMissingLoginValues
+	}
+	fmt.Println(loginVals)
+	userID := loginVals.Username
+	password := loginVals.Password
+
 	if (userID == "admin" && password == "admin") || (userID == "test" && password == "test") {
 		return &User{
 			UserName:  userID,
 			LastName:  "Bo-Yi",
 			FirstName: "Wu",
-		}, true
+		}, nil
 	}
 
-	return nil, false
+	return nil, jwt.ErrFailedAuthentication
 }
 
 func authorizator(user interface{}, c *gin.Context) bool {
