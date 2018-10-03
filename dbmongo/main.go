@@ -157,6 +157,9 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
 	r.POST("/login", authMiddleware.LoginHandler)
+	r.GET("/ws/:jwt", func(c *gin.Context) {
+		wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
+	})
 
 	api := r.Group("api")
 	api.Use(authMiddleware.MiddlewareFunc())
@@ -191,10 +194,6 @@ func main() {
 		api.GET("/compact/entreprise", compactEntreprise)
 		api.GET("/reduce/:algo/:batch/:siret", reduce)
 		api.GET("/reduce/:algo/:batch", reduce)
-
-		r.GET("/ws/:jwt", func(c *gin.Context) {
-			wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
-		})
 	}
 
 	debugAPI := r.Group("debugAPI")

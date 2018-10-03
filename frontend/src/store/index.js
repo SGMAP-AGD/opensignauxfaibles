@@ -12,8 +12,8 @@ var axiosClient = axios.create(
   {
     headers: {
       'Content-Type': 'application/json'
-    },
-    baseURL: 'http://localhost:3000'
+    }
+    // baseURL: 'http://localhost:3000'
   }
 )
 
@@ -242,7 +242,7 @@ function wsConnect (state) {
   if (index > -1) {
     Vue._installedPlugins.splice(index, 1)
   }
-  Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + state.token, {
+  Vue.use(VueNativeSock, 'ws://opensignauxfaibles.fr:3000/ws/' + state.token, {
     store: store,
     format: 'json',
     connectManually: true,
