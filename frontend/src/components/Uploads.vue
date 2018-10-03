@@ -6,7 +6,7 @@
     slot="activator">
       <v-progress-circular 
       color="indigo"
-      width="2"
+      :width="2"
       v-model="globalUploads">
       <v-icon color="indigo darken-4" small>fa-upload</v-icon>
       </v-progress-circular>

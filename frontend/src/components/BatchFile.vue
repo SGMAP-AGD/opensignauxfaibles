@@ -15,10 +15,10 @@
       slider-color="indigo darken-4"
       >
         <v-tab ripple>
-          Upload
+          Téléverser
         </v-tab>
         <v-tab ripple>
-          Fichier existant
+          Relier    
         </v-tab>
         <v-tab-item>
           <v-flex>
@@ -43,47 +43,40 @@
           </v-flex>
         </v-tab-item>
         <v-tab-item>
-          Fichier existant
+          <v-flex xs10>
+            <v-combobox 
+            multiple
+            deletableChips
+            chips
+            flat
+            v-model="addFiles"
+            :items="files"
+            item-text="filename"
+            item-value="name"
+            label="Lier un fichier existant"
+            ripple
+            append-outer-icon="fa-plus-square"
+            @click:append-outer="add"
+            >
+              <template
+              slot="item"
+              slot-scope="{index, item, parent}"
+              >
+                  <v-list-tile style="width: 100%">
+                    <v-list-tile-content>
+                      <span class="strong">{{ item.filename }}</span>
+                      <span class="light">{{ item.pathname }}</span>
+                    </v-list-tile-content>
+                    <v-list-tile-action>
+                      <span class="light">{{ item.psize }}</span>
+                      <span class="light">{{ item.pdate }}</span>
+                    </v-list-tile-action>
+                  </v-list-tile>
+              </template>
+            </v-combobox>
+          </v-flex>
         </v-tab-item>
       </v-tabs>
-
-
-
-
-
-      
-      <v-flex xs12>
-        <v-combobox 
-          multiple
-          deletableChips
-          chips
-          flat
-          v-model="addFiles"
-          :items="files"
-          item-text="filename"
-          item-value="name"
-          label="Ajouter un fichier"
-          ripple
-          append-outer-icon="fa-plus-square"
-          @click:append-outer="add"
-        >
-          <template
-            slot="item"
-            slot-scope="{index, item, parent}"
-          >
-              <v-list-tile style="width: 100%">
-                <v-list-tile-content>
-                  <span class="strong">{{ item.filename }}</span>
-                  <span class="light">{{ item.pathname }}</span>
-                </v-list-tile-content>
-                <v-list-tile-action>
-                  <span class="light">{{ item.psize }}</span>
-                  <span class="light">{{ item.pdate }}</span>
-                </v-list-tile-action>
-              </v-list-tile>
-          </template>
-        </v-combobox>
-      </v-flex>
       <v-list style="width: 100%">
         <v-list-tile style="width: 100%">
           <v-list-tile-content>

@@ -85,6 +85,7 @@ func main() {
 		api.GET("/kanboard/get/projects", listProjects)
 		api.GET("/kanboard/get/tasks", getKBTasks)
 		api.POST("/admin/batch", upsertBatch)
+		api.POST("/admin/batch/addFile", addFileToBatchHandler)
 		api.GET("/admin/batch", listBatch)
 		api.DELETE("/admin/batch", dropBatch)
 		api.GET("/admin/files", adminFiles)
@@ -100,7 +101,6 @@ func main() {
 		api.GET("/data/naf", getNAF)
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
-
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)

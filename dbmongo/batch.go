@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -76,14 +75,12 @@ func upsertBatch(c *gin.Context) {
 	err := c.Bind(&batch)
 	if err != nil {
 		c.JSON(500, err)
-		fmt.Println(err)
 		return
 	}
 
 	err = batch.save()
 	if err != nil {
 		c.JSON(500, "Erreur à l'enregistrement")
-		fmt.Println(err)
 		return
 	}
 
@@ -122,6 +119,12 @@ func getBatches() []AdminBatch {
 	var batches []AdminBatch
 	db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
 	return batches
+}
+
+func getBatch(batchKey string) AdminBatch {
+	var batch AdminBatch
+	db.DB.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(&batch)
+	return batch
 }
 
 // batchToTime calcule la date de référence à partir de la référence de batch
@@ -175,6 +178,44 @@ func createNextBatch() error {
 	return err
 }
 
+type newFile struct {
+	FileName string `json:"filename"`
+	Type     string `json:"type"`
+	BatchKey string `json:"batch"`
+}
+
+func addFileToBatchHandler(c *gin.Context) {
+	var file newFile
+	err := c.Bind(&file)
+	if err != nil {
+		c.JSON(500, err.Error())
+	}
+	addFileChannel <- file
+
+	c.JSON(200, "Demande d'ajout prise en compte")
+}
+
+func addFileToBatch() chan newFile {
+	channel := make(chan newFile)
+
+	go func() {
+		for file := range channel {
+			batch := getBatch(file.BatchKey)
+			batch.Files[file.Type] = append(batch.Files[file.Type], file.FileName)
+			batch.save()
+			batches := getBatches()
+			mainMessageChannel <- socketMessage{
+				JournalEvent: log(info, "addFileToBatch", "Fichier "+file.FileName+"du type "+file.Type+" ajouté au batch "+file.BatchKey),
+				Batches:      batches,
+			}
+		}
+	}()
+
+	return channel
+}
+
 func purgeBatch(c *gin.Context) {}
 
 func resetBatch(c *gin.Context) {}
+
+var addFileChannel = addFileToBatch()

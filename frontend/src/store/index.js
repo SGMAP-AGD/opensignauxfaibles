@@ -160,6 +160,10 @@ const store = new Vuex.Store({
     resetUploads (context) {
       context.commit('resetUploads')
     },
+    addFile (context, file) {
+      console.log(file)
+      axiosClient.post('/api/admin/batch/addFile', file)
+    },
     upload (context, file) {
       let formData = new FormData()
       let filename = '/' + file.currentBatch + '/' + file.currentType.type + '/' + file.name
@@ -189,8 +193,14 @@ const store = new Vuex.Store({
             context.commit('updateUploads', newStatus)
           }
         }
-      )
-      .catch(function (response) {
+      ).then(response => {
+        let postData = {
+          filename: filename,
+          type: file.currentType.type,
+          batch: file.currentBatch
+        }
+        context.dispatch('addFile', postData)
+      }).catch(function (response) {
         console.log(response)
       })
     },
