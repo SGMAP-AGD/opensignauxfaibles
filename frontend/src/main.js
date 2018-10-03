@@ -27,7 +27,7 @@ Vue.prototype.$axios = axios.create(
 
 Vue.prototype.$axios.interceptors.request.use(
   config => {
-    config.baseURL = 'http://opensignauxfaibles.fr:3000'
+    config.baseURL = 'http://opensignauxfaibles.fr'
     if (store.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.state.token
     return config
   }
