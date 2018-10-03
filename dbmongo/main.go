@@ -28,6 +28,7 @@ func checkOrigin(r *http.Request) bool {
 
 func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
 	conn, err := wsupgrader.Upgrade(w, r, nil)
+	fmt.Println(err)
 	if err != nil {
 		fmt.Printf("Failed to set websocket upgrade: %+v", err)
 		return
@@ -54,7 +55,7 @@ func main() {
 	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:8080"}
+	config.AllowOrigins = []string{"http://opensignauxfaibles.fr:3001", "http://opensignauxfaibles.fr:3000"}
 	config.AddAllowHeaders("Authorization")
 	config.AddAllowMethods("GET", "POST", "PUT", "HEAD", "DELETE")
 
@@ -115,7 +116,7 @@ func main() {
 					FirstName: "Wu",
 				}, nil
 			}
-
+			fmt.Println("kikoo")
 			return nil, jwt.ErrFailedAuthentication
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
@@ -157,6 +158,7 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
 	r.POST("/login", authMiddleware.LoginHandler)
+
 	r.GET("/ws/:jwt", func(c *gin.Context) {
 		wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
 	})

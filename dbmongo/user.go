@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	jwt "github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
 )
@@ -25,7 +23,6 @@ func authenticator(c *gin.Context) (interface{}, error) {
 	if err := c.ShouldBind(&loginVals); err != nil {
 		return "", jwt.ErrMissingLoginValues
 	}
-	fmt.Println(loginVals)
 	userID := loginVals.Username
 	password := loginVals.Password
 
