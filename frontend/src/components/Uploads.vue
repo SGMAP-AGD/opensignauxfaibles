@@ -1,5 +1,6 @@
 <template>
-  <v-dialog v-if="uploads.length > 0">
+  <v-dialog v-if="uploads.length > 0"
+    width="500">
     <v-btn
     flat
     icon=""
@@ -12,10 +13,13 @@
       </v-progress-circular>
     </v-btn>
     <v-card>
-      <v-btn
-      @click="resetUploads()">
-        Purge
-      </v-btn>
+      <v-toolbar>
+        <v-btn
+        flat
+        @click="resetUploads()">
+          masquer les téléversements terminés
+        </v-btn>
+      </v-toolbar>
       <v-card-text 
       v-for="(upload, index) in uploads" 
       :key="index">

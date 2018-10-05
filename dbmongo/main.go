@@ -55,7 +55,7 @@ func main() {
 	r.Use(Kanboard())
 	// FIXME: configurer correctement CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://opensignauxfaibles.fr:3001", "http://opensignauxfaibles.fr:3000", "http://opensignauxfaibles.fr"}
+	config.AllowOrigins = []string{"http://localhost:8080", "http://opensignauxfaibles.fr:8080", "http://opensignauxfaibles.fr:3000", "http://opensignauxfaibles.fr"}
 	config.AddAllowHeaders("Authorization")
 	config.AddAllowMethods("GET", "POST", "PUT", "HEAD", "DELETE")
 

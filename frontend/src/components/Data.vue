@@ -19,7 +19,7 @@
         {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
       </v-tab>
       <v-tab-item
-      style="min-height: 200vh;"
+      style="min-height: 500vh;"
       v-for="(batch, rank) in batches"
       :key="rank"
       lazy
@@ -59,10 +59,3 @@ export default {
   name: 'Data'
 }
 </script>
-
-<style scoped>
-.tabs__content
-    {
-        min-height: 100vh;
-    }
-</style>

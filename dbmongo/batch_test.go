@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -31,7 +30,6 @@ func Test_isBatchID(t *testing.T) {
 	if isBatchID("1801") {
 		t.Log("1801 est un ID de batch")
 	} else {
-		fmt.Println(isBatchID("1801"))
 		t.Error("1801 devrait être un ID de batch")
 	}
 

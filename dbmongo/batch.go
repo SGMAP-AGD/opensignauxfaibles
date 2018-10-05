@@ -204,6 +204,8 @@ func addFileToBatch() chan newFile {
 			batch.Files[file.Type] = append(batch.Files[file.Type], file.FileName)
 			batch.save()
 			batches := getBatches()
+			db.Status.Epoch++
+			db.Status.write()
 			mainMessageChannel <- socketMessage{
 				JournalEvent: log(info, "addFileToBatch", "Fichier "+file.FileName+"du type "+file.Type+" ajouté au batch "+file.BatchKey),
 				Batches:      batches,

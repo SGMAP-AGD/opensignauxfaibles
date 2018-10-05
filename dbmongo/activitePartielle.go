@@ -88,7 +88,6 @@ func parseAPDemande(path string) chan *APDemande {
 					return
 				}
 			}
-			fmt.Println()
 			// FIXME: établir une meilleure méthode pour tester la validité de la ligne
 			for _, row := range sheet.Rows[3:] {
 				var errors [10]error
@@ -112,9 +111,6 @@ func parseAPDemande(path string) chan *APDemande {
 					if allErrors(errors[:], nil) {
 						outputChannel <- &apdemande
 					} else {
-						fmt.Println(row)
-						fmt.Println(apdemande)
-						fmt.Println(errors)
 						e++
 						errorLines = append(errorLines, n)
 					}

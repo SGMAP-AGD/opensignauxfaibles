@@ -13,7 +13,7 @@ var axiosClient = axios.create(
     headers: {
       'Content-Type': 'application/json'
     },
-    baseURL: 'http://opensignauxfaibles.fr'
+    baseURL: 'http://opensignauxfaibles.fr:3000'
   }
 )
 
@@ -45,7 +45,14 @@ const store = new Vuex.Store({
       message: [],
       reconnectError: false
     },
-    uploads: []
+    uploads: [],
+    tabs: [{
+      'type': 'Prediction',
+      'param': '1802'
+    }, {
+      'type': 'Etablissement',
+      'param': '01234567890123'
+    }]
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
@@ -97,7 +104,7 @@ const store = new Vuex.Store({
       })
     },
     logout (state) {
-      vm.$disconnect()
+      // vm.$disconnect()
       state.credentials.username = null
       state.credentials.password = null
       state.token = null
@@ -166,11 +173,11 @@ const store = new Vuex.Store({
     },
     upload (context, file) {
       let formData = new FormData()
-      let filename = '/' + file.currentBatch + '/' + file.currentType.type + '/' + file.name
+      let filename = '/' + file.batch + '/' + file.type + '/' + file.file.name
 
-      formData.append('file', file)
-      formData.append('batch', file.currentBatch)
-      formData.append('type', file.currentType.type)
+      formData.append('file', file.file)
+      formData.append('batch', file.batch)
+      formData.append('type', file.type)
 
       var status = {
         'amount': 0,
@@ -191,31 +198,32 @@ const store = new Vuex.Store({
               'name': filename
             }
             context.commit('updateUploads', newStatus)
+            context.commit('updateBatches')
           }
         }
       ).then(response => {
         let postData = {
           filename: filename,
-          type: file.currentType.type,
-          batch: file.currentBatch
+          type: file.type,
+          batch: file.batch
         }
         context.dispatch('addFile', postData)
       }).catch(function (response) {
         console.log(response)
       })
     },
-    checkEpoch () {
-      if (store.state.token != null) {
+    checkEpoch (context) {
+      if (context.state.token != null) {
         axiosClient.get('/api/admin/epoch').then(response => {
           if (response.data !== store.state.epoch) {
-            store.commit('setEpoch', response.data)
-            store.commit('updateRefs')
-            store.commit('updateBatches')
-            store.commit('updateDbStatus')
+            context.commit('setEpoch', response.data)
+            context.commit('updateRefs')
+            context.commit('updateBatches')
+            context.commit('updateDbStatus')
           }
         }).catch(error => {
           if (error.response.status === 401) {
-            store.commit('logout')
+            context.commit('logout')
           }
         })
       }
@@ -233,6 +241,9 @@ const store = new Vuex.Store({
     },
     getUploads (state) {
       return state.uploads
+    },
+    getTabs (state) {
+      return state.tabs
     }
   }
 })
@@ -242,7 +253,7 @@ function wsConnect (state) {
   if (index > -1) {
     Vue._installedPlugins.splice(index, 1)
   }
-  Vue.use(VueNativeSock, 'ws://opensignauxfaibles.fr/ws/' + state.token, {
+  Vue.use(VueNativeSock, 'ws://opensignauxfaibles.fr:3000/ws/' + state.token, {
     store: store,
     format: 'json',
     connectManually: true,
@@ -270,4 +281,11 @@ setInterval(
     },
     180000)
 
+setInterval(
+      function () {
+        if (store.state.token != null && !store.state.sockets.isConnected === false) {
+          store.dispatch('checkEpoch')
+        }
+      },
+      1000)
 export default store

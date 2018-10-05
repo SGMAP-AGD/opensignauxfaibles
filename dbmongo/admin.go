@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -56,7 +55,6 @@ func cloneDB(c *gin.Context) {
 	err := db.DB.Run(bson.M{"eval": "copyDatabase()"}, result)
 	if err != nil {
 		c.JSON(500, err)
-		fmt.Println(err)
 		return
 	}
 	removeDatabaseCopy(db.DB)

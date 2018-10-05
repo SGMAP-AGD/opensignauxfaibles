@@ -71,7 +71,6 @@ func parseAltares(path string) chan *Altares {
 }
 
 func importAltares(batch *AdminBatch) error {
-	fmt.Println("koukou")
 	for altares := range parseAltares(viper.GetString("APP_DATA") + batch.Files["altares"][0]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 

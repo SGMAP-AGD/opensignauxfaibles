@@ -1,8 +1,8 @@
 <template>
-<v-container align-center>
-  <v-layout center>
-    <v-flex xs4 offset-xs4>
-      <v-card>
+<v-container fluid fill-height>
+  <v-layout align-center justify-center>
+    <v-flex xs12 lg3>
+      <v-card class="elevation-6">
                   <v-form @submit="login">
 
         <v-toolbar class="toolbar" id="toolbar" card color="indigo darken-1">

@@ -3,20 +3,27 @@
     <v-toolbar
     class="toolbar"
     dense
-    color="blue-grey lighten-3"
+    color="grey lighten-3"
     app
     >
-    <v-menu open-on-hover top offset-y transition="slide-x-transition">
-      <v-btn  slot="activator" width="100px" :color="menu.color" dark>{{ menu.title }}</v-btn>
+
+    <v-menu v-if="login" open-on-click top offset-y transition="slide-x-transition">
+      <v-btn flat slot="activator">
+      <v-img src="/static/logo.png"/>
+   </v-btn>
+      
       <v-list>
         <v-list-tile
         v-for="(item, index) in items"
         :key="index"
         @click="setMenu(index)"
         :to="item.action"
-        :color="item.color"
-          style="vertical-align: middle">
+        style="vertical-align: middle">
+          <v-list-tile-action>
+            <v-icon :color="item.color">{{ item.icon }}</v-icon>
+          </v-list-tile-action>
           <v-list-tile-title
+          :prepend-icon="item.icon"
           style="vertical-align: middle">
             {{ item.title }}
           </v-list-tile-title>
@@ -24,9 +31,11 @@
       </v-list>
     </v-menu>
     <v-toolbar-title>
+
       <span class="span" id="blue">Signaux</span>
       <span class="span" id="red">Faibles</span>
-      <span class="span caption gray">Plateforme de détection des entreprises fragiles</span>
+      <span class="span gray">– Plateforme de détection des entreprises fragiles</span>
+
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
@@ -35,7 +44,7 @@
         {{ dbstatus }}
           <v-progress-circular slot="activator"
             indeterminate
-            color="indigo darken-4"
+            color="grey darken-4"
           ></v-progress-circular>
       </v-tooltip>
       
@@ -46,13 +55,13 @@
       v-model="dialog" 
       scrollable v-if="login">
         <v-btn flat lazy icon slot="activator" >
-          <v-icon small color="indigo darken-4">fa-bell</v-icon>
+          <v-icon small color="grey darken-4">fa-bell</v-icon>
         </v-btn>
         <v-card
         style="min-height: 90vh;">
           <v-toolbar
           class="headline"
-          color="indigo darken-4"
+          color="grey darken-4"
           dark
           dense
           card>
@@ -100,7 +109,7 @@
       <v-tooltip bottom open-delay="1000" transition="fade-transition" v-if="login" >
       Déconnexion
           <v-btn icon @click="logout()" slot="activator">
-            <v-icon small color="indigo darken-4">fa-sign-out-alt</v-icon>
+            <v-icon small color="grey darken-4">fa-sign-out-alt</v-icon>
           </v-btn>
       </v-tooltip>
 
@@ -169,12 +178,15 @@ export default {
       items: [
         { title: 'Accueil',
           action: '/',
+          icon: 'fa-home',
           color: 'green darken-3' },
-        { title: 'Détection',
-          action: '/prediction',
+        { title: 'Parcourir',
+          action: '/Browse',
+          icon: 'fa-search',
           color: 'indigo darken-4' },
         { title: 'Données',
           action: '/data',
+          icon: 'fa-database',
           color: 'red darken-4' }
         // { title: 'Admin',
         //   action: '/admin',

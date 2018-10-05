@@ -1,16 +1,33 @@
 <template>
   <div>
-      <v-card>
+    <v-navigation-drawer
+    class="elevation-6"
+    absolute
+    permanent
+    :mini-variant = "mini"
+    style="z-index: 1"
+    >
+    <v-list>
+      <v-list-tile @click="mini=!mini">
+        <v-list-tile-action>
+          <v-icon>fa-filter</v-icon>
+        </v-list-tile-action>
+        <v-list-tile>Sélection</v-list-tile>
+      </v-list-tile>
+    </v-list>
+    </v-navigation-drawer>
+
+    <v-card :class="mini?'widget_large':'widget_tiny'">
     <v-data-table
-      v-model="selected"
-      :headers="headers"
-      :items="prediction"
-      :pagination.sync="pagination"
-      select-all
-      item-key="name"
-      class="elevation-1"
-      :loading="loading"
-      :rows-per-page-items="[10]"
+    v-model="selected"
+    :headers="headers"
+    :items="prediction"
+    :pagination.sync="pagination"
+    select-all
+    item-key="name"
+    class="elevation-1"
+    :loading="loading"
+    :rows-per-page-items="[10]"
     >
       <template slot="headers" slot-scope="props">
         <tr>
@@ -159,6 +176,7 @@
       IEcharts
     },
     data: () => ({
+      mini: true,
       fichart: false,
       loading: true,
       pagination: {
@@ -300,8 +318,20 @@
   }
 </script>
 
-<style>
+<style scoped>
 .echarts {
   width: 400px
+}
+.widget_tiny {
+  position: absolute;
+  left: 320px;
+  top: 20px; 
+  right: 20px;
+}
+.widget_large {
+  position: absolute;
+  left: 100px;
+  top: 20px;
+  right: 20px;
 }
 </style>
