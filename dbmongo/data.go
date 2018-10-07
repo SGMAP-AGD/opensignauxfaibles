@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"sort"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
@@ -84,16 +84,19 @@ func dataPrediction(c *gin.Context) {
 }
 
 func reduce(c *gin.Context) {
-	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-08-01")
-	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-03-01")
 
 	// Détermination scope traitement
 	algo := c.Params.ByName("algo")
-	batch := c.Params.ByName("batch")
+	batchKey := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
 
-	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch, "_id.algo": algo})
+	batch := getBatch(batchKey)
+
+	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch.ID.Key, "_id.algo": algo})
+
+	dateDebut := batch.Params.DateDebut
+	dateFin := batch.Params.DateFin
+	dateFinEffectif := batch.Params.DateFinEffectif
 
 	var queryEtablissement interface{}
 	var queryEntreprise interface{}
@@ -134,7 +137,7 @@ func reduce(c *gin.Context) {
 		"date_fin_effectif":      dateFinEffectif,
 		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
 		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
-		"actual_batch":           batch,
+		"actual_batch":           batch.ID.Key,
 		"naf":                    naf,
 	}
 
@@ -359,6 +362,7 @@ func loadNAF() (NAF, error) {
 
 	NAF1File, NAF1err := os.Open(NAF1)
 	if NAF1err != nil {
+		fmt.Println(NAF1err)
 		return NAF{}, NAF1err
 	}
 
@@ -366,17 +370,18 @@ func loadNAF() (NAF, error) {
 	NAF1reader.Comma = ';'
 	NAF1reader.Read()
 	for {
-		row, error := NAF1reader.Read()
-		if error == io.EOF {
+		row, err := NAF1reader.Read()
+		if err == io.EOF {
 			break
-		} else if error != nil {
-			// log.Fatal(error)
+		} else if err != nil {
+			fmt.Println(err)
 		}
 		naf.N1[row[0]] = row[1]
 	}
 
 	NAF5to1File, NAF5to1err := os.Open(NAF5to1)
 	if NAF5to1err != nil {
+		fmt.Println(NAF5to1err)
 		return NAF{}, NAF5to1err
 	}
 
@@ -384,17 +389,18 @@ func loadNAF() (NAF, error) {
 	NAF5to1reader.Comma = ';'
 	NAF5to1reader.Read()
 	for {
-		row, error := NAF5to1reader.Read()
-		if error == io.EOF {
+		row, err := NAF5to1reader.Read()
+		if err == io.EOF {
 			break
-		} else if error != nil {
-			// log.Fatal(error)
+		} else if err != nil {
+			fmt.Println(err)
 		}
 		naf.N5to1[row[0]] = row[1]
 	}
 
 	NAF5File, NAF5err := os.Open(NAF5)
 	if NAF5err != nil {
+		fmt.Println(NAF5err)
 		return NAF{}, NAF5err
 	}
 
@@ -402,11 +408,11 @@ func loadNAF() (NAF, error) {
 	NAF5reader.Comma = ';'
 	NAF5reader.Read()
 	for {
-		row, error := NAF5reader.Read()
-		if error == io.EOF {
+		row, err := NAF5reader.Read()
+		if err == io.EOF {
 			break
-		} else if error != nil {
-			// log.Fatal(error)
+		} else if err != nil {
+			fmt.Println(err)
 		}
 
 		naf.N5[row[0]] = row[1]

@@ -189,6 +189,7 @@ func main() {
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
 		api.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
+		api.GET("/data/etablissement/:batchKey/:siret", etablissementBrowse)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)

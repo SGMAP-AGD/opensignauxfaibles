@@ -48,10 +48,13 @@ const store = new Vuex.Store({
     uploads: [],
     tabs: [{
       'type': 'Prediction',
-      'param': '1802'
+      'param': '02/2018',
+      'batch': '1802'
     }, {
       'type': 'Etablissement',
-      'param': '01234567890123'
+      'param': '015752868 00024',
+      'siret': '01575286800024',
+      'batch': '1802'
     }]
   },
   mutations: {
@@ -283,7 +286,7 @@ setInterval(
 
 setInterval(
       function () {
-        if (store.state.token != null && !store.state.sockets.isConnected === false) {
+        if (store.state.token != null && !store.state.socket.isConnected === false) {
           store.dispatch('checkEpoch')
         }
       },

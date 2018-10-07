@@ -7,6 +7,7 @@
       color="indigo darken-4"
       dark
       slider-color="red accent-2"
+      lazy
     >
       <v-tab
         v-for="(tab, index) in tabs"
@@ -20,8 +21,8 @@
         v-for="(tab,index) in tabs"
         :key="index"
       >
-        <PredictionTable v-if="tab.type==='Prediction'" :param="tab.param"/>
-        <Etablissement v-if="tab.type==='Etablissement'" :param="tab.param"/>
+        <PredictionTable v-if="tab.type==='Prediction'" :batch="tab.batch"/>
+        <Etablissement v-if="tab.type==='Etablissement'" :siret="tab.siret" :batch="tab.batch"/>
       </v-tab-item>
     </v-tabs>
 
@@ -33,6 +34,11 @@ import PredictionTable from '@/components/PredictionTable'
 import Etablissement from '@/components/Etablissement'
 
 export default {
+  data () {
+    return {
+      active: 0
+    }
+  },
   mounted () {
     this.$store.commit('updateBatches')
   },

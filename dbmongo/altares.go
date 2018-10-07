@@ -19,7 +19,7 @@ type Altares struct {
 	CodeJournal   string    `json:"code_journal" bson:"code_journal"`
 	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
 	Siret         string    `json:"-" bson:"-"`
-}
+} 
 
 func parseAltares(path string) chan *Altares {
 	outputChannel := make(chan *Altares)
@@ -44,7 +44,7 @@ func parseAltares(path string) chan *Altares {
 		for {
 			row, error := reader.Read()
 			if error == io.EOF {
-				break
+				break 
 			} else if error != nil {
 				// log.Fatal(error)
 			}

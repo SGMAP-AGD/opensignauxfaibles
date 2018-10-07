@@ -84,8 +84,7 @@ func importBatchHandler(c *gin.Context) {
 
 func importBatch(batch *AdminBatch) {
 	if !batch.Readonly {
-		for script, fn := range importFunctions {
-			fmt.Println(script)
+		for _, fn := range importFunctions {
 			err := fn(batch)
 			if err != nil {
 				log(critical, "importMain", "Erreur à l'importation")
@@ -94,5 +93,4 @@ func importBatch(batch *AdminBatch) {
 	} else {
 		log(critical, "importMain", "Le lot "+batch.ID.Key+" est fermé, import impossible.")
 	}
-	fmt.Println("fini !")
 }
