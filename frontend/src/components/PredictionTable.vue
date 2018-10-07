@@ -48,117 +48,9 @@
           <td>{{ props.item.raisonSociale }}</td>
           <td class="text-xs-right">{{ Math.round(props.item.score*1000)/1000 }}</td>
           <td class="text-xs-right">
-            <v-bottom-sheet 
-              lazy
-            >
-              <v-btn
-                slot="activator"
-                flat 
-              >
-                {{ props.item.effectif }}
-              </v-btn>
-              <v-card>
-                <v-toolbar center card color="indigo lighten-3">
-                <h1>EFFECTIFS {{ props.item.raisonSociale }}</h1>
-                </v-toolbar>
-                <div class="echarts">
-                  
-                  <IEcharts class="chart"
-                  style="height: 500px; width: 1300px"
-
-                  :option="props.item.historyEffectif">
-                  </IEcharts>
-                </div>
-              </v-card>
-            </v-bottom-sheet>
           </td>
           <td class="text-xs-right">{{ (props.item.dette_urssaf>0)?"oui":"non" }}</td>
           <td class="text-xs-right">{{ props.item.activite_partielle }}</td>
-          <td class="text-xs-right">
-            <v-bottom-sheet
-              v-if="props.item.all_financiere[props.item.all_financiere.length -1]"
-              :close-on-content-click="false"
-              offset-y
-            >
-              <v-btn 
-                slot="activator"
-                flat
-              >
-                {{ props.item.all_financiere[props.item.all_financiere.length -1].arrete_bilan }}
-              </v-btn>
-                    <v-card>
-            <v-data-iterator
-              :items="props.item.all_financiere"
-              hide-actions
-              :pagination.sync="pagination"
-              content-tag="v-layout"
-              row
-              wrap
-              solid
-            >
-
-                  <v-toolbar
-                    slot="header"
-                    class="mb-2"
-                    color="indigo darken-5"
-                    dark
-                    flat
-                  >
-                    <v-toolbar-title>Ratios Financiers {{ props.item.raisonSociale }}</v-toolbar-title>
-                    <v-spacer></v-spacer>
-                    <v-toolbar-items>
-                      <v-btn flat @click="fichart = !fichart">
-                        <v-icon v-if="fichart">fa-table</v-icon>
-                        <v-icon v-if="!fichart">fa-chart-line</v-icon>
-                      </v-btn>
-                    </v-toolbar-items>
-                    </v-toolbar>
-
-                    <v-flex
-                      slot="item"
-                      slot-scope="fin"
-                      xs12
-                      sm6
-                      md4
-                      lg2
-                    >
-                    <div>
-                    <v-card>
-                      <v-card-title><h4>{{ fin.item.annee }} ({{ fin.item.arrete_bilan }})</h4></v-card-title>
-                      <v-divider></v-divider>
-                      <v-list dense>
-                        <v-list-tile>
-                          <v-list-tile-content>Délai Fournisseur:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.delai_fournisseur }}</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Dette Fiscale:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.dette_fiscale }}</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Financier Court Terme:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.financier_court_terme }}</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Frais Financier:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.frais_financier }}</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Poids Fond de Roulement:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.poids_frng }}</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Taux de marge:</v-list-tile-content>
-                          <v-list-tile-content class="align-end">{{ fin.item.taux_marge }}</v-list-tile-content>
-                        </v-list-tile>
-                      </v-list>
-                    </v-card>
-                    </div>
-                    </v-flex>
-                </v-data-iterator>
-               </v-card>  
-            </v-bottom-sheet>
-          </td>
         </tr>
       </template>
     </v-data-table>
@@ -187,20 +79,13 @@
       actualBatch: '1803',
       headers: [
         {
-          text: 'siret',
-          align: 'left',
-          value: 'siret'
-        },
-        {
           text: 'raison sociale',
           align: 'left',
           value: 'raison_sociale'
         },
-        { text: 'score', value: 'score' },
-        { text: 'effectif', value: 'effectif' },
-        { text: 'dette urssaf', value: 'dette urssaf' },
-        { text: 'activite partielle', value: 'activite_partielle' },
-        { text: 'données financières', value: 'données financières' }
+        { text: 'détection', value: 'score' },
+        { text: 'emploi', value: 'emploi' },
+        { text: 'urssaf', value: 'urssaf' }
       ],
       prediction: []
     }),

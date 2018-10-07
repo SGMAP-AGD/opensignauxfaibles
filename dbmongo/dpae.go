@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/spf13/viper"
 )
 
 // DPAE Déclaration préalabre à l'embauche
@@ -24,7 +25,7 @@ type DPAE struct {
 func parseDPAE(path string) chan *DPAE {
 	outputChannel := make(chan *DPAE)
 
-	file, err := os.Open(path)
+	file, err := os.Open(viper.GetString("APP_DATA") + path)
 	if err != nil {
 		fmt.Println("Error", err)
 	}

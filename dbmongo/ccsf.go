@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/spf13/viper"
 )
 
 // CCSF information urssaf ccsf
@@ -23,7 +24,7 @@ type CCSF struct {
 func parseCCSF(path string, dateBatch time.Time) chan *CCSF {
 	outputChannel := make(chan *CCSF)
 
-	file, err := os.Open(path)
+	file, err := os.Open(viper.GetString("APP_DATA") + path)
 	if err != nil {
 		fmt.Println("Error", err)
 	}

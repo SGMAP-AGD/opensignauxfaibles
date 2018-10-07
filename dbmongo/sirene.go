@@ -48,7 +48,7 @@ func parseSirene(paths []string) chan *Sirene {
 
 	go func() {
 		for _, path := range paths {
-			file, err := os.Open(path)
+			file, err := os.Open(viper.GetString("APP_DATA") + path)
 			if err != nil {
 				fmt.Println("Error", err)
 			}

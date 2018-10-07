@@ -55,18 +55,18 @@ func listFiles(basePath string) ([]fileSummary, error) {
 }
 
 var importFunctions = map[string]func(*AdminBatch) error{
-	"apconso": importAPConso,
-	"bdf":     importBDF,
-	"delai":   importDelai,
-	//"apdemande": importAPDemande,
-	//"diane": importDiane,
-	//"cotisation": importCotisation,
-	//"dpae":       importDPAE,
-	//"altares":    importAltares,
-	//"ccsf":       importCCSF,
-	//"debit":      importDebit,
-	//"effectif":   importEffectif,
-	//"sirene":     importSirene,
+	"apconso":    importAPConso,
+	"bdf":        importBDF,
+	"delai":      importDelai,
+	"apdemande":  importAPDemande,
+	"diane":      importDiane,
+	"cotisation": importCotisation,
+	"dpae":       importDPAE,
+	"altares":    importAltares,
+	"ccsf":       importCCSF,
+	"debit":      importDebit,
+	"effectif":   importEffectif,
+	"sirene":     importSirene,
 }
 
 func purge(c *gin.Context) {
@@ -84,7 +84,8 @@ func importBatchHandler(c *gin.Context) {
 
 func importBatch(batch *AdminBatch) {
 	if !batch.Readonly {
-		for _, fn := range importFunctions {
+		for script, fn := range importFunctions {
+			fmt.Println(script)
 			err := fn(batch)
 			if err != nil {
 				log(critical, "importMain", "Erreur à l'importation")
@@ -93,4 +94,5 @@ func importBatch(batch *AdminBatch) {
 	} else {
 		log(critical, "importMain", "Le lot "+batch.ID.Key+" est fermé, import impossible.")
 	}
+	fmt.Println("fini !")
 }

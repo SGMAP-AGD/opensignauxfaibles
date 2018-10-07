@@ -9,8 +9,8 @@
 
     <v-menu v-if="login" open-on-click top offset-y transition="slide-x-transition">
       <v-btn flat slot="activator">
-      <v-img src="/static/logo.png"/>
-   </v-btn>
+        <v-icon large color="grey darken-4">menu</v-icon>
+      </v-btn>
       
       <v-list>
         <v-list-tile

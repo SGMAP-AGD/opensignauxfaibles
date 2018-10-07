@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/cnf/structhash"
@@ -108,7 +109,7 @@ func parseAPDemande(path string) chan *APDemande {
 					apdemande.HeureConsommee, errors[8] = parsePFloat(row.Cells[f["S_HEURE_CONSOM_TOT"]].Value)
 					apdemande.EffectifConsomme, errors[9] = parsePInt(row.Cells[f["S_EFF_CONSOM_TOT"]].Value)
 
-					if allErrors(errors[:], nil) {
+					if allErrors(errors[:], nil) && apdemande.Siret != "" {
 						outputChannel <- &apdemande
 					} else {
 						e++
@@ -144,6 +145,9 @@ func importAPDemande(batch *AdminBatch) error {
 							APDemande: map[string]*APDemande{
 								hash: apdemande,
 							}}}}}
+			if value.Value.Batch == nil {
+				spew.Dump(value)
+			}
 			db.ChanEtablissement <- &value
 		}
 	}
@@ -185,7 +189,7 @@ func parseAPConso(path string) chan *APConso {
 						apconso.Montant, errors[2] = parsePFloat(row.Cells[idxMontants].Value)
 						apconso.Effectif, errors[3] = parsePInt(row.Cells[idxEffectifs].Value)
 
-						if allErrors(errors[:], nil) {
+						if allErrors(errors[:], nil) && apconso.Siret != "" {
 							outputChannel <- &apconso
 						} else {
 							e++
@@ -218,6 +222,9 @@ func importAPConso(batch *AdminBatch) error {
 							APConso: map[string]*APConso{
 								hash: apconso,
 							}}}}}
+			if value.Value.Batch == nil {
+				spew.Dump(value)
+			}
 			db.ChanEtablissement <- &value
 		}
 	}

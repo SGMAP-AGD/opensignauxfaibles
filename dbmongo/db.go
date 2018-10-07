@@ -59,7 +59,8 @@ func initDB() DB {
 				Type: "batch",
 			},
 		}
-		_, err := db.C("Admin").Upsert(bson.M{"_id": firstBatchID}, firstBatch)
+
+		err := db.C("Admin").Insert(firstBatch)
 
 		if err != nil {
 			panic("Impossible de créer le premier batch: " + err.Error())
@@ -86,7 +87,7 @@ func initDB() DB {
 
 	// envoie un struct vide pour purger les channels au cas où il reste les objets non insérés
 	go func() {
-		for range time.Tick(30 * time.Second) {
+		for range time.Tick(1 * time.Second) {
 			chanEntreprise <- &ValueEntreprise{}
 			chanEtablissement <- &ValueEtablissement{}
 		}
@@ -114,13 +115,12 @@ func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
 		i := 0
 
 		for value := range source {
-			if (value.Value.Siren == "" && i > 0) || i >= 100 {
+			if (value.Value.Batch == nil) || i >= 100 {
 				for _, v := range buffer {
 					objects = append(objects, *v)
 				}
-				err := db.C("Entreprise").Insert(objects...)
-				if err != nil {
-					logErrors(db, err)
+				if len(objects) > 0 {
+					go func(o []interface{}) { db.C("Entreprise").Insert(o...) }(objects)
 				}
 				buffer = make(map[string]*ValueEntreprise)
 				objects = make([]interface{}, 0)
@@ -151,12 +151,13 @@ func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
 		i := 0
 
 		for value := range source {
-			if (value.Value.Siret == "" && i > 0) || i >= 100 {
+			if (value.Value.Batch == nil) || i >= 100 {
 				for _, v := range buffer {
 					objects = append(objects, *v)
 				}
-				go func(o []interface{}) { db.C("Etablissement").Insert(o...) }(objects)
-
+				if len(objects) > 0 {
+					go func(o []interface{}) { db.C("Etablissement").Insert(o...) }(objects)
+				}
 				buffer = make(map[string]*ValueEtablissement)
 				objects = make([]interface{}, 0)
 				i = 0
