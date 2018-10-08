@@ -1,7 +1,7 @@
 <template>
 <v-container fluid fill-height>
   <v-layout align-center justify-center>
-    <v-flex xs12 lg3>
+    <v-flex xs4>
       <v-card class="elevation-6">
                   <v-form @submit="login">
 

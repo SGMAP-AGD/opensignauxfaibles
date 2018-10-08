@@ -7,13 +7,71 @@
     :mini-variant = "mini"
     style="z-index: 1"
     >
-    <v-list>
-      <v-list-tile @click="mini=!mini">
-        <v-list-tile-action>
-          <v-icon>fa-filter</v-icon>
-        </v-list-tile-action>
-        <v-list-tile>Sélection</v-list-tile>
-      </v-list-tile>
+    <v-list two-line>
+      <v-list-group
+      v-model="nomini">
+        <v-list-tile  slot="activator" @click="mini=!mini">
+          <v-list-tile-action>
+            <v-icon>fa-filter</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>Sélection</v-list-tile-content>
+        </v-list-tile>
+        <v-list-tile>
+          <v-list-tile-action>
+            <v-icon>fa-industry</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-select
+              :items="naf1"
+              v-model="naf"
+              label="Secteur d'activité"
+            ></v-select>
+          </v-list-tile-content>
+        </v-list-tile>
+        <v-list-tile>
+          <v-list-tile-action>
+            <v-icon>fa-users</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-select
+              :items="effectifClass"
+              v-model="minEffectif"
+              label="Effectif minimum"
+            ></v-select>
+          </v-list-tile-content>
+        </v-list-tile>
+        <v-list-tile>
+          <v-list-tile-action>
+          <v-checkbox
+            v-model="entrepriseConnue">   
+          </v-checkbox>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            Entreprise non suivie
+          </v-list-tile-content>
+
+        </v-list-tile>
+        <v-list-tile>
+          <v-list-tile-action>
+          <v-checkbox
+            v-model="horsCCSF">   
+          </v-checkbox>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            hors CCSF
+          </v-list-tile-content>
+        </v-list-tile>
+        <v-list-tile>
+          <v-list-tile-action>
+          <v-checkbox
+            v-model="horsProcol">   
+          </v-checkbox>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            hors Procédure Collective
+          </v-list-tile-content>
+        </v-list-tile>
+        </v-list-group>
     </v-list>
     </v-navigation-drawer>
 
@@ -21,7 +79,7 @@
     <v-data-table
     v-model="selected"
     :headers="headers"
-    :items="prediction"
+    :items="predictionFiltered"
     :pagination.sync="pagination"
     select-all
     item-key="name"
@@ -44,13 +102,14 @@
       </template>
       <template slot="items" slot-scope="props">
         <tr :active="props.selected">
-          <td>{{ props.item.siret }}</td>
-          <td>{{ props.item.raisonSociale }}</td>
-          <td class="text-xs-right">{{ Math.round(props.item.score*1000)/1000 }}</td>
+          
+          <td>{{ props.item.raison_sociale }} {{ props.item.connu }} </td>
+          <td class="text-xs-center"><widgetPrediction :prob="props.item.prob" :diff="props.item.diff"/></td>
           <td class="text-xs-right">
+            {{ props.item.effectif }}
           </td>
-          <td class="text-xs-right">{{ (props.item.dette_urssaf>0)?"oui":"non" }}</td>
-          <td class="text-xs-right">{{ props.item.activite_partielle }}</td>
+          <td class="text-xs-right">{{ props.item.default_urssaf?"oui":"non" }}</td>
+
         </tr>
       </template>
     </v-data-table>
@@ -61,38 +120,78 @@
 
 <script>
   import IEcharts from 'vue-echarts-v3/src/full.js'
-
+  import widgetPrediction from '@/components/widgetPrediction'
   export default {
     props: ['batchKey'],
     components: {
-      IEcharts
+      IEcharts,
+      widgetPrediction
     },
     data: () => ({
+      effectifClass: [10, 20, 50, 100],
+      selected: [],
       mini: true,
-      fichart: false,
       loading: true,
       pagination: {
         sortBy: 'name'
       },
-      naf: {},
-      selected: [],
-      actualBatch: '1803',
+      naf1: [
+        'Activités spécialisées, scientifiques et techniques',
+        'Activités de services administratifs et de soutien',
+        'Industrie manufacturière',
+        'Hébergement et restauration',
+        'Construction',
+        'Transports et entreposage',
+        'Commerce ; réparation d\'automobiles et de motocycles',
+        'Santé humaine et action sociale',
+        'Autres activités de services',
+        'Arts, spectacles et activités récréatives',
+        'Industries extractives',
+        'Production et distribution d\'eau ; assainissement, gestion des déchets et dépollution',
+        'Information et communication',
+        'Activités financières et d\'assurance',
+        'Activités immobilières',
+        'Agriculture, sylviculture et pêche',
+        'Production et distribution d\'électricité, de gaz, de vapeur et d\'air conditionné',
+        'Activités extra-territoriales'
+      ],
       headers: [
         {
           text: 'raison sociale',
           align: 'left',
           value: 'raison_sociale'
         },
-        { text: 'détection', value: 'score' },
-        { text: 'emploi', value: 'emploi' },
-        { text: 'urssaf', value: 'urssaf' }
+        { text: 'détection', value: 'prob' },
+        { text: 'emploi', value: 'effectif' },
+        { text: 'Défault urssaf', value: 'default_urssaf' }
       ],
-      prediction: []
+      prediction: [],
+      naf: null,
+      minEffectif: 20,
+      entrepriseConnue: true,
+      horsCCSF: true,
+      horsProcol: true
     }),
+    computed: {
+      nomini: {
+        get () { return !this.mini },
+        set (mini) { this.mini = !mini }
+      },
+      predictionFiltered () {
+        return this.prediction.filter(p => this.applyFilter(p))
+      }
+    },
     mounted () {
       this.getPrediction()
     },
     methods: {
+      applyFilter (p) {
+        return (this.naf == null || p.naf1 === this.naf) &&
+        (p.effectif >= this.minEffectif) &&
+        (p.connu === false || this.entrepriseConnue === false) &&
+        (p.ccsf === false || this.horsCCSF === false) &&
+        (p.procol === 'in_bonis' || this.horsProcol === false)
+      },
       getNAF () {
         var self = this
         this.$axios.get('/api/data/naf').then(response => { self.naf = response.data })
@@ -110,71 +209,11 @@
         }
       },
       getPrediction () {
-        var self = this
         this.loading = true
-        this.$axios.get('/api/data/prediction/' + this.batchKey + '/algo1/0', this.$store.getters.axiosConfig).then(response => {
-          self.prediction = response.data.map(prediction => {
-            var etablissement = self.flattenTypes(
-              self.projectBatch(
-                prediction.etablissement
-                )
-            )
-            var entreprise = self.flattenTypes(
-              self.projectBatch(
-                (prediction.entreprise || {})
-                )
-            )
-            var allEffectif = etablissement.effectif.reduce((accu, effectif) => {
-              var effectifPeriode = Date.parse(effectif.periode)
-              accu[effectifPeriode] = (accu[effectif.periode] || 0) + effectif.effectif
-              return accu
-            }, {})
-            var lastTime = Object.keys(allEffectif).reduce((accu, time) => {
-              return (time > accu) ? time : accu
-            })
-            self.loading = false
-            return {
-              'siret': prediction._id.siret,
-              'score': prediction.score,
-              'effectif': allEffectif[lastTime],
-              'raisonSociale': (etablissement.sirene || [{'raisonsociale': 'n/a'}])[0].raisonsociale,
-              'features': prediction.features,
-              'dette_urssaf': prediction.features[prediction.features.length - 1].montant_part_patronale + prediction.features[prediction.features.length - 1].montant_part_ouvriere,
-              'activite_partielle': prediction.features[prediction.features.length - 1].apart_heures_consommees,
-              'all_financiere': (entreprise.bdf || []).sort((a, b) => a.annee > b.annee).map(bdf => {
-                return {
-                  'annee': bdf.annee,
-                  'secteur': bdf.secteur,
-                  'siren': bdf.siren,
-                  'arrete_bilan': bdf.arrete_bilan.substring(0, 10),
-                  'delai_fournisseur': Math.round(bdf.delai_fournisseur * 1000) / 1000,
-                  'dette_fiscale': Math.round(bdf.dette_fiscale * 1000) / 1000,
-                  'financier_court_terme': Math.round(bdf.financier_court_terme * 1000) / 1000,
-                  'frais_financier': Math.round(bdf.frais_financier * 1000) / 1000,
-                  'poids_frng': Math.round(bdf.poids_frng * 1000) / 1000,
-                  'taux_marge': Math.round(bdf.taux_marge * 1000) / 1000
-                }
-              }),
-              'historyEffectif': {
-                tooltip: {},
-                xAxis: [{
-                  type: 'time',
-                  splitNumber: 3
-                }],
-                yAxis: {},
-                series: [{
-                  type: 'line',
-                  smooth: true,
-                  color: 'blue',
-                  data: (Object.keys(allEffectif))
-                    .map(key => [key, allEffectif[key]])
-                    .sort((a, b) => parseInt(b[0]) - parseInt(a[0]))
-                    .map(entry => [new Date(parseInt(entry[0])), entry[1]])
-                    .slice(0, 14)
-                }]
-              }
-            }
-          })
+        var self = this
+        this.$axios.get('/api/data/prediction').then(response => {
+          this.prediction = response.data
+          self.loading = false
         })
       },
       projectBatch (o) {

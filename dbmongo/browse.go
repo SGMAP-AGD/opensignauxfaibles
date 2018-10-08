@@ -65,7 +65,9 @@ func etablissementBrowse(c *gin.Context) {
 
 }
 func predictionBrowse(c *gin.Context) {
-
+	var result []interface{}
+	db.DB.C("Prediction").Find(nil).All(&result)
+	c.JSON(200, result)
 }
 
 // func predictionBrowse(c *gin.Context) {

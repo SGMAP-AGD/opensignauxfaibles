@@ -8,7 +8,7 @@
     >
       <v-list>
         <v-toolbar class="elevation-1">
-          Etablissement {{ param }}
+          Etablissement {{ siret }}
         </v-toolbar>
         <v-list-tile>
           <v-list-tile-action>
@@ -41,7 +41,7 @@
     <div class="widget">
       <v-card>
         <v-toolbar card>
-          Etablissement {{ param }}
+          Etablissement {{ siret }}
         </v-toolbar>
         <v-card-title>
           {{ JSON.stringify(etablissement, null, 2)}}
@@ -61,7 +61,8 @@ export default {
       bilan: true,
       urssaf: true,
       apart: true,
-      etablissement: {}
+      etablissement: {},
+      entreprise: {}
     }
   },
   mounted () {
