@@ -10,7 +10,7 @@
   >
     
   </v-img>
-  <v-card-text>
+  <v-card-text class="text-xs-center">
     {{ process.description }}
   </v-card-text>
   <v-card-actions>

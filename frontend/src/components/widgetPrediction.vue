@@ -1,10 +1,10 @@
 <template>
   <div>
     <v-icon large v-if="detection.prob=='high'" color="red">fa-exclamation-triangle</v-icon> 
-    <v-icon large v-if="detection.prob=='low'" color="yellow">fa-question</v-icon>
+    <v-icon large v-if="detection.prob=='low'" color="amber">fa-question</v-icon>
     <v-icon large v-if="detection.prob=='none'" color="green">fa-check-circle</v-icon> 
     <v-icon small v-if="detection.diff=='up'" color="red">fa-arrow-up</v-icon> 
-    <v-icon small v-if="detection.diff=='down'" color="blue">fa-arrow_down</v-icon>
+    <v-icon small v-if="detection.diff=='down'" color="blue">fa-arrow-down</v-icon>
   </div>
 </template>
 

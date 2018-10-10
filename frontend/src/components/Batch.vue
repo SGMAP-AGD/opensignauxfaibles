@@ -8,12 +8,11 @@
     style="z-index: 1"
     >
       <v-list dense class="pt-0">
-
-          <v-list-tile >
+          <!-- <v-list-tile >
             <v-list-tile-content class="text-xs-center">
                           <v-icon large>fa-database</v-icon>
             </v-list-tile-content>
-          </v-list-tile>
+          </v-list-tile> -->
         <v-list-group>
           <v-list-tile slot="activator" bgcolor="red">
             <v-list-tile-action>

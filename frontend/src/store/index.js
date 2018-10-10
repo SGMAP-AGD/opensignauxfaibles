@@ -48,14 +48,15 @@ const store = new Vuex.Store({
     uploads: [],
     tabs: [{
       'type': 'Prediction',
-      'param': '02/2018',
+      'param': '09/2018',
       'batch': '1802'
-    }, {
-      'type': 'Etablissement',
-      'param': '015752868 00024',
-      'siret': '01575286800024',
-      'batch': '1802'
-    }]
+    },
+    {
+      'type': 'Prediction',
+      'param': '08/2018',
+      'batch': '1807'
+    }
+    ]
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
@@ -161,9 +162,15 @@ const store = new Vuex.Store({
     },
     resetUploads (state) {
       state.uploads = state.uploads.filter(u => u.amount < 100)
+    },
+    updateTabs (state, tabs) {
+      state.tabs = tabs
     }
   },
   actions: {
+    updateTabs (state, tabs) {
+      state.commit('updateTabs', tabs)
+    },
     saveBatch (state, batch) {
       axiosClient.post('/api/admin/batch', batch).then(r => { state.currentBatch = batch })
     },

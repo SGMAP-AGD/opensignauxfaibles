@@ -34,7 +34,7 @@
 
       <span class="span" id="blue">Signaux</span>
       <span class="span" id="red">Faibles</span>
-      <span class="span gray">– Plateforme de détection des entreprises fragiles</span>
+      <span class="span gray">– Plateforme de détection des entreprises fragilisées</span>
 
     </v-toolbar-title>
     <v-spacer></v-spacer>
@@ -180,7 +180,7 @@ export default {
           action: '/',
           icon: 'fa-home',
           color: 'green darken-3' },
-        { title: 'Parcourir',
+        { title: 'Détection',
           action: '/Browse',
           icon: 'fa-search',
           color: 'indigo darken-4' },

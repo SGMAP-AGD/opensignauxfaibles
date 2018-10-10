@@ -14,7 +14,7 @@
           <v-list-tile-action>
             <v-icon>fa-filter</v-icon>
           </v-list-tile-action>
-          <v-list-tile-content>Sélection</v-list-tile-content>
+          <v-list-tile-content>Filtrage</v-list-tile-content>
         </v-list-tile>
         <v-list-tile>
           <v-list-tile-action>
@@ -101,10 +101,14 @@
         </tr>
       </template>
       <template slot="items" slot-scope="props">
-        <tr :active="props.selected">
+        <tr 
+        :active="props.selected"
+        @click="open(props.item)"
+        >
           
-          <td>{{ props.item.raison_sociale }} {{ props.item.connu }} </td>
+          <td>{{ props.item.raison_sociale }} </td>
           <td class="text-xs-center"><widgetPrediction :prob="props.item.prob" :diff="props.item.diff"/></td>
+          <td class="text-xs-center">{{ props.item.departement }}</td>
           <td class="text-xs-right">
             {{ props.item.effectif }}
           </td>
@@ -136,6 +140,7 @@
         sortBy: 'name'
       },
       naf1: [
+        'Tous',
         'Activités spécialisées, scientifiques et techniques',
         'Activités de services administratifs et de soutien',
         'Industrie manufacturière',
@@ -162,11 +167,12 @@
           value: 'raison_sociale'
         },
         { text: 'détection', value: 'prob' },
+        { text: 'département', value: 'departement' },
         { text: 'emploi', value: 'effectif' },
         { text: 'Défault urssaf', value: 'default_urssaf' }
       ],
       prediction: [],
-      naf: null,
+      naf: 'Industrie manufacturière',
       minEffectif: 20,
       entrepriseConnue: true,
       horsCCSF: true,
@@ -179,14 +185,28 @@
       },
       predictionFiltered () {
         return this.prediction.filter(p => this.applyFilter(p))
+      },
+      tabs: {
+        get () { return this.$store.getters.getTabs },
+        set (tabs) { this.$store.dispatch('updateTabs', tabs) }
       }
     },
     mounted () {
       this.getPrediction()
     },
     methods: {
+      open (etab) {
+        if (this.tabs.findIndex(t => t.siret === etab._id.siret) === -1) {
+          this.tabs.push({
+            'type': 'Etablissement',
+            'param': etab.raison_sociale,
+            'siret': etab._id.siret,
+            'batch': '1802'
+          })
+        }
+      },
       applyFilter (p) {
-        return (this.naf == null || p.naf1 === this.naf) &&
+        return (this.naf === 'Tous' || p.naf1 === this.naf) &&
         (p.effectif >= this.minEffectif) &&
         (p.connu === false || this.entrepriseConnue === false) &&
         (p.ccsf === false || this.horsCCSF === false) &&

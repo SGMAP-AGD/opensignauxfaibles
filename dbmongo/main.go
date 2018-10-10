@@ -116,7 +116,6 @@ func main() {
 					FirstName: "Wu",
 				}, nil
 			}
-			fmt.Println("kikoo")
 			return nil, jwt.ErrFailedAuthentication
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
@@ -189,7 +188,7 @@ func main() {
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
 		api.GET("/data/prediction", predictionBrowse)
-		api.GET("/data/etablissement/:batchKey/:siret", etablissementBrowse)
+		api.GET("/data/etablissement/:batchKey", etablissementBrowse)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissement)
 		api.GET("/compact/etablissement", compactEtablissement)

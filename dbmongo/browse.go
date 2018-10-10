@@ -15,18 +15,25 @@ func etablissementBrowse(c *gin.Context) {
 	dateFin := batch.Params.DateFin
 	dateFinEffectif := batch.Params.DateFinEffectif
 
-	siret := c.Params.ByName("siret")
-	if siret == "" {
-		c.JSON(500, "Aucun siret dans la requête")
-		return
-	}
-	query := bson.M{"value.siret": siret}
+	// siret := c.Params.ByName("siret")
+	// if siret == "" {
+	// 	c.JSON(500, "Aucun siret dans la requête")
+	// 	return
+	// }
+	// query := bson.M{"value.siret": siret}
 
 	// Ressources JS
 	MREtablissement := MapReduceJS{}
 	errEt := MREtablissement.load("browse", "etablissement")
 	if errEt != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce browse/etablissement")
+		return
+	}
+
+	MREntreprise := MapReduceJS{}
+	errEn := MREtablissement.load("browse", "entreprise")
+	if errEn != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce browse/entreprise")
 		return
 	}
 
@@ -37,11 +44,28 @@ func etablissementBrowse(c *gin.Context) {
 	}
 
 	// Traitement MR
-	job := &mgo.MapReduce{
+	jobEtablissement := &mgo.MapReduce{
 		Map:      string(MREtablissement.Map),
 		Reduce:   string(MREtablissement.Reduce),
 		Finalize: string(MREtablissement.Finalize),
-		Out:      nil,
+		Out:      "BrowseEtablissement",
+		Scope: bson.M{
+			"date_debut":             dateDebut,
+			"date_fin":               dateFin,
+			"date_fin_effectif":      dateFinEffectif,
+			"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
+			"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
+			"actual_batch":           batch.ID.Key,
+			"naf":                    naf,
+		},
+	}
+
+	// Traitement MR
+	jobEntreprise := &mgo.MapReduce{
+		Map:      string(MREntreprise.Map),
+		Reduce:   string(MREntreprise.Reduce),
+		Finalize: string(MREntreprise.Finalize),
+		Out:      "BrowseEntreprise",
 		Scope: bson.M{
 			"date_debut":             dateDebut,
 			"date_fin":               dateFin,
@@ -55,14 +79,17 @@ func etablissementBrowse(c *gin.Context) {
 
 	var result interface{}
 
-	_, err := db.DB.C("Etablissement").Find(query).MapReduce(job, &result)
-
-	if err != nil {
-		c.JSON(500, err.Error())
-	} else {
-		c.JSON(200, result)
+	_, errEt = db.DB.C("Etablissement").Find(nil).MapReduce(jobEtablissement, &result)
+	if errEt != nil {
+		c.JSON(500, "erreur dans le mapReduce Etablissement: "+errEt.Error())
+		return
 	}
 
+	_, errEn = db.DB.C("Entreprise").Find(nil).MapReduce(jobEntreprise, &result)
+	if errEn != nil {
+		c.JSON(500, "Erreur dans le mapReduce Entreprise: "+errEn.Error())
+		return
+	}
 }
 func predictionBrowse(c *gin.Context) {
 	var result []interface{}

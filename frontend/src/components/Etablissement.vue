@@ -66,9 +66,9 @@ export default {
     }
   },
   mounted () {
-    this.$axios.get('/api/data/etablissement/' + this.batch + '/' + this.siret).then(response => {
-      this.etablissement = response.data
-    })
+    // this.$axios.get('/api/data/etablissement/' + this.batch + '/' + this.siret).then(response => {
+    //   this.etablissement = response.data
+    // })
   }
 }
 </script>
