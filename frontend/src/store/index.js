@@ -46,6 +46,7 @@ const store = new Vuex.Store({
       reconnectError: false
     },
     uploads: [],
+    activeTab: null,
     tabs: [{
       'type': 'Prediction',
       'param': '09/2018',
@@ -59,6 +60,9 @@ const store = new Vuex.Store({
     ]
   },
   mutations: {
+    updateActiveTab (state, activeTab) {
+      state.activeTab = activeTab
+    },
     SOCKET_ONOPEN (state, event) {
       Vue.prototype.$socket = event.currentTarget
       state.socket.isConnected = true
@@ -168,6 +172,12 @@ const store = new Vuex.Store({
     }
   },
   actions: {
+    updateActiveTab (context, activeTab) {
+      console.log('activeTab')
+      console.log(activeTab)
+      context.commit('updateActiveTab', activeTab)
+      console.log(store.state.activeTab)
+    },
     updateTabs (state, tabs) {
       state.commit('updateTabs', tabs)
     },
@@ -254,6 +264,9 @@ const store = new Vuex.Store({
     },
     getTabs (state) {
       return state.tabs
+    },
+    activeTab (state) {
+      return state.activeTab
     }
   }
 })

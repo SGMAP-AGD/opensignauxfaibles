@@ -9,6 +9,7 @@
       <v-list>
         <v-toolbar class="elevation-1">
           Etablissement {{ siret }}
+          <v-spacer/>
         </v-toolbar>
         <v-list-tile>
           <v-list-tile-action>
@@ -42,6 +43,10 @@
       <v-card>
         <v-toolbar card>
           Etablissement {{ siret }}
+          <v-spacer/>
+          <v-icon 
+          color="red"
+          @click="close()">fa-times-circle</v-icon>
         </v-toolbar>
         <v-card-title>
           {{ JSON.stringify(etablissement, null, 2)}}
@@ -65,10 +70,21 @@ export default {
       entreprise: {}
     }
   },
-  mounted () {
-    // this.$axios.get('/api/data/etablissement/' + this.batch + '/' + this.siret).then(response => {
-    //   this.etablissement = response.data
-    // })
+  methods: {
+    close () {
+      this.tabs = this.tabs.filter((tab, index) => index !== this.activeTab)
+      this.activeTab = this.activeTab - 1
+    }
+  },
+  computed: {
+    activeTab: {
+      get () { return this.$store.getters.activeTab },
+      set (activeTab) { this.$store.dispatch('updateActiveTab', activeTab) }
+    },
+    tabs: {
+      get () { return this.$store.getters.getTabs },
+      set (tabs) { this.$store.dispatch('updateTabs', tabs) }
+    }
   }
 }
 </script>

@@ -103,10 +103,14 @@
       <template slot="items" slot-scope="props">
         <tr 
         :active="props.selected"
-        @click="open(props.item)"
+        @click.left="open(props.item, true)"
+        @click.middle="open(props.item, false)"
         >
           
-          <td>{{ props.item.raison_sociale }} </td>
+          <td><v-tooltip left>
+            <div slot="activator">{{ props.item.raison_sociale }}</div>
+            {{ props.item._id.siret }}
+            </v-tooltip> </td>
           <td class="text-xs-center"><widgetPrediction :prob="props.item.prob" :diff="props.item.diff"/></td>
           <td class="text-xs-center">{{ props.item.departement }}</td>
           <td class="text-xs-right">
@@ -189,20 +193,25 @@
       tabs: {
         get () { return this.$store.getters.getTabs },
         set (tabs) { this.$store.dispatch('updateTabs', tabs) }
+      },
+      activeTab: {
+        get () { return this.$store.getters.activeTab },
+        set (activeTab) { this.$store.dispatch('updateActiveTab', activeTab) }
       }
     },
     mounted () {
       this.getPrediction()
     },
     methods: {
-      open (etab) {
+      open (etab, focus) {
         if (this.tabs.findIndex(t => t.siret === etab._id.siret) === -1) {
-          this.tabs.push({
+          let i = this.tabs.push({
             'type': 'Etablissement',
             'param': etab.raison_sociale,
             'siret': etab._id.siret,
             'batch': '1802'
           })
+          if (focus) { this.activeTab = i - 1 }
         }
       },
       applyFilter (p) {
@@ -235,28 +244,6 @@
           this.prediction = response.data
           self.loading = false
         })
-      },
-      projectBatch (o) {
-        return Object.keys((o.batch || {})).sort()
-          .filter(batch => batch <= this.actualBatch).reduce((m, batch) => {
-            Object.keys(o.batch[batch]).forEach((type) => {
-              m[type] = (m[type] || {})
-              var arrayDelete = (o.batch[batch].compact.delete[type] || [])
-              if (arrayDelete !== {}) {
-                arrayDelete.forEach(hash => {
-                  delete m[type][hash]
-                })
-              }
-              Object.assign(m[type], o.batch[batch][type])
-            })
-            return m
-          }, {})
-      },
-      flattenTypes (o) {
-        return Object.keys(o).filter(type => type !== 'compact').reduce((accu, type) => {
-          accu[type] = Object.values(o[type])
-          return accu
-        }, {})
       }
     }
   }

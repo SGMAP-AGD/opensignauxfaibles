@@ -1,9 +1,7 @@
 <template>
 <div>
-
-        
   <v-tabs
-      v-model="active"
+      v-model="activeTab"
       color="indigo darken-4"
       dark
       slider-color="red accent-2"
@@ -15,6 +13,15 @@
         ripple
       >
        {{ tab.param }}
+       <div style="width: 10px"/>
+
+        <v-icon
+        v-if="tab.type === 'Etablissement'"
+        color="red accent-1"
+        style="font-size: 15px"
+        @click="close(index)">
+          fa-times
+        </v-icon>
       </v-tab>
       <v-tab-item
         style="min-height: 500vh;"
@@ -45,16 +52,20 @@ export default {
   methods: {
     setCurrentBatchKey (batchKey) {
       this.currentBatchKey = batchKey
+    },
+    close (tabIndex) {
+      this.activeTab = Math.min(this.activeTab, (this.tabs.length - 2))
+      this.tabs = this.tabs.filter((tab, index) => index !== tabIndex)
     }
   },
   computed: {
     tabs: {
-      set (tabs) {
-
-      },
-      get () {
-        return this.$store.getters.getTabs
-      }
+      get () { return this.$store.getters.getTabs },
+      set (tabs) { this.$store.dispatch('updateTabs', tabs) }
+    },
+    activeTab: {
+      get () { return this.$store.getters.activeTab },
+      set (activeTab) { this.$store.dispatch('updateActiveTab', activeTab) }
     },
     currentBatchKey: {
       get () {
