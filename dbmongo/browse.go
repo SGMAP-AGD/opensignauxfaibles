@@ -1,54 +1,48 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
 
-func etablissementBrowse(c *gin.Context) {
+// prepareMRJob charge les fichiers MapReduce et fournit les paramètres pour l'exécution
+func prepareMRJob(batchKey string, id string, typeJob string, target string) (*mgo.MapReduce, *bson.M, error) {
 
-	batchKey := c.Params.ByName("batchKey")
-	batch := getBatch(batchKey)
+	query := &bson.M{
+		"_id": id,
+	}
+	var output interface{}
+	output = nil
+	if id == "" {
+		query = nil
+		output = &bson.M{"merge": "Browser"}
+	}
+
+	MR := MapReduceJS{}
+	errEt := MR.load(typeJob, target)
+	if errEt != nil {
+		return &mgo.MapReduce{}, nil, fmt.Errorf("Problème d'accès aux fichiers MapReduce " + typeJob + "/" + target)
+	}
+
+	batch, _ := getBatch(batchKey)
 
 	dateDebut := batch.Params.DateDebut
 	dateFin := batch.Params.DateFin
 	dateFinEffectif := batch.Params.DateFinEffectif
 
-	// siret := c.Params.ByName("siret")
-	// if siret == "" {
-	// 	c.JSON(500, "Aucun siret dans la requête")
-	// 	return
-	// }
-	// query := bson.M{"value.siret": siret}
-
-	// Ressources JS
-	MREtablissement := MapReduceJS{}
-	errEt := MREtablissement.load("browse", "etablissement")
-	if errEt != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce browse/etablissement")
-		return
-	}
-
-	MREntreprise := MapReduceJS{}
-	errEn := MREtablissement.load("browse", "entreprise")
-	if errEn != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce browse/entreprise")
-		return
-	}
-
 	naf, errNAF := loadNAF()
 	if errNAF != nil {
-		c.JSON(500, "Problème d'accès aux fichiers naf")
-		return
+		return &mgo.MapReduce{}, nil, fmt.Errorf("Problème d'accès aux fichiers naf")
 	}
 
-	// Traitement MR
-	jobEtablissement := &mgo.MapReduce{
-		Map:      string(MREtablissement.Map),
-		Reduce:   string(MREtablissement.Reduce),
-		Finalize: string(MREtablissement.Finalize),
-		Out:      "BrowseEtablissement",
+	job := &mgo.MapReduce{
+		Map:      string(MR.Map),
+		Reduce:   string(MR.Reduce),
+		Finalize: string(MR.Finalize),
+		Out:      output,
 		Scope: bson.M{
 			"date_debut":             dateDebut,
 			"date_fin":               dateFin,
@@ -60,41 +54,76 @@ func etablissementBrowse(c *gin.Context) {
 		},
 	}
 
-	// Traitement MR
-	jobEntreprise := &mgo.MapReduce{
-		Map:      string(MREntreprise.Map),
-		Reduce:   string(MREntreprise.Reduce),
-		Finalize: string(MREntreprise.Finalize),
-		Out:      "BrowseEntreprise",
-		Scope: bson.M{
-			"date_debut":             dateDebut,
-			"date_fin":               dateFin,
-			"date_fin_effectif":      dateFinEffectif,
-			"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
-			"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
-			"actual_batch":           batch.ID.Key,
-			"naf":                    naf,
-		},
-	}
-
-	var result interface{}
-
-	_, errEt = db.DB.C("Etablissement").Find(nil).MapReduce(jobEtablissement, &result)
-	if errEt != nil {
-		c.JSON(500, "erreur dans le mapReduce Etablissement: "+errEt.Error())
-		return
-	}
-
-	_, errEn = db.DB.C("Entreprise").Find(nil).MapReduce(jobEntreprise, &result)
-	if errEn != nil {
-		c.JSON(500, "Erreur dans le mapReduce Entreprise: "+errEn.Error())
-		return
-	}
+	return job, query, nil
 }
+
+// etablissementBrowseHandler traite les requêtes au format browser
+func etablissementBrowseHandler(c *gin.Context) {
+	batchKey := c.Params.ByName("batchKey")
+	siret := c.Params.ByName("siret")
+	var siren string
+	if len(siret) == 14 {
+		siren = siret[0:9]
+	}
+
+	// préparation des jobs
+	var jobs [2]*mgo.MapReduce
+	var queries [2]*bson.M
+	var errMR [2]error
+	jobs[0], queries[0], errMR[0] = prepareMRJob(batchKey, siret, "browser", "etablissement")
+	jobs[1], queries[1], errMR[1] = prepareMRJob(batchKey, siren, "browser", "entreprise")
+
+	if !allErrors(errMR[:], nil) {
+		c.JSON(500, "Erreur dans la création du job MapReduce: "+errMR[0].Error()+", "+errMR[1].Error())
+	}
+
+	// exécution
+	var resultEtablissement interface{}
+	var resultEntreprise interface{}
+	var err [2]error
+
+	_, err[0] = db.DB.C("Etablissement").Find(queries[0]).MapReduce(jobs[0], &resultEtablissement)
+	_, err[1] = db.DB.C("Entreprise").Find(queries[1]).MapReduce(jobs[1], &resultEntreprise)
+	if !allErrors(err[:], nil) {
+		c.JSON(500, "Erreur dans l'execution du MapReduce ")
+		return
+	}
+
+	c.JSON(200, bson.M{
+		"etablissement": resultEtablissement,
+		"entreprise":    resultEntreprise,
+	})
+}
+
 func predictionBrowse(c *gin.Context) {
+	// var result []interface{}
+	// db.DB.C("Prediction").Find(nil).Sort("-prob").All(&result)
+	// c.JSON(200, result)
+
+	var pipeline []bson.M
+
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
+		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
+	}})
+
+	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
+		"from":         "Browser",
+		"localField":   "siren",
+		"foreignField": "_id",
+		"as":           "entreprise"}})
+
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.bdf", 0}}}})
+
+	pipeline = append(pipeline, bson.M{"$project": bson.M{"entreprise": 0}})
+
 	var result []interface{}
-	db.DB.C("Prediction").Find(nil).All(&result)
+	err := db.DB.C("Prediction").Pipe(pipeline).All(&result)
+	if err != nil {
+		c.JSON(500, err)
+		return
+	}
 	c.JSON(200, result)
+
 }
 
 // func predictionBrowse(c *gin.Context) {

@@ -84,7 +84,7 @@
     select-all
     item-key="name"
     class="elevation-1"
-    :loading="loading"
+    loading="false"
     :rows-per-page-items="[10]"
     >
       <template slot="headers" slot-scope="props">
@@ -117,7 +117,39 @@
             {{ props.item.effectif }}
           </td>
           <td class="text-xs-right">{{ props.item.default_urssaf?"oui":"non" }}</td>
-
+          <td>
+            <IEcharts
+              style="height: 40px"
+              :loading="chart"
+              :option="getMargeOption(
+                (props.item.bdf || []).map(b => {
+                return {'x': b.annee, 'y': b.taux_marge}
+                })
+              )"
+            />
+          </td>
+          <td>
+            <IEcharts
+              style="height: 40px"
+              :loading="chart"
+              :option="getMargeOption(
+                (props.item.bdf || []).map(b => {
+                return {'x': b.annee, 'y': b.poids_frng}
+                })
+              )"
+            />
+          </td>
+          <td>
+            <IEcharts
+              style="height: 40px"
+              :loading="chart"
+              :option="getMargeOption(
+                (props.item.bdf || []).map(b => {
+                return {'x': b.annee, 'y': b.financier_court_terme}
+                })
+              )"
+            />
+          </td>
         </tr>
       </template>
     </v-data-table>
@@ -127,7 +159,9 @@
 </template>
 
 <script>
-  import IEcharts from 'vue-echarts-v3/src/full.js'
+  import IEcharts from 'vue-echarts-v3/src/lite.js'
+  import 'echarts/lib/chart/line'
+  import 'echarts/lib/component/title'
   import widgetPrediction from '@/components/widgetPrediction'
   export default {
     props: ['batchKey'],
@@ -139,7 +173,8 @@
       effectifClass: [10, 20, 50, 100],
       selected: [],
       mini: true,
-      loading: true,
+      loading: false,
+      chart: false,
       pagination: {
         sortBy: 'name'
       },
@@ -170,10 +205,13 @@
           align: 'left',
           value: 'raison_sociale'
         },
-        { text: 'détection', value: 'prob' },
-        { text: 'département', value: 'departement' },
-        { text: 'emploi', value: 'effectif' },
-        { text: 'Défault urssaf', value: 'default_urssaf' }
+        {text: 'détection', value: 'prob'},
+        {text: 'département', value: 'departement'},
+        {text: 'emploi', value: 'effectif'},
+        {text: 'Défault urssaf', value: 'default_urssaf'},
+        {text: 'Taux de marge', value: 'taux_marge'},
+        {text: 'Fond de roulement', value: 'fond_roulement'},
+        {text: 'Financier court terme', value: 'financier_court_terme'}
       ],
       prediction: [],
       naf: 'Industrie manufacturière',
@@ -237,11 +275,50 @@
           this.pagination.descending = false
         }
       },
+      getMargeOption (marge) {
+        return {
+          title: {
+            text: null
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross',
+              label: {
+                backgroundColor: '#283b56'
+              }
+            }
+          },
+          toolbox: {
+            show: true
+          },
+          xAxis: {
+            show: true,
+            type: 'category',
+            axisTick: false,
+            data: marge.map((m) => m.x)
+          },
+          yAxis: {
+            type: 'value',
+            show: false,
+            min: -150,
+            max: 150
+          },
+          series: [{
+            color: 'indigo',
+            smooth: true,
+            name: 'taux marge',
+            type: 'line',
+            data: marge.map((m) => m.y)
+          }]
+        }
+      },
       getPrediction () {
         this.loading = true
         var self = this
         this.$axios.get('/api/data/prediction').then(response => {
           this.prediction = response.data
+          this.prediction.bdf = this.prediction.bdf.sort((a, b) => a.annee < b.annee)
           self.loading = false
         })
       }

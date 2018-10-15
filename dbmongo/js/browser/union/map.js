@@ -2,6 +2,6 @@ function map() {
     emit(
     {'siren': this.value.siren,
      'batch': actual_batch,
-     'algo': 'algo1'},
+     'algo': 'algo2'},
     this.value)
-}
+} 

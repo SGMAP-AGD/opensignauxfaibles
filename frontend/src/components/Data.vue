@@ -15,7 +15,6 @@
         :key="batch"
         ripple
         dark
-        lazy
       >
         {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
       </v-tab>
@@ -24,7 +23,6 @@
       style="min-height: 500vh;"
       v-for="(batch, rank) in batches"
       :key="rank"
-      lazy
       >
           <Batch 
           :batchKey="batch"/>

@@ -51,11 +51,6 @@ const store = new Vuex.Store({
       'type': 'Prediction',
       'param': '09/2018',
       'batch': '1802'
-    },
-    {
-      'type': 'Prediction',
-      'param': '08/2018',
-      'batch': '1807'
     }
     ]
   },

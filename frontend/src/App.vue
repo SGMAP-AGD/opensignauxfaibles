@@ -188,12 +188,6 @@ export default {
           action: '/data',
           icon: 'fa-database',
           color: 'red darken-4' }
-        // { title: 'Admin',
-        //   action: '/admin',
-        //   color: 'black'},
-        // { title: 'Test',
-        //   action: '/admintoto',
-        //   color: 'yellow'}
       ],
       avatar: {
         debug: {icon: 'fa-cogs', color: 'blue'},

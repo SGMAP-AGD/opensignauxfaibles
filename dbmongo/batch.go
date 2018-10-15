@@ -84,7 +84,7 @@ func upsertBatch(c *gin.Context) {
 		return
 	}
 
-	batches := getBatches()
+	batches, _ := getBatches()
 	mainMessageChannel <- socketMessage{
 		Batches: batches,
 	}
@@ -107,7 +107,7 @@ func listBatch(c *gin.Context) {
 }
 
 func getBatchesID() []string {
-	batches := getBatches()
+	batches, _ := getBatches()
 	var batchesID []string
 	for _, b := range batches {
 		batchesID = append(batchesID, b.ID.Key)
@@ -115,16 +115,17 @@ func getBatchesID() []string {
 	return batchesID
 }
 
-func getBatches() []AdminBatch {
+func getBatches() ([]AdminBatch, error) {
 	var batches []AdminBatch
-	db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
-	return batches
+	err := db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("_id.key").All(&batches)
+	return batches, err
 }
 
-func getBatch(batchKey string) AdminBatch {
+// getBatch retourne le batch correspondant à la clé batchKey
+func getBatch(batchKey string) (AdminBatch, error) {
 	var batch AdminBatch
-	db.DB.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(&batch)
-	return batch
+	err := db.DB.C("Admin").Find(bson.M{"_id.type": "batch", "_id.key": batchKey}).One(&batch)
+	return batch, err
 }
 
 // batchToTime calcule la date de référence à partir de la référence de batch
@@ -160,7 +161,7 @@ func processBatch() {
 }
 
 func lastBatch() AdminBatch {
-	batches := getBatches()
+	batches, _ := getBatches()
 	l := len(batches)
 	batch := batches[l-1]
 	return batch
@@ -200,10 +201,10 @@ func addFileToBatch() chan newFile {
 
 	go func() {
 		for file := range channel {
-			batch := getBatch(file.BatchKey)
+			batch, _ := getBatch(file.BatchKey)
 			batch.Files[file.Type] = append(batch.Files[file.Type], file.FileName)
 			batch.save()
-			batches := getBatches()
+			batches, _ := getBatches()
 			db.Status.Epoch++
 			db.Status.write()
 			mainMessageChannel <- socketMessage{

@@ -90,7 +90,7 @@ func reduce(c *gin.Context) {
 	batchKey := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
 
-	batch := getBatch(batchKey)
+	batch, _ := getBatch(batchKey)
 
 	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch.ID.Key, "_id.algo": algo})
 
@@ -271,6 +271,7 @@ func getFeatures(c *gin.Context) {
 }
 
 func compactEntreprise(c *gin.Context) {
+	siren := c.Params.ByName("siren")
 	batches := getBatchesID()
 
 	// Détermination scope traitement
@@ -278,8 +279,6 @@ func compactEntreprise(c *gin.Context) {
 	var output interface{}
 	var etablissement []interface{}
 
-	// Si le parametre siren est absent, on traite l'ensemble de la collection
-	siren := c.Params.ByName("siren")
 	if siren == "" {
 		query = nil
 		output = bson.M{"replace": "Entreprise"}
