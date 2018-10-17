@@ -41,6 +41,7 @@ export default {
       axios.get('http://localhost:3000/api/admin/clone/' + this.to)
       .then(response => alert(JSON.stringify(response.data, null, 2)))
     },
+    
     go () {
       this.$axios.get('/api/processBatch').then(r => { this.d = r.data })
     }
@@ -52,6 +53,7 @@ export default {
     }
   }
 }
+
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
