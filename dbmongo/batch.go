@@ -157,6 +157,9 @@ func processBatch() {
 	batch := lastBatch()
 	status.setDBStatus(sp("Import des fichiers"))
 	importBatch(&batch)
+	compactEntreprise("")
+	compactEtablissement("")
+
 	status.setDBStatus(nil)
 }
 

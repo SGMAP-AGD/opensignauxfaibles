@@ -51,8 +51,14 @@
             <v-list-tile-content>
               <v-list-tile-title
               :class="(type.type==currentType) ? 'selected': null">
-              {{ type.text }}</v-list-tile-title>
+              {{ type.text }}>
+              </v-list-tile-title>
             </v-list-tile-content>
+            <v-list-tile-action>
+              <v-icon 
+              @click="toggleComplete(type.type)"
+              >{{ currentBatch.complete_types.includes(type.type)?'mdi-square-inc':'mdi-shape-square-plus' }}</v-icon>
+            </v-list-tile-action>
           </v-list-tile>
           <v-divider></v-divider>
         </v-list-group>
@@ -146,8 +152,20 @@ export default {
     }
   },
   computed: {
-    currentBatch () {
-      return this.$store.state.batches.filter(b => b.id.key === this.batchKey)
+    currentBatchKey () {
+      return this.$store.state.currentBatchKey
+    },
+    currentBatch: {
+      get () {
+        if (this.$store.state.batches !== []) {
+          return this.$store.state.batches[this.currentBatchKey]
+        } else {
+          return null
+        }
+      },
+      set (batch) {
+        this.$store.dispatch('saveBatch', batch).then(r => this.$store.dispatch('checkEpoch'))
+      }
     },
     features () {
       return this.$store.state.features
@@ -159,6 +177,15 @@ export default {
   methods: {
     setCurrentType (type) {
       this.currentType = type
+    },
+    toggleComplete (type) {
+      let batch = this.currentBatch
+      if (batch.complete_types.includes(type)) {
+        batch.complete_types = batch.complete_types.filter(t => t !== type)
+      } else {
+        batch.complete_types = (batch.complete_types || []).concat(type)
+      }
+      this.currentBatch = batch
     }
   },
   components: { BatchFile, BatchDate, BatchProcess }

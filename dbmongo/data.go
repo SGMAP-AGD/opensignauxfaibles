@@ -198,14 +198,24 @@ func reduce(c *gin.Context) {
 
 }
 
-func compactEtablissement(c *gin.Context) {
+func compactEtablissementHandler(c *gin.Context) {
+	siret := c.Params.ByName("siret")
+
+	err := compactEtablissement(siret)
+
+	if err != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
+	}
+}
+
+func compactEtablissement(siret string) error {
 	batches, _ := getBatches()
 
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
 	var etablissement []interface{}
-	var completeTypes map[string][]string
+	var completeTypes = make(map[string][]string)
 	var batchesID []string
 
 	for _, b := range batches {
@@ -214,7 +224,6 @@ func compactEtablissement(c *gin.Context) {
 	}
 
 	// Si le parametre siret est absent, on traite l'ensemble de la collection
-	siret := c.Params.ByName("siret")
 	if siret == "" {
 		query = nil
 		output = bson.M{"replace": "Etablissement"}
@@ -229,8 +238,7 @@ func compactEtablissement(c *gin.Context) {
 	errEt := MREtablissement.load("compact", "etablissement")
 
 	if errEt != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
-		return
+		return errEt
 	}
 
 	// Traitement MR
@@ -264,11 +272,9 @@ func compactEtablissement(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
-	} else {
-		c.JSON(200, etablissement)
+		return err
 	}
-
+	return nil
 }
 
 func getFeatures(c *gin.Context) {
@@ -277,15 +283,23 @@ func getFeatures(c *gin.Context) {
 	c.JSON(200, data)
 }
 
-func compactEntreprise(c *gin.Context) {
+func compactEntrepriseHandler(c *gin.Context) {
 	siren := c.Params.ByName("siren")
+	err := compactEntreprise(siren)
+
+	if err != nil {
+		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
+		return
+	}
+}
+func compactEntreprise(siren string) error {
 	batches, _ := getBatches()
 
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
 	var etablissement []interface{}
-	var completeTypes map[string][]string
+	var completeTypes = make(map[string][]string)
 	var batchesID []string
 
 	for _, b := range batches {
@@ -307,8 +321,7 @@ func compactEntreprise(c *gin.Context) {
 	errEn := MREntreprise.load("compact", "entreprise")
 
 	if errEn != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
-		return
+		return errEn
 	}
 
 	// Traitement MR
@@ -335,12 +348,7 @@ func compactEntreprise(c *gin.Context) {
 		_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, nil)
 	}
 
-	if err != nil {
-		c.JSON(500, "Echec du traitement MR, message serveur: "+err.Error())
-	} else {
-		c.JSON(200, etablissement)
-	}
-
+	return err
 }
 
 func dropBatch(c *gin.Context) {
