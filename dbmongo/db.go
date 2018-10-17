@@ -125,7 +125,8 @@ func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
 				buffer = make(map[string]*ValueEntreprise)
 				objects = make([]interface{}, 0)
 				i = 0
-			} else {
+			}
+			if value.Value.Batch != nil {
 				if knownValue, ok := buffer[value.Value.Siren]; ok {
 					newValue, _ := (*knownValue).merge(*value)
 					buffer[value.Value.Siren] = &newValue
@@ -135,7 +136,6 @@ func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
 					i++
 				}
 			}
-
 		}
 	}(source)
 
@@ -161,7 +161,8 @@ func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
 				buffer = make(map[string]*ValueEtablissement)
 				objects = make([]interface{}, 0)
 				i = 0
-			} else {
+			}
+			if value.Value.Batch != nil {
 				if knownValue, ok := buffer[value.Value.Siret]; ok {
 					newValue, _ := (*knownValue).merge(*value)
 					buffer[value.Value.Siret] = &newValue
@@ -171,7 +172,6 @@ func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
 					i++
 				}
 			}
-
 		}
 	}(source)
 
