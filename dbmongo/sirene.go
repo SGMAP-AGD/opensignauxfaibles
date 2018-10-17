@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -18,6 +17,7 @@ import (
 type Sirene struct {
 	Siren              string    `json,omitempty:"siren" bson,omitempty:"siren"`
 	Nic                string    `json,omitempty:"nic" bson,omitempty:"nic"`
+	NicSiege           string    `json,omitempty:"nic_siege" bson,omitempty:"nic_siege"`
 	RaisonSociale      string    `json,omitempty:"raison_sociale" bson,omitempty:"raison_sociale"`
 	NumVoie            string    `json,omitempty:"numero_voie" bson,omitempty:"numero_voie"`
 	IndRep             string    `json,omitempty:"indrep" bson,omitempty:"indrep"`
@@ -41,6 +41,7 @@ type Sirene struct {
 	DebutActivite      time.Time `json:"debut_activite" bson:"debut_activite"`
 	Longitude          float64   `json,omitempty:"longitude" bson:"longitude"`
 	Lattitude          float64   `json,omitempty:"lattitude" bson:"lattitude"`
+	Adresse            [7]string `json:"adresse" bson:"adresse"`
 }
 
 func parseSirene(paths []string) chan *Sirene {
@@ -49,7 +50,7 @@ func parseSirene(paths []string) chan *Sirene {
 
 	go func() {
 		for _, path := range paths {
-			file, err := os.Open(path)
+			file, err := os.Open(viper.GetString("APP_DATA") + path)
 			if err != nil {
 				fmt.Println("Error", err)
 			}
@@ -62,13 +63,14 @@ func parseSirene(paths []string) chan *Sirene {
 				if error == io.EOF {
 					break
 				} else if error != nil {
-					log.Fatal(error)
+					// log.Fatal(error)
 				}
 
 				if !(ignoreSirene.contains(row[71])) {
 					sirene := Sirene{}
 					sirene.Siren = row[0]
 					sirene.Nic = row[1]
+					sirene.NicSiege = row[65]
 					sirene.RaisonSociale = row[2]
 					sirene.NumVoie = row[16]
 					sirene.IndRep = row[17]
@@ -92,7 +94,7 @@ func parseSirene(paths []string) chan *Sirene {
 					sirene.DebutActivite, _ = time.Parse("20060102", row[51])
 					sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
 					sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
-
+					sirene.Adresse = [7]string{row[2], row[3], row[4], row[5], row[6], row[7], row[8]}
 					outputChannel <- &sirene
 				}
 			}
@@ -118,9 +120,9 @@ func importSirene(batch *AdminBatch) error {
 						Sirene: map[string]*Sirene{
 							hash: sirene,
 						}}}}}
-		batch.ChanEtablissement <- &value
+		db.ChanEtablissement <- &value
 	}
 
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }

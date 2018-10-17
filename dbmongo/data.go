@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bufio"
+	"encoding/csv"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"sort"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/spf13/viper"
 )
 
 // MapReduceJS Ensemble de fonctions JS pour mongodb
@@ -68,30 +73,30 @@ func dataPrediction(c *gin.Context) {
 	var etablissement []ValueEtablissement
 	var siret []string
 
-	db, _ := c.Keys["DB"].(*mgo.Database)
-	db.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
+	db.DB.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
 	for _, r := range prediction {
 		siret = append(siret, r.Siret)
 	}
 
 	query := bson.M{"_id": bson.M{"$in": siret}}
-	db.C("Etablissement").Find(query).All(&etablissement)
+	db.DB.C("Etablissement").Find(query).All(&etablissement)
 	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
 }
 
 func reduce(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-
-	dateDebut, _ := time.Parse("2006-01-02", "2014-01-01")
-	dateFin, _ := time.Parse("2006-01-02", "2018-09-01")
-	dateFinEffectif, _ := time.Parse("2006-01-02", "2018-06-01")
 
 	// Détermination scope traitement
 	algo := c.Params.ByName("algo")
-	batch := c.Params.ByName("batch")
+	batchKey := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
 
-	db.C("Features").RemoveAll(bson.M{"_id.batch": batch, "_id.algo": algo})
+	batch, _ := getBatch(batchKey)
+
+	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch.ID.Key, "_id.algo": algo})
+
+	dateDebut := batch.Params.DateDebut
+	dateFin := batch.Params.DateFin
+	dateFinEffectif := batch.Params.DateFinEffectif
 
 	var queryEtablissement interface{}
 	var queryEntreprise interface{}
@@ -120,12 +125,20 @@ func reduce(c *gin.Context) {
 		return
 	}
 
-	scope := bson.M{"date_debut": dateDebut,
+	naf, errNAF := loadNAF()
+	if errNAF != nil {
+		c.JSON(500, "Problème d'accès aux fichiers naf")
+		return
+	}
+
+	scope := bson.M{
+		"date_debut":             dateDebut,
 		"date_fin":               dateFin,
 		"date_fin_effectif":      dateFinEffectif,
 		"serie_periode":          genereSeriePeriode(dateDebut, dateFin),
 		"serie_periode_annuelle": genereSeriePeriodeAnnuelle(dateDebut, dateFin),
-		"actual_batch":           batch,
+		"actual_batch":           batch.ID.Key,
+		"naf":                    naf,
 	}
 
 	jobEtablissement := &mgo.MapReduce{
@@ -136,7 +149,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err := db.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
+	_, err := db.DB.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -150,7 +163,7 @@ func reduce(c *gin.Context) {
 		Scope:    scope,
 	}
 
-	_, err = db.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
+	_, err = db.DB.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -165,9 +178,9 @@ func reduce(c *gin.Context) {
 	}
 
 	if output == nil {
-		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, &result)
+		_, err = db.DB.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, &result)
 	} else {
-		_, err = db.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, nil)
+		_, err = db.DB.C("MRWorkspace").Find(queryEntreprise).MapReduce(jobUnion, nil)
 	}
 
 	if err != nil {
@@ -175,7 +188,7 @@ func reduce(c *gin.Context) {
 		return
 	}
 
-	err = db.C("MRWorkspace").DropCollection()
+	err = db.DB.C("MRWorkspace").DropCollection()
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -186,8 +199,7 @@ func reduce(c *gin.Context) {
 }
 
 func compactEtablissement(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-	batches := getBatchesID(db)
+	batches := getBatchesID()
 
 	// Détermination scope traitement
 	var query interface{}
@@ -239,9 +251,9 @@ func compactEtablissement(c *gin.Context) {
 
 	err := errors.New("")
 	if output == nil {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, &etablissement)
+		_, err = db.DB.C("Etablissement").Find(query).MapReduce(job, &etablissement)
 	} else {
-		_, err = db.C("Etablissement").Find(query).MapReduce(job, nil)
+		_, err = db.DB.C("Etablissement").Find(query).MapReduce(job, nil)
 	}
 
 	if err != nil {
@@ -252,17 +264,21 @@ func compactEtablissement(c *gin.Context) {
 
 }
 
+func getFeatures(c *gin.Context) {
+	var data []interface{}
+	db.DB.C("Features").Find(nil).All(&data)
+	c.JSON(200, data)
+}
+
 func compactEntreprise(c *gin.Context) {
-	db, _ := c.Keys["DB"].(*mgo.Database)
-	batches := getBatchesID(db)
+	siren := c.Params.ByName("siren")
+	batches := getBatchesID()
 
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
 	var etablissement []interface{}
 
-	// Si le parametre siren est absent, on traite l'ensemble de la collection
-	siren := c.Params.ByName("siren")
 	if siren == "" {
 		query = nil
 		output = bson.M{"replace": "Entreprise"}
@@ -299,9 +315,9 @@ func compactEntreprise(c *gin.Context) {
 	var err error
 
 	if output == nil {
-		_, err = db.C("Entreprise").Find(query).MapReduce(job, &etablissement)
+		_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, &etablissement)
 	} else {
-		_, err = db.C("Entreprise").Find(query).MapReduce(job, nil)
+		_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, nil)
 	}
 
 	if err != nil {
@@ -313,42 +329,93 @@ func compactEntreprise(c *gin.Context) {
 }
 
 func dropBatch(c *gin.Context) {
-	db := c.Keys["DB"].(*mgo.Database)
+	batchKey := c.Params.ByName("batchKey")
+	change, err := db.DB.C("Admin").RemoveAll(bson.M{"_id.key": batchKey, "_id.type": "batch"})
+	c.JSON(200, []interface{}{err, change})
 
-	batches := getBatchesID(db)
-	sort.Slice(batches, func(i, j int) bool {
-		return batches[i] > batches[j]
-	})
-	currentBatch := batches[0]
+}
+func getNAF(c *gin.Context) {
+	naf, err := loadNAF()
+	if err != nil {
+		c.JSON(500, err)
+	}
+	c.JSON(200, naf)
+}
 
-	MREtablissement := MapReduceJS{}
-	errEt := MREtablissement.load("dropBatch", "etablissement")
-	MREntreprise := MapReduceJS{}
-	errEn := MREntreprise.load("dropBatch", "entreprise")
+// NAF libellés et liens N5/N1
+type NAF struct {
+	N1    map[string]string `json:"n1" bson:"n1"`
+	N5    map[string]string `json:"n5" bson:"n5"`
+	N5to1 map[string]string `json:"n5to1" bson:"n5to1"`
+}
 
-	if errEt != nil || errEn != nil {
-		c.JSON(500, "Probleme d'accès aux ressources MapReduce")
-		return
+func loadNAF() (NAF, error) {
+	naf := NAF{}
+	naf.N1 = make(map[string]string)
+	naf.N5 = make(map[string]string)
+	naf.N5to1 = make(map[string]string)
+
+	NAF1 := viper.GetString("NAF_L1")
+	NAF5 := viper.GetString("NAF_L5")
+	NAF5to1 := viper.GetString("NAF_5TO1")
+
+	NAF1File, NAF1err := os.Open(NAF1)
+	if NAF1err != nil {
+		fmt.Println(NAF1err)
+		return NAF{}, NAF1err
 	}
 
-	jobEt := &mgo.MapReduce{
-		Map:      string(MREtablissement.Map),
-		Reduce:   string(MREtablissement.Reduce),
-		Finalize: string(MREtablissement.Finalize),
-		Out:      bson.M{"replace": "Etablissement"},
-		Scope:    bson.M{"currentBatch": currentBatch},
+	NAF1reader := csv.NewReader(bufio.NewReader(NAF1File))
+	NAF1reader.Comma = ';'
+	NAF1reader.Read()
+	for {
+		row, err := NAF1reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println(err)
+		}
+		naf.N1[row[0]] = row[1]
 	}
 
-	jobEn := &mgo.MapReduce{
-		Map:      string(MREntreprise.Map),
-		Reduce:   string(MREntreprise.Reduce),
-		Finalize: string(MREntreprise.Finalize),
-		Out:      bson.M{"replace": "Entreprise"},
-		Scope:    bson.M{"currentBatch": currentBatch},
+	NAF5to1File, NAF5to1err := os.Open(NAF5to1)
+	if NAF5to1err != nil {
+		fmt.Println(NAF5to1err)
+		return NAF{}, NAF5to1err
 	}
 
-	_, errEt = db.C("Etablissement").Find(nil).MapReduce(jobEt, nil)
-	_, errEn = db.C("Entreprise").Find(nil).MapReduce(jobEn, nil)
+	NAF5to1reader := csv.NewReader(bufio.NewReader(NAF5to1File))
+	NAF5to1reader.Comma = ';'
+	NAF5to1reader.Read()
+	for {
+		row, err := NAF5to1reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println(err)
+		}
+		naf.N5to1[row[0]] = row[1]
+	}
 
-	c.JSON(200, currentBatch)
+	NAF5File, NAF5err := os.Open(NAF5)
+	if NAF5err != nil {
+		fmt.Println(NAF5err)
+		return NAF{}, NAF5err
+	}
+
+	NAF5reader := csv.NewReader(bufio.NewReader(NAF5File))
+	NAF5reader.Comma = ';'
+	NAF5reader.Read()
+	for {
+		row, err := NAF5reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println(err)
+		}
+
+		naf.N5[row[0]] = row[1]
+
+	}
+	return naf, nil
 }

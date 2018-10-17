@@ -5,11 +5,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"github.com/cnf/structhash"
+	"github.com/spf13/viper"
 )
 
 // Altares Extrait du récapitulatif altarès
@@ -19,7 +19,7 @@ type Altares struct {
 	CodeJournal   string    `json:"code_journal" bson:"code_journal"`
 	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
 	Siret         string    `json:"-" bson:"-"`
-}
+} 
 
 func parseAltares(path string) chan *Altares {
 	outputChannel := make(chan *Altares)
@@ -44,9 +44,9 @@ func parseAltares(path string) chan *Altares {
 		for {
 			row, error := reader.Read()
 			if error == io.EOF {
-				break
+				break 
 			} else if error != nil {
-				log.Fatal(error)
+				// log.Fatal(error)
 			}
 
 			dateEffet, err := time.Parse("2006-01-02", row[dateEffetIndex])
@@ -71,7 +71,7 @@ func parseAltares(path string) chan *Altares {
 }
 
 func importAltares(batch *AdminBatch) error {
-	for altares := range parseAltares(batch.Files["altares"][0]) {
+	for altares := range parseAltares(viper.GetString("APP_DATA") + batch.Files["altares"][0]) {
 		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 
 		value := ValueEtablissement{
@@ -82,8 +82,8 @@ func importAltares(batch *AdminBatch) error {
 						Altares: map[string]*Altares{
 							hash: altares,
 						}}}}}
-		batch.ChanEtablissement <- &value
+		db.ChanEtablissement <- &value
 	}
-	batch.ChanEtablissement <- &ValueEtablissement{}
+	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
 }
