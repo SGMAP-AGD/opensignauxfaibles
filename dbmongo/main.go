@@ -61,25 +61,6 @@ func main() {
 
 	r.Use(cors.New(config))
 
-	// authMiddleware := &jwt.GinJWTMiddleware{
-	// 	Realm:         "OpenSignauxFaibles",
-	// 	Key:           []byte(viper.GetString("JWT_SECRET")),
-	// 	Timeout:       time.Hour,
-	// 	MaxRefresh:    time.Hour,
-	// 	Authenticator: authenticator,
-	// 	Authorizator:  authorizator,
-	// 	Unauthorized:  unauthorized,
-	// 	IdentityHandler: func(c *gin.Context) interface{} {
-	// 		claims := jwt.ExtractClaims(c)
-	// 		return &User{
-	// 			UserName: claims["id"].(string),
-	// 		}
-	// 	},
-	// 	TokenLookup:   "header: Authorization, query: token, cookie: jwt",
-	// 	TokenHeadName: "Bearer",
-	// 	TimeFunc:      time.Now,
-	// }
-
 	var identityKey = "id"
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "test zone",
@@ -131,23 +112,10 @@ func main() {
 				"message": message,
 			})
 		},
-		// TokenLookup is a string in the form of "<source>:<name>" that is used
-		// to extract token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		// - "param:<name>"
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-		// TokenLookup: "query:token",
-		// TokenLookup: "cookie:token",
 
-		// TokenHeadName is a string in the header. Default value is "Bearer"
+		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
 		TokenHeadName: "Bearer",
-
-		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-		TimeFunc: time.Now,
+		TimeFunc:      time.Now,
 	})
 
 	if err != nil {
@@ -199,18 +167,6 @@ func main() {
 		api.GET("/reduce/:algo/:batch", reduce)
 	}
 
-	debugAPI := r.Group("debugAPI")
-	debugAPI.Use(authMiddleware.MiddlewareFunc())
-	{
-		debugAPI.GET("/data/prediction/:batch/:algo/:page", predictionBrowse)
-		debugAPI.GET("/import/:batch", importBatchHandler)
-		debugAPI.GET("/compact/etablissement/:siret", compactEtablissement)
-		debugAPI.GET("/compact/etablissement", compactEtablissement)
-		debugAPI.GET("/compact/entreprise/:siren", compactEntreprise)
-		debugAPI.GET("/compact/entreprise", compactEntreprise)
-		debugAPI.GET("/reduce/:algo/:batch/:siret", reduce)
-		debugAPI.GET("/reduce/:algo/:batch", reduce)
-	}
 	bind := viper.GetString("APP_BIND")
 	r.Run(bind)
 }

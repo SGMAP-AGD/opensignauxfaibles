@@ -168,10 +168,7 @@ const store = new Vuex.Store({
   },
   actions: {
     updateActiveTab (context, activeTab) {
-      console.log('activeTab')
-      console.log(activeTab)
       context.commit('updateActiveTab', activeTab)
-      console.log(store.state.activeTab)
     },
     updateTabs (state, tabs) {
       state.commit('updateTabs', tabs)
@@ -183,7 +180,6 @@ const store = new Vuex.Store({
       context.commit('resetUploads')
     },
     addFile (context, file) {
-      console.log(file)
       axiosClient.post('/api/admin/batch/addFile', file)
     },
     upload (context, file) {
@@ -224,7 +220,6 @@ const store = new Vuex.Store({
         }
         context.dispatch('addFile', postData)
       }).catch(function (response) {
-        console.log(response)
       })
     },
     checkEpoch (context) {

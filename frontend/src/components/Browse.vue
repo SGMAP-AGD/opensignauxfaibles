@@ -24,7 +24,7 @@
         </v-icon>
       </v-tab>
       <v-tab-item
-        style="min-height: 500vh;"
+        style="min-height: 5000vh;"
         v-for="(tab,index) in tabs"
         :key="index"
       >

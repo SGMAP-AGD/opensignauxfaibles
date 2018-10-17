@@ -1,10 +1,9 @@
 <template>
-<v-container fluid fill-height>
+<v-container fluid >
   <v-layout align-center justify-center>
     <v-flex xs4>
       <v-card class="elevation-6">
-                  <v-form @submit="login">
-
+        <v-form @submit="login">
         <v-toolbar class="toolbar" id="toolbar" card color="indigo darken-1">
           <v-spacer> </v-spacer>
             Identification

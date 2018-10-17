@@ -89,6 +89,7 @@
     >
       <template slot="headers" slot-scope="props">
         <tr>
+          <th/>
           <th
             v-for="header in props.headers"
             :key="header.text"
@@ -103,16 +104,20 @@
       <template slot="items" slot-scope="props">
         <tr 
         :active="props.selected"
-        @click.left="open(props.item, true)"
-        @click.middle="open(props.item, false)"
         >
-          
-          <td><v-tooltip left>
+          <td>
+            <v-icon
+            @click.left="open(props.item, true)"
+            @click.middle="open(props.item, false)"
+            >
+              fa-address-card
+            </v-icon>
+          </td>
+          <td ><v-tooltip left>
             <div slot="activator">{{ props.item.raison_sociale }}</div>
             {{ props.item._id.siret }}
             </v-tooltip> </td>
           <td class="text-xs-center"><widgetPrediction :prob="props.item.prob" :diff="props.item.diff"/></td>
-          <td class="text-xs-center">{{ props.item.departement }}</td>
           <td class="text-xs-right">
             {{ props.item.effectif }}
           </td>
@@ -206,7 +211,6 @@
           value: 'raison_sociale'
         },
         {text: 'détection', value: 'prob'},
-        {text: 'département', value: 'departement'},
         {text: 'emploi', value: 'effectif'},
         {text: 'Défault urssaf', value: 'default_urssaf'},
         {text: 'Taux de marge', value: 'taux_marge'},
@@ -341,5 +345,8 @@
   left: 100px;
   top: 20px;
   right: 20px;
+}
+.pointer:hover {
+  cursor: hand;
 }
 </style>

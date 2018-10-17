@@ -247,6 +247,7 @@ v-list {
   color: "black";
 }
 #app {
+  min-height: 5000px;
   background-image: url("/static/bgapp.png");
 }
 .span {
