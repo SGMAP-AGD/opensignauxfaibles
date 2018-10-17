@@ -28,8 +28,8 @@ type Sirene struct {
 	Departement        string    `json,omitempty:"departement" bson,omitempty:"departement"`
 	Commune            string    `json,omitempty:"commune" bson,omitempty:"commune"`
 	APE                string    `json,omitempty:"ape" bson,omitempty:"ape"`
-	NatureActivite     string    `json,omitempty:"" bson,omitempty:""`
-	ActiviteSaisoniere string    `json,omitempty:"" bson,omitempty:""`
+	NatureActivite     string    `json,omitempty:"nature_activite" bson,omitempty:"nature_activite"`
+	ActiviteSaisoniere string    `json,omitempty:"activite_saisoniere" bson,omitempty:"activite_sai"`
 	ModaliteActivite   string    `json,omitempty:"modalite_activite" bson,omitempty:"modalite_activite"`
 	Productif          string    `json,omitempty:"productif" bson,omitempty:"productif"`
 	NatureJuridique    string    `json,omitempty:"nature_juridique" bson,omitempty:"nature_juridique"`
@@ -44,9 +44,9 @@ type Sirene struct {
 	Adresse            [7]string `json:"adresse" bson:"adresse"`
 }
 
-func parseSirene(paths []string) chan *Sirene {
+func parseSirene(paths []string, mapping map[string]bool) chan *Sirene {
 	outputChannel := make(chan *Sirene)
-	ignoreSirene := stringSlice(viper.GetStringSlice("SIRENE_IGNORE"))
+	//ignoreSirene := stringSlice(viper.GetStringSlice("SIRENE_IGNORE"))
 
 	go func() {
 		for _, path := range paths {
@@ -66,7 +66,7 @@ func parseSirene(paths []string) chan *Sirene {
 					// log.Fatal(error)
 				}
 
-				if !(ignoreSirene.contains(row[71])) {
+				if _, ok := mapping[row[0]]; ok {
 					sirene := Sirene{}
 					sirene.Siren = row[0]
 					sirene.Nic = row[1]
@@ -109,7 +109,10 @@ func parseSirene(paths []string) chan *Sirene {
 // hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 func importSirene(batch *AdminBatch) error {
-	for sirene := range parseSirene(batch.Files["sirene"]) {
+
+	mapping, _ := getSirensFromMapping(batch)
+
+	for sirene := range parseSirene(batch.Files["sirene"], mapping) {
 		hash := fmt.Sprintf("%x", structhash.Md5(sirene, 1))
 
 		value := ValueEtablissement{

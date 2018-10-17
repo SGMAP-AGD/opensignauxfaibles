@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
@@ -97,8 +96,40 @@ func getCompteSiretMapping(batch *AdminBatch) (map[string]string, error) {
 	return compteSiretMapping, nil
 }
 
-func importAdminUrsaff(c *gin.Context, batch *AdminBatch) {
+func getSirensFromMapping(batch *AdminBatch) (map[string]bool, error) {
+	SiretsFromMapping := make(map[string]bool)
+	path := batch.Files["admin_urssaf"]
+	basePath := viper.GetString("APP_DATA")
 
+	for _, p := range path {
+		file, err := os.Open(basePath + p)
+		if err != nil {
+			return map[string]bool{}, errors.New("Erreur à l'ouverture du fichier, " + err.Error())
+		}
+
+		reader := csv.NewReader(bufio.NewReader(file))
+		reader.Comma = ';'
+
+		// discard header row
+		reader.Read()
+
+		siretIndex := 3
+
+		for {
+			row, err := reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				log(critical, "importCompteSiret", "Erreur à la lecture du fichier "+file.Name())
+				return map[string]bool{}, err
+			}
+			if _, err := strconv.Atoi(row[siretIndex]); err == nil && len(row[siretIndex]) == 14 {
+				SiretsFromMapping[row[siretIndex][0:9]] = true
+			}
+		}
+		file.Close()
+	}
+	return SiretsFromMapping, nil
 }
 
 func max(a, b int) int {

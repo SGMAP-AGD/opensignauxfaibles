@@ -12,11 +12,11 @@ import (
 
 // AdminBatch metadata Batch
 type AdminBatch struct {
-	ID        AdminID    `json:"id" bson:"_id"`
-	Files     BatchFiles `json:"files" bson:"files"`
-	Readonly  bool       `json:"readonly" bson:"readonly"`
-	Blacklist []string   `json:"blacklist" bson:"blacklist"`
-	Params    struct {
+	ID            AdminID    `json:"id" bson:"_id"`
+	Files         BatchFiles `json:"files" bson:"files"`
+	Readonly      bool       `json:"readonly" bson:"readonly"`
+	CompleteTypes []string   `json:"complete_types" bson:"complete_types"`
+	Params        struct {
 		DateDebut       time.Time `json:"date_debut" bson:"date_debut"`
 		DateFin         time.Time `json:"date_fin" bson:"date_fin"`
 		DateFinEffectif time.Time `json:"date_fin_effectif" bson:"date_fin_effectif"`

@@ -199,12 +199,19 @@ func reduce(c *gin.Context) {
 }
 
 func compactEtablissement(c *gin.Context) {
-	batches := getBatchesID()
+	batches, _ := getBatches()
 
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
 	var etablissement []interface{}
+	var completeTypes map[string][]string
+	var batchesID []string
+
+	for _, b := range batches {
+		completeTypes[b.ID.Key] = b.CompleteTypes
+		batchesID = append(batchesID, b.ID.Key)
+	}
 
 	// Si le parametre siret est absent, on traite l'ensemble de la collection
 	siret := c.Params.ByName("siret")
@@ -232,7 +239,7 @@ func compactEtablissement(c *gin.Context) {
 		Reduce:   string(MREtablissement.Reduce),
 		Finalize: string(MREtablissement.Finalize),
 		Out:      output,
-		Scope: bson.M{"batches": batches,
+		Scope: bson.M{"batches": batchesID,
 			"types": []string{
 				"altares",
 				"apconso",
@@ -245,7 +252,7 @@ func compactEtablissement(c *gin.Context) {
 				"sirene",
 				"dpae",
 			},
-			"deleteOld": []string{"effectif", "apdemande", "apconso", "altares"},
+			"completeTypes": completeTypes,
 		},
 	}
 
@@ -272,12 +279,19 @@ func getFeatures(c *gin.Context) {
 
 func compactEntreprise(c *gin.Context) {
 	siren := c.Params.ByName("siren")
-	batches := getBatchesID()
+	batches, _ := getBatches()
 
 	// Détermination scope traitement
 	var query interface{}
 	var output interface{}
 	var etablissement []interface{}
+	var completeTypes map[string][]string
+	var batchesID []string
+
+	for _, b := range batches {
+		completeTypes[b.ID.Key] = b.CompleteTypes
+		batchesID = append(batchesID, b.ID.Key)
+	}
 
 	if siren == "" {
 		query = nil
@@ -303,12 +317,13 @@ func compactEntreprise(c *gin.Context) {
 		Reduce:   string(MREntreprise.Reduce),
 		Finalize: string(MREntreprise.Finalize),
 		Out:      output,
-		Scope: bson.M{"batches": batches,
+		Scope: bson.M{
+			"batches": batches,
 			"types": []string{
 				"bdf",
 				"diane",
 			},
-			"deleteOld": []string{"bdf"},
+			"completeTypes": completeTypes,
 		},
 	}
 
