@@ -84,12 +84,18 @@ raw_data <- raw_data %>%
 
 ```{r}
 
-aux_features <- feature_engineering(raw_data, all_data)
+out <- feature_engineering_std(raw_data, all_data)
+raw_data <- out[[1]]
+all_data <- out[[2]]
 
-raw_data <- aux_features[[1]]
-all_data <- aux_features[[2]]
+ref_f_e <- feature_engineering_create(raw_data)
 
-rm(aux_features)
+out <- feature_engineering_apply(ref_f_e, raw_data, all_data)
+
+raw_data <- out[[1]]
+all_data <- out[[2]]
+
+rm(out)
 
 raw_data <- raw_data %>%
     mutate_if(is.POSIXct, as.Date)
@@ -199,7 +205,8 @@ new_variables = c(
 variations = c(grep('variation',names(raw_data), value = TRUE),
                grep('diff_moy12',names(raw_data), value = TRUE))
 
-distrib = c(grep('distrib',names(raw_data), value = TRUE),
+distrib = c(grep('APE1',names(raw_data), value = TRUE),
+            grep('APE1',names(raw_data), value = TRUE), 
             'TargetEncode_code_naf_niveau1')
 
 x_distrib = c(
@@ -239,10 +246,10 @@ model <- h2o.xgboost(
 #  filter(!is.na(log_cotisationdue_effectif))
 
 
-prediction <- as.tibble(h2o.predict(model,all))
+prediction <- as.tibble(h2o.cbind(all,h2o.predict(model,all)))
 
-pred_data <- all_data %>% 
-  cbind(prediction %>% rename(prob = default) %>% select(predict, prob)) %>% 
+pred_data <- all_data %>%
+  left_join(prediction %>% rename(prob = default0) %>% select(predict, prob,siret, periode), by=c('siret', 'periode')) %>% 
   group_by(siret) %>%
   arrange(siret,periode) %>% 
   mutate(last_prob = lag(prob),
@@ -254,6 +261,6 @@ pred_data <- all_data %>%
 pred_data %>% 
   filter(periode == actual_period) %>% 
   prepare_for_export(additional_names = c('diff', 'connu', 'interressant_urssaf')) %>%
-  export(batch = '1808')
+  export(batch = '1809')
 ```
 

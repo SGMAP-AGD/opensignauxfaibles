@@ -163,7 +163,6 @@
 </template>
 
 <script>
-
 export default {
   props: ['type'],
   data () {

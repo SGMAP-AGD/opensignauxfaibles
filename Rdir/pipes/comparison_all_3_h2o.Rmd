@@ -29,16 +29,16 @@ library(h2o)
 library(R.utils)
 
 # Sources
-sourceDirectory(find_rstudio_root_file('tools'))
+sourceDirectory(find_rstudio_root_file('tools'), modifiedOnly = FALSE)
 ```
 
 
 ```{r}
-actual_period <- as.Date("2018-07-01")
+actual_period <- as.Date("2018-08-01")
 ```
 
 ```{r}
-raw_data <- connect_to_database('Features', '1808', algo = 'algo2', min_effectif = 20)
+raw_data <- connect_to_database('Features', '1809', algo = 'algo2', min_effectif = 20)
 ```
 
 ```{r}
@@ -76,11 +76,6 @@ samples <-
 sample_train <- samples$train %>%
   left_join(raw_data, by = c('siret','periode'))
 
-if (!nrow(samples$validation)==0) {
-  sample_val <- samples$validation %>%
-    left_join(raw_data, by = c('siret', 'periode'))
-}
-
 sample_validation <- raw_data %>%
   semi_join(samples$validation, by = c('siret','periode'))
 
@@ -93,18 +88,18 @@ assert_split_consistency(sample_train, sample_validation,sample_test)
 
 ```{r}
 
-aux_features <- feature_engineering(sample_train,sample_test,sample_validation)
 
-sample_train  <- aux_features[[1]]
+out <- feature_engineering_std(sample_train, sample_validation)
+sample_train <- out[[1]]
+sample_validation <- out[[2]]
 
-sample_test <- aux_features[[2]]
+# reference for feature engineering
+ref_f_e <- feature_engineering_create(sample_train)
 
-sample_validation <- aux_features[[3]]
-
-rm(aux_features)
+out <- feature_engineering_apply(ref_f_e, sample_train, sample_validation)
+sample_train <- out[[1]]
+sample_validation <- out[[2]]
 ```
-
-
 
 ```{r}
 # If not enough memory, run systemctl restart mongod
@@ -112,7 +107,6 @@ rm(aux_features)
 gc()
 h2o.init(ip = "localhost", port = 4444)
 train.hex <- as.h2o(sample_train)
-test.hex <- as.h2o(sample_test)
 validation.hex <- as.h2o(sample_validation)
 ```
 
@@ -120,7 +114,6 @@ validation.hex <- as.h2o(sample_validation)
 Définition classe positive
 ```{r}
 train.hex['outcome'] <- h2o.relevel(x = train.hex['outcome'], y = "non_default")
-test.hex['outcome'] <- h2o.relevel(x = test.hex['outcome'], y = "non_default")
 validation.hex['outcome'] <- h2o.relevel(x = validation.hex['outcome'], y = "non_default")
 ```
 
@@ -128,14 +121,9 @@ Target encoding APE
 ```{r}
 te_map <- h2o.target_encode_create(
   train.hex, 
-  x = list(c('code_naf_niveau1'), c('code_ape')), 
-  y = 'outcome',
-  fold_column = 'fold_column')
-
-
-train.hex <- h2o.target_encode_apply(
+  x = list(c('code_naf_niveau1'), c('code_ape_niveau2'), c('code_ape_niveau3'), c('code_ape_niveau4'), c('code_ape')), 
   train.hex, 
-  x = list(c('code_naf_niveau1'), c('code_ape')), 
+  x = list(c('code_naf_niveau1'),c('code_ape_niveau2'), c('code_ape_niveau3'), c('code_ape_niveau4'), c('code_ape')), 
   y = 'outcome',
   target_encode_map = te_map,
   holdout_type = 'KFold',
@@ -145,7 +133,7 @@ train.hex <- h2o.target_encode_apply(
 
 validation.hex <- h2o.target_encode_apply(
   validation.hex,
-  x = list(c('code_naf_niveau1'), c('code_ape')),
+  x = list(c('code_naf_niveau1'), c('code_ape_niveau2'), c('code_ape_niveau3'), c('code_ape_niveau4'), c('code_ape')),
   y = 'outcome',
   target_encode_map = te_map, 
   holdout_type = 'None',
@@ -153,15 +141,6 @@ validation.hex <- h2o.target_encode_apply(
   fold_column = 'fold_column',
   noise_level = 0)
 
-test.hex <- h2o.target_encode_apply(
-  test.hex,
-  x = list(c('code_naf_niveau1'), c('code_ape')),
-  y = 'outcome',
-  target_encode_map = te_map, 
-  holdout_type = 'None',
-  blended_avg = FALSE, 
-  fold_column = 'fold_column',
-  noise_level = 0)
 ```
 
 ```{r}
@@ -169,8 +148,30 @@ test.hex <- h2o.target_encode_apply(
 
 validation.hex <- validation.hex[(validation.hex[,'etat_proc_collective'] == 'in_bonis') && (as.numeric(validation.hex[,'default_urssaf']) == 0),]
 
-test.hex <- test.hex[(test.hex[,'etat_proc_collective'] == 'in_bonis') && (as.numeric(test.hex[,'default_urssaf']) == 0),]
+```
 
+#Only test
+```{r}
+out <- feature_engineering_std(sample_test)
+sample_test <- out[[1]]
+
+out <-feature_engineering_apply(ref_f_e, sample_test)
+
+test.hex <- as.h2o(sample_test)
+
+test.hex['outcome'] <- h2o.relevel(x = test.hex['outcome'], y = "non_default")
+
+test.hex <- h2o.target_encode_apply(
+  test.hex,
+  x = list(c('code_naf_niveau1'), c('code_ape_niveau2'), c('code_ape_niveau3'), c('code_ape_niveau4'), c('code_ape')),
+  y = 'outcome',
+  target_encode_map = te_map, 
+  holdout_type = 'None',
+  blended_avg = FALSE, 
+  fold_column = 'fold_column',
+  noise_level = 0)
+
+test.hex <- test.hex[(test.hex[,'etat_proc_collective'] == 'in_bonis') && (as.numeric(test.hex[,'default_urssaf']) == 0),]
 ```
 
 ```{r}
@@ -194,7 +195,7 @@ x_minimal = c(
   "montant_part_ouvriere",                    
   "montant_part_patronale",
   "ratio_dette_moy12m",
-  "dette_any_12m",
+  #"dette_any_12m",
   "ratio_dette",
   "poids_frng",                               
   "taux_marge",                                
@@ -242,7 +243,10 @@ variations = c(grep('variation',names(sample_train), value = TRUE),
                grep('diff_moy12',names(sample_train), value = TRUE))
 
 distrib = c(grep('distrib',names(sample_train), value = TRUE),
-          'TargetEncode_code_naf_niveau1')
+          'TargetEncode_code_naf_niveau1', 
+          'TargetEncode_code_ape_niveau2',
+          'TargetEncode_code_ape_niveau3')#,
+          #'TargetEncode_code_ape_niveau4')#,
           #'TargetEncode_code_ape')
 
 x_distrib = c(x_minimal,
@@ -345,6 +349,56 @@ x_without_urssaf = c(
   "apart_heures_consommees_variation_12",
   ratios_diane)
 
+x_distrib_less_debit <- x_distrib[-c(75,76,78,79)]
+
+x_medium <- c("montant_part_patronale",                   
+              "ratio_dette",                              
+              "ratio_dette_moy12m",                       
+              "etat_proc_collective_num",                 
+              "TargetEncode_code_ape_niveau3",            
+              "cotisation",                               
+              "frais_financier_distrib_APE1",             
+              "taux_marge_distrib_APE1",
+              "taux_marge_distrib_APE2",
+              "montant_part_patronale_variation_3",       
+              "ratio_liquidite_reduite_distrib_APE1",
+              #"ratio_liquidite_reduite_distrib_APE2",
+              "dette_fiscale",                            
+              "ratio_delai_client_distrib_APE1",          
+              "montant_part_patronale_variation_1",       
+              "montant_part_patronale_variation_2",       
+              "ratio_rend_capitaux_propres",              
+              "taux_marge",                               
+              "poids_frng_distrib_APE1",
+              "delai_fournisseur_distrib_APE2", 
+              "delai_fournisseur_distrib_APE1",   
+              "delai_fournisseur_distrib_APE2", 
+              "taux_rotation_stocks_distrib_APE1",        
+              "effectif",                                 
+              "ratio_rentabilite_nette_distrib_APE1",     
+              "ratio_export_distrib_APE1",                
+              "TargetEncode_code_ape_niveau2",            
+              "effectif_diff_moy12",                      
+              "montant_part_ouvriere",                    
+              "financier_court_terme_distrib_APE1",       
+              #"effectif_entreprise",                      
+              "age",                                      
+              "ratio_liquidite_reduite",                  
+              "ratio_productivite_distrib_APE1",          
+              "frais_financier",                          
+              "financier_court_terme",                    
+              "ratio_delai_client",                       
+              "TargetEncode_code_naf_niveau1",            
+              "resultat_net_consolide",                   
+              "taux_rotation_stocks",                     
+              "nombre_etab_secondaire",                   
+              "nbr_etablissements_connus",                
+              "CA",                                       
+              "chiffre_affaires_net_lie_aux_exportations",
+              "ratio_dette_delai",                        
+              "ratio_marge_operationnelle_distrib_APE1",  
+              "poids_frng")  
+
 y = "outcome"
 ```
 
@@ -409,7 +463,7 @@ y = "outcome"
 
 xgb_start <- h2o.xgboost(
   model_id = 'LGB_model_start',
-  x= x_distrib, 
+  x= x_medium, 
   y =y,
   training_frame = train.hex,
   validation_frame = validation.hex,
@@ -419,7 +473,7 @@ xgb_start <- h2o.xgboost(
   max_depth = 4,
   ntrees = 60,
   seed = 123, 
-  score_each_iteration = TRUE,
+  score_each_iteration = FALSE,
   stopping_rounds = 4,
   quiet_mode =  FALSE
 )

@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 model = xgb_start
+
+library(iml)
+h2o.no_progress()
 ```
 
 ## R Courbe précision rappel et PR-AUC
@@ -84,5 +87,70 @@ to_plot <- cbind(test.df,pred.df) %>%
 ggplot(to_plot, aes(x = code_naf_niveau1, color = ok)) +
   geom_bar(position = 'fill') + 
   geom_abline(slope = 0, intercept = mean(to_plot$ok))
+```
+
+# Partial dependence plot
+```{r}
+
+varimp <- h2o.varimp(model)
+h2o.partialPlot(model, validation.hex, destination_key = "partial_dependence_plot_lgb_ref", cols = "resultat_net_consolide")
+```
+# IML
+
+```{r}
+features  <- as.data.frame(validation.hex[,x_medium])
+response <- 2-as.numeric(as.factor(as.vector(validation.hex$outcome)))
+pred <- function(model, newdata)  {
+  results <- as.data.frame(h2o.predict(model, as.h2o(newdata)))
+  return(results[[3L]])
+}
+```
+
+```{r}
+predictor.xgb <- Predictor$new(
+  model = model,
+  data = features,
+  y = response,
+  predict.fun = pred,
+  class = "classification"
+)
+```
+
+```{r}
+tic()
+imp.xgb <- FeatureImp$new(predictor.xgb, loss = "mse")
+toc()
+plot(imp.xgb) + ggtitle('XGB')
+
+```
+
+```{r}
+tic()
+part.xgb <- FeatureEffect$new(predictor.xgb, 'montant_part_patronale')
+toc()
+part.xgb_ice <- FeatureEffect$new(predictor.xgb, 'taux_marge_distrib_APE1', ice = TRUE)
+part.xgb_ice$center(0)
+
+plot(part.xgb) + ggtitle('xgb') + xlim(0,400000)
+plot(part.xgb_ice) + ggtitle('xgb_ice')
+```
+
+
+```{r}
+tic()
+interact.xgb <- Interaction$new(predictor.xgb) 
+toc()
+plot(interact.xgb)
+```
+```{r}
+tic()
+shap.xgb <- Shapley$new(predictor.xgb, x.interest = features[903,])
+toc()
+
+shap_plot <- shap.xgb %>% plot()
+thresh <- 10e-5 
+to_remove <- abs(shap_plot$data[,"phi"]) < thresh
+shap_plot$data <- shap_plot$data[!to_remove,]
+shap_plot
 ```
 
