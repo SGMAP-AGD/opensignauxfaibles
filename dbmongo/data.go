@@ -26,6 +26,49 @@ type MapReduceJS struct {
 	Finalize string
 }
 
+func loadMR(typeJob string, target string) (*mgo.MapReduce, error) {
+	mr := &mgo.MapReduce{}
+
+	file, err := ioutil.ReadDir("js/" + typeJob + "/" + target)
+	sort.Slice(file, func(i, j int) bool {
+		return file[i].Name() < file[j].Name()
+	})
+
+	if err != nil {
+		return nil, errors.New("Chemin introuvable")
+	}
+
+	mr.Map = ""
+	mr.Reduce = ""
+	mr.Finalize = ""
+
+	for _, f := range file {
+		if match, _ := regexp.MatchString("^map.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + typeJob + "/" + target + "/" + f.Name())
+			if err != nil {
+				return nil, errors.New("Lecture impossible: js/" + typeJob + "/" + target + "/" + f.Name())
+			}
+			mr.Map = mr.Map + string(fp)
+		}
+		if match, _ := regexp.MatchString("^reduce.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + typeJob + "/" + target + "/" + f.Name())
+			if err != nil {
+				return nil, errors.New("Lecture impossible: js/" + typeJob + "/" + target + "/" + f.Name())
+			}
+			mr.Reduce = mr.Reduce + string(fp)
+		}
+		if match, _ := regexp.MatchString("^finalize.*js", f.Name()); match {
+			fp, err := ioutil.ReadFile("js/" + typeJob + "/" + target + "/" + f.Name())
+			if err != nil {
+				return nil, errors.New("Lecture impossible: js/" + typeJob + "/" + target + "/" + f.Name())
+			}
+			mr.Finalize = mr.Finalize + string(fp)
+		}
+	}
+	return mr, nil
+
+}
+
 func (mr *MapReduceJS) load(routine string, scope string) error {
 	file, err := ioutil.ReadDir("js/" + routine + "/" + scope)
 	sort.Slice(file, func(i, j int) bool {
@@ -83,27 +126,33 @@ func dataPrediction(c *gin.Context) {
 	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
 }
 
-func reduce(c *gin.Context) {
-
-	// Détermination scope traitement
+func reduceHandler(c *gin.Context) {
 	algo := c.Params.ByName("algo")
 	batchKey := c.Params.ByName("batch")
 	siret := c.Params.ByName("siret")
 
 	batch, _ := getBatch(batchKey)
+	result, err := reduce(batch, algo, siret)
 
-	db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch.ID.Key, "_id.algo": algo})
+	if err != nil {
+		c.JSON(500, err.Error())
+	} else {
+		c.JSON(200, result)
+	}
+}
 
-	dateDebut := batch.Params.DateDebut
-	dateFin := batch.Params.DateFin
-	dateFinEffectif := batch.Params.DateFinEffectif
-
+func reduce(batch AdminBatch, algo string, siret string) (interface{}, error) {
 	var queryEtablissement interface{}
 	var queryEntreprise interface{}
 	var output interface{}
 	var result interface{}
 
+	dateDebut := batch.Params.DateDebut
+	dateFin := batch.Params.DateFin
+	dateFinEffectif := batch.Params.DateFinEffectif
+
 	if siret == "" {
+		db.DB.C("Features").RemoveAll(bson.M{"_id.batch": batch.ID.Key, "_id.algo": algo})
 		queryEtablissement = bson.M{"value.index." + algo: true}
 		queryEntreprise = nil
 		output = bson.M{"merge": "Features"}
@@ -121,14 +170,12 @@ func reduce(c *gin.Context) {
 	errUn := MRUnion.load(algo, "union")
 
 	if errEt != nil || errEn != nil || errUn != nil {
-		c.JSON(500, "Problème d'accès aux fichiers MapReduce")
-		return
+		return nil, fmt.Errorf("Problème d'accès aux fichiers MapReduce")
 	}
 
 	naf, errNAF := loadNAF()
 	if errNAF != nil {
-		c.JSON(500, "Problème d'accès aux fichiers naf")
-		return
+		return nil, fmt.Errorf("Problème d'accès aux fichiers naf")
 	}
 
 	scope := bson.M{
@@ -151,8 +198,7 @@ func reduce(c *gin.Context) {
 
 	_, err := db.DB.C("Etablissement").Find(queryEtablissement).MapReduce(jobEtablissement, nil)
 	if err != nil {
-		c.JSON(500, err)
-		return
+		return nil, fmt.Errorf("Erreur du traitement MapReduce Etablissement: " + err.Error())
 	}
 
 	jobEntreprise := &mgo.MapReduce{
@@ -165,8 +211,7 @@ func reduce(c *gin.Context) {
 
 	_, err = db.DB.C("Entreprise").Find(queryEntreprise).MapReduce(jobEntreprise, nil)
 	if err != nil {
-		c.JSON(500, err)
-		return
+		return nil, fmt.Errorf("Erreur du traitement Entreprise: " + err.Error())
 	}
 
 	jobUnion := &mgo.MapReduce{
@@ -184,17 +229,10 @@ func reduce(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(500, err)
-		return
+		return result, fmt.Errorf("Erreur du traitement MapReduce Union")
 	}
 
-	err = db.DB.C("MRWorkspace").DropCollection()
-	if err != nil {
-		c.JSON(500, err)
-		return
-	}
-
-	c.JSON(200, result)
+	return result, nil
 
 }
 
@@ -351,12 +389,6 @@ func compactEntreprise(siren string) error {
 	return err
 }
 
-func dropBatch(c *gin.Context) {
-	batchKey := c.Params.ByName("batchKey")
-	change, err := db.DB.C("Admin").RemoveAll(bson.M{"_id.key": batchKey, "_id.type": "batch"})
-	c.JSON(200, []interface{}{err, change})
-
-}
 func getNAF(c *gin.Context) {
 	naf, err := loadNAF()
 	if err != nil {

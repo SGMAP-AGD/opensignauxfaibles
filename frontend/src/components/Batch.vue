@@ -51,7 +51,7 @@
             <v-list-tile-content>
               <v-list-tile-title
               :class="(type.type==currentType) ? 'selected': null">
-              {{ type.text }}>
+              {{ type.text }}
               </v-list-tile-title>
             </v-list-tile-content>
             <v-list-tile-action>
@@ -132,7 +132,7 @@ export default {
           key: 'reset',
           img: '/static/poubelle.png',
           description: 'Retour au batch précédent',
-          do (self) { self.$axios.get('/api/batch/reset') }
+          do (self) { self.$axios.get('/api/batch/revert') }
         },
         {text: 'Purger',
           color: 'blue',
@@ -147,6 +147,13 @@ export default {
           img: '/static/warning.png',
           description: 'Intégration des données et calcul des prédictions.',
           do (self) { self.$axios.get('/api/batch/process') }
+        },
+        {text: 'Clôture',
+          color: 'black',
+          key: 'close',
+          img: '/static/warning.png',
+          description: 'Clôture du batch en cours et création du suivant',
+          do (self) { self.$axios.get('/api/batch/next') }
         }
       ]
     }

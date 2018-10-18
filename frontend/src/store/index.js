@@ -294,11 +294,12 @@ setInterval(
     },
     180000)
 
-setInterval(
-      function () {
-        if (store.state.token != null && !store.state.socket.isConnected === false) {
-          store.dispatch('checkEpoch')
-        }
-      },
-      1000)
+// setInterval(
+//       function () {
+//         if (store.state.token != null && !store.state.socket.isConnected === false) {
+//           store.dispatch('checkEpoch')
+//         }
+//       },
+//       1000)
+
 export default store
