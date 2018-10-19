@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 
 // AdminBatch metadata Batch
 type AdminBatch struct {
-	ID        AdminID    `json:"id" bson:"_id"`
-	Files     BatchFiles `json:"files" bson:"files"`
-	Readonly  bool       `json:"readonly" bson:"readonly"`
-	Blacklist []string   `json:"blacklist" bson:"blacklist"`
-	Params    struct {
+	ID            AdminID    `json:"id" bson:"_id"`
+	Files         BatchFiles `json:"files" bson:"files"`
+	Readonly      bool       `json:"readonly" bson:"readonly"`
+	CompleteTypes []string   `json:"complete_types" bson:"complete_types"`
+	Params        struct {
 		DateDebut       time.Time `json:"date_debut" bson:"date_debut"`
 		DateFin         time.Time `json:"date_fin" bson:"date_fin"`
 		DateFinEffectif time.Time `json:"date_fin_effectif" bson:"date_fin_effectif"`
@@ -52,6 +53,47 @@ func (batch *AdminBatch) new(batchID string) error {
 	batch.ID.Key = batchID
 	batch.ID.Type = "batch"
 	batch.Files = BatchFiles{}
+	return nil
+}
+
+func nextBatchHandler(c *gin.Context) {
+	err := nextBatch()
+	if err != nil {
+		c.JSON(500, fmt.Errorf("Erreur nextBatch: "+err.Error()))
+	}
+	batches, _ := getBatches()
+	mainMessageChannel <- socketMessage{
+		Batches: batches,
+	}
+	c.JSON(200, "nextBatch ok")
+}
+
+func nextBatch() error {
+	batch := lastBatch()
+	spew.Dump(batch)
+	newBatchID, err := nextBatchID(batch.ID.Key)
+	if err != nil {
+		return fmt.Errorf("Mauvais numéro de batch: " + err.Error())
+	}
+	newBatch := AdminBatch{
+		ID: AdminID{
+			Key:  newBatchID,
+			Type: "batch",
+		},
+		CompleteTypes: batch.CompleteTypes,
+	}
+
+	batch.Readonly = true
+
+	err = batch.save()
+	if err != nil {
+		return fmt.Errorf("Erreur readonly Batch: " + err.Error())
+	}
+
+	err = newBatch.save()
+	if err != nil {
+		return fmt.Errorf("Erreur newBatch: " + err.Error())
+	}
 	return nil
 }
 
@@ -157,6 +199,12 @@ func processBatch() {
 	batch := lastBatch()
 	status.setDBStatus(sp("Import des fichiers"))
 	importBatch(&batch)
+	compactEntreprise("")
+	compactEtablissement("")
+	for _, algo := range []string{"algo1", "algo2"} {
+		_, err := reduce(batch, algo, "")
+		fmt.Println(err)
+	}
 	status.setDBStatus(nil)
 }
 
@@ -217,8 +265,70 @@ func addFileToBatch() chan newFile {
 	return channel
 }
 
-func purgeBatch(c *gin.Context) {}
+func purgeBatchHandler(c *gin.Context) {
+	err := purgeBatch()
+	if err != nil {
+		c.JSON(500, "Erreur dans la purge du batch: "+err.Error())
+	}
+}
 
-func resetBatch(c *gin.Context) {}
+func purgeBatch() error {
+	batch := lastBatch()
+
+	// prepareMRJob charge les fichiers MapReduce et fournit les paramètres pour l'exécution
+	MREntreprise, errEn := loadMR("purgeBatch", "entreprise")
+	MREtablissement, errEt := loadMR("purgeBatch", "etablissement")
+
+	if errEn != nil || errEt != nil {
+		return fmt.Errorf("Erreur de chargement MapReduce")
+	}
+
+	MREntreprise.Out = &bson.M{"replace": "Entreprise"}
+	MREtablissement.Out = &bson.M{"replace": "Etablissement"}
+
+	MREntreprise.Scope = &bson.M{
+		"currentBatch": batch.ID.Key,
+	}
+	MREtablissement.Scope = &bson.M{
+		"currentBatch": batch.ID.Key,
+	}
+
+	_, errEn = db.DB.C("Entreprise").Find(nil).MapReduce(MREntreprise, nil)
+	_, errEt = db.DB.C("Etablissement").Find(nil).MapReduce(MREtablissement, nil)
+
+	return nil
+}
+
+func revertBatchHandler(c *gin.Context) {
+	err := revertBatch()
+	if err != nil {
+		c.JSON(500, err)
+	}
+	batches, _ := getBatches()
+	mainMessageChannel <- socketMessage{
+		Batches: batches,
+	}
+	c.JSON(200, "ok")
+}
+
+func dropLastBatch() error {
+	batch := lastBatch()
+	_, err := db.DB.C("Admin").RemoveAll(bson.M{"_id.key": batch.ID.Key, "_id.type": "batch"})
+	return err
+}
+
+// revertBatch purge le batch et supprime sa référence dans la collection Admin
+func revertBatch() error {
+	err := purgeBatch()
+	if err != nil {
+		return fmt.Errorf("Erreur lors de la purge: " + err.Error())
+	}
+	err = dropLastBatch()
+	if err != nil {
+		return fmt.Errorf("Erreur lors de la purge: " + err.Error())
+	}
+
+	return nil
+}
 
 var addFileChannel = addFileToBatch()

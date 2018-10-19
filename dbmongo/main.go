@@ -28,7 +28,6 @@ func checkOrigin(r *http.Request) bool {
 
 func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
 	conn, err := wsupgrader.Upgrade(w, r, nil)
-	fmt.Println(err)
 	if err != nil {
 		fmt.Printf("Failed to set websocket upgrade: %+v", err)
 		return
@@ -141,15 +140,15 @@ func main() {
 		api.POST("/admin/batch", upsertBatch)
 		api.POST("/admin/batch/addFile", addFileToBatchHandler)
 		api.GET("/admin/batch", listBatch)
-		api.DELETE("/admin/batch", dropBatch)
 		api.GET("/admin/files", adminFiles)
 		api.GET("/admin/types", listTypes)
 		api.GET("/admin/clone/:to", cloneDB)
 		api.GET("/admin/features", adminFeature)
 		api.GET("/admin/status", getDBStatus)
 		api.GET("/admin/getLogs", getLogsHandler)
-		api.GET("/batch/reset", resetBatch)
-		api.GET("/batch/purge", purgeBatch)
+		api.GET("/batch/revert", revertBatchHandler)
+		api.GET("/batch/next", nextBatchHandler)
+		api.GET("/batch/purge", purgeBatchHandler)
 		api.GET("/batch/process", processBatchHandler)
 		api.POST("/admin/files", addFile)
 		api.GET("/data/naf", getNAF)
@@ -159,12 +158,12 @@ func main() {
 		api.GET("/data/etablissement/:batchKey/:siret", etablissementBrowseHandler)
 		api.GET("/data/etablissement/:batchKey", etablissementBrowseHandler)
 		api.GET("/import/:batch", importBatchHandler)
-		api.GET("/compact/etablissement/:siret", compactEtablissement)
-		api.GET("/compact/etablissement", compactEtablissement)
-		api.GET("/compact/entreprise/:siren", compactEntreprise)
-		api.GET("/compact/entreprise", compactEntreprise)
-		api.GET("/reduce/:algo/:batch/:siret", reduce)
-		api.GET("/reduce/:algo/:batch", reduce)
+		api.GET("/compact/etablissement/:siret", compactEtablissementHandler)
+		api.GET("/compact/etablissement", compactEtablissementHandler)
+		api.GET("/compact/entreprise/:siren", compactEntrepriseHandler)
+		api.GET("/compact/entreprise", compactEntrepriseHandler)
+		api.GET("/reduce/:algo/:batch/:siret", reduceHandler)
+		api.GET("/reduce/:algo/:batch", reduceHandler)
 	}
 
 	bind := viper.GetString("APP_BIND")

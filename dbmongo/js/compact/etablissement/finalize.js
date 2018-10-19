@@ -1,8 +1,7 @@
 function finalize(k, o) {
-    deleteOld = new Set(deleteOld)
 
     batches.reduce((m, batch) => {
-
+        var deleteOld = new Set(completeTypes[batch])
         o.batch[batch] = (o.batch[batch]||{})
         o.batch[batch].compact = (o.batch[batch].compact||{})
         o.batch[batch].compact["status"] = (o.batch[batch].compact["status"]||false)
@@ -26,12 +25,10 @@ function finalize(k, o) {
             keys.filter(key => (m[type].has(key))).forEach(key => delete o.batch[batch][type][key])
             m[type] = new Set([...m[type]].concat(keys))
             if (Object.keys(o.batch[batch][type]).length == 0) {delete o.batch[batch][type]}
-
         })
 
         o.batch[batch].compact = (o.batch[batch].compact||{})
         o.batch[batch].compact.status = true
-        
         return m
     }, {})
 

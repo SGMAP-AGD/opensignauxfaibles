@@ -72,10 +72,8 @@ func parseBDF(path []string) chan *BDF {
 				log(warning, "importBDF", "Erreurs de conversion constatées aux lignes suivantes: "+fmt.Sprintf("%v", errorLines))
 			}
 		}
-
 		close(outputChannel)
 	}()
-
 	return outputChannel
 }
 
