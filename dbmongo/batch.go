@@ -61,20 +61,31 @@ func nextBatchHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(500, fmt.Errorf("Erreur nextBatch: "+err.Error()))
 	}
+	batches, _ := getBatches()
+	mainMessageChannel <- socketMessage{
+		Batches: batches,
+	}
 	c.JSON(200, "nextBatch ok")
 }
 
 func nextBatch() error {
 	batch := lastBatch()
+	spew.Dump(batch)
+	newBatchID, err := nextBatchID(batch.ID.Key)
+	if err != nil {
+		return fmt.Errorf("Mauvais numéro de batch: " + err.Error())
+	}
 	newBatch := AdminBatch{
 		ID: AdminID{
-			Key:  batch.ID.Key,
+			Key:  newBatchID,
 			Type: "batch",
 		},
 		CompleteTypes: batch.CompleteTypes,
 	}
+
 	batch.Readonly = true
-	err := batch.save()
+
+	err = batch.save()
 	if err != nil {
 		return fmt.Errorf("Erreur readonly Batch: " + err.Error())
 	}
@@ -83,7 +94,6 @@ func nextBatch() error {
 	if err != nil {
 		return fmt.Errorf("Erreur newBatch: " + err.Error())
 	}
-
 	return nil
 }
 
@@ -266,7 +276,6 @@ func purgeBatch() error {
 	batch := lastBatch()
 
 	// prepareMRJob charge les fichiers MapReduce et fournit les paramètres pour l'exécution
-
 	MREntreprise, errEn := loadMR("purgeBatch", "entreprise")
 	MREtablissement, errEt := loadMR("purgeBatch", "etablissement")
 
@@ -294,6 +303,10 @@ func revertBatchHandler(c *gin.Context) {
 	err := revertBatch()
 	if err != nil {
 		c.JSON(500, err)
+	}
+	batches, _ := getBatches()
+	mainMessageChannel <- socketMessage{
+		Batches: batches,
 	}
 	c.JSON(200, "ok")
 }

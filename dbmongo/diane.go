@@ -285,6 +285,7 @@ func parseDiane(paths []string) chan *Diane {
 				outputChannel <- &diane
 
 			}
+			file.Close()
 		}
 		close(outputChannel)
 	}()

@@ -47,8 +47,8 @@
             color="grey darken-4"
           ></v-progress-circular>
       </v-tooltip>
-      
     </v-btn>
+
     <Uploads/>
       <v-dialog 
       lazy 
@@ -60,6 +60,7 @@
         <v-card
         style="min-height: 90vh;">
           <v-toolbar
+          style="vertical-align: middle"
           class="headline"
           color="grey darken-4"
           dark
@@ -69,7 +70,7 @@
               Activité Serveur
             </v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-toolbar-items>
+            <v-toolbar-items >
               <v-switch
               height="100%"
               v-for="(key,index) in avatar"
