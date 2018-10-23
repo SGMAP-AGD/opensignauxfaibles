@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"regexp"
 	"time"
 
 	"github.com/spf13/viper"
@@ -126,7 +127,7 @@ func insertEntreprise(db *mgo.Database) chan *ValueEntreprise {
 				objects = make([]interface{}, 0)
 				i = 0
 			}
-			if value.Value.Batch != nil {
+			if match, _ := regexp.MatchString("^[0-9]{9}$", value.Value.Siren); value.Value.Batch != nil && match {
 				if knownValue, ok := buffer[value.Value.Siren]; ok {
 					newValue, _ := (*knownValue).merge(*value)
 					buffer[value.Value.Siren] = &newValue
@@ -162,7 +163,7 @@ func insertEtablissement(db *mgo.Database) chan *ValueEtablissement {
 				objects = make([]interface{}, 0)
 				i = 0
 			}
-			if value.Value.Batch != nil {
+			if match, _ := regexp.MatchString("^[0-9]{14}$", value.Value.Siret); value.Value.Batch != nil && match {
 				if knownValue, ok := buffer[value.Value.Siret]; ok {
 					newValue, _ := (*knownValue).merge(*value)
 					buffer[value.Value.Siret] = &newValue
