@@ -19,7 +19,7 @@ type Altares struct {
 	CodeJournal   string    `json:"code_journal" bson:"code_journal"`
 	CodeEvenement string    `json:"code_evenement" bson:"code_evenement"`
 	Siret         string    `json:"-" bson:"-"`
-} 
+}
 
 func parseAltares(path string) chan *Altares {
 	outputChannel := make(chan *Altares)
@@ -44,7 +44,7 @@ func parseAltares(path string) chan *Altares {
 		for {
 			row, error := reader.Read()
 			if error == io.EOF {
-				break 
+				break
 			} else if error != nil {
 				// log.Fatal(error)
 			}
@@ -71,18 +71,20 @@ func parseAltares(path string) chan *Altares {
 }
 
 func importAltares(batch *AdminBatch) error {
-	for altares := range parseAltares(viper.GetString("APP_DATA") + batch.Files["altares"][0]) {
-		hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
+	for _, fileName := range batch.Files["altares"] {
+		for altares := range parseAltares(viper.GetString("APP_DATA") + fileName) {
+			hash := fmt.Sprintf("%x", structhash.Md5(altares, 1))
 
-		value := ValueEtablissement{
-			Value: Etablissement{
-				Siret: altares.Siret,
-				Batch: map[string]Batch{
-					batch.ID.Key: Batch{
-						Altares: map[string]*Altares{
-							hash: altares,
-						}}}}}
-		db.ChanEtablissement <- &value
+			value := ValueEtablissement{
+				Value: Etablissement{
+					Siret: altares.Siret,
+					Batch: map[string]Batch{
+						batch.ID.Key: Batch{
+							Altares: map[string]*Altares{
+								hash: altares,
+							}}}}}
+			db.ChanEtablissement <- &value
+		}
 	}
 	db.ChanEtablissement <- &ValueEtablissement{}
 	return nil
