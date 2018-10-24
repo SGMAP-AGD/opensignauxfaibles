@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -12,7 +11,8 @@ import (
 	"strings"
 )
 
-func readAndRandomCotisations(fileName string) []string {
+func readAndRandomCotisations(fileName string, outputFileName string) error {
+	// source
 	file, err := os.Open(fileName)
 	if err != nil {
 		log.Fatal(err)
@@ -20,11 +20,24 @@ func readAndRandomCotisations(fileName string) []string {
 	defer file.Close()
 	coef := make(map[string]float64)
 
+	// destination
+	outputFile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
 	reader := csv.NewReader(bufio.NewReader(file))
 	reader.Comma = ';'
 	row, err := reader.Read()
-	fmt.Println("\"" + strings.Join(row, "\";\"") + "\"")
-	// title, err := reader.Read()
+
+	// ligne de titre
+	row, err = reader.Read()
+	outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
+	_, err = outputFile.WriteString(outputRow)
+	if err != nil {
+		return err
+	}
 
 	for {
 		row, err := reader.Read()
@@ -46,7 +59,12 @@ func readAndRandomCotisations(fileName string) []string {
 			row[5] = strconv.Itoa(int(cotisDue * coef[row[0]]))
 		}
 
-		fmt.Println("\"" + strings.Join(row, "\";\"") + "\"")
+		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
+		_, err = outputFile.WriteString(outputRow)
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

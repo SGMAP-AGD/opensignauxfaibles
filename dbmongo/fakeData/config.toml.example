@@ -1,0 +1,8 @@
+##### Fichiers source, /!\ un seul fichier par type /!\
+debit = "/foo/bar/debits.csv"
+cotisations = "/foo/bar/cotisations.csv"
+comptes = "/foo/bar/comptes.csv"
+sirene = "/foo/bar/ésirene.csv"
+
+###### Les fichiers générés seront préfixés par outputPrefix
+prefixOutput = "fake-"

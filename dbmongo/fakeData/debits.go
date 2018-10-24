@@ -3,37 +3,60 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func readAndRandomDebits(fileName string) []string {
+func readAndRandomDebits(fileName string, outputFileName string) error {
+	// source
 	file, err := os.Open(fileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer file.Close()
-	coef := make(map[string]float64)
-
 	reader := csv.NewReader(bufio.NewReader(file))
 	reader.Comma = ';'
 
+	// destination
+	outputFile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
+	// ligne de titre
 	row, err := reader.Read()
-	fmt.Println("\"" + strings.Join(row, "\";\"") + "\"")
+	outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
+	_, err = outputFile.WriteString(outputRow)
+	if err != nil {
+		return err
+	}
+
+	// map des coefficients générés
+	coef := make(map[string]float64)
 
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
 			break
+		} else if err != nil {
+			return err
 		}
-		partOuvriere, _ := strconv.ParseFloat(row[4], 64)
+		partOuvriere, err := strconv.ParseFloat(row[4], 64)
+		if err != nil {
+			return err
+		}
 		partPatronale, _ := strconv.ParseFloat(row[5], 64)
+		if err != nil {
+			return err
+		}
 		partPenalite, _ := strconv.ParseFloat(row[15], 64)
+		if err != nil {
+			return err
+		}
 
 		if c, ok := coef[row[0]]; ok {
 			row[4] = strconv.Itoa(int(partOuvriere * c))
@@ -45,7 +68,12 @@ func readAndRandomDebits(fileName string) []string {
 			row[5] = strconv.Itoa(int(partPatronale * coef[row[0]]))
 			row[15] = strconv.Itoa(int(partPenalite * coef[row[0]]))
 		}
-		fmt.Println("\"" + strings.Join(row, "\";\"") + "\"")
+
+		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
+		_, err = outputFile.WriteString(outputRow)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
