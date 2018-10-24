@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func readAndRandomDebits(fileName string, outputFileName string) error {
+func readAndRandomDebits(fileName string, outputFileName string, mapping map[string]string) error {
 	// source
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -68,7 +68,7 @@ func readAndRandomDebits(fileName string, outputFileName string) error {
 			row[5] = strconv.Itoa(int(partPatronale * coef[row[0]]))
 			row[15] = strconv.Itoa(int(partPenalite * coef[row[0]]))
 		}
-
+		row[0] = mapping[row[0]]
 		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
 		_, err = outputFile.WriteString(outputRow)
 		if err != nil {

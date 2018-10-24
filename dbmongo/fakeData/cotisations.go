@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func readAndRandomCotisations(fileName string, outputFileName string) error {
+func readAndRandomCotisations(fileName string, outputFileName string, mapping map[string]string) error {
 	// source
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -29,10 +29,9 @@ func readAndRandomCotisations(fileName string, outputFileName string) error {
 
 	reader := csv.NewReader(bufio.NewReader(file))
 	reader.Comma = ';'
-	row, err := reader.Read()
 
 	// ligne de titre
-	row, err = reader.Read()
+	row, err := reader.Read()
 	outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
 	_, err = outputFile.WriteString(outputRow)
 	if err != nil {
@@ -58,6 +57,8 @@ func readAndRandomCotisations(fileName string, outputFileName string) error {
 			row[3] = strconv.Itoa(int(encDirect * coef[row[0]]))
 			row[5] = strconv.Itoa(int(cotisDue * coef[row[0]]))
 		}
+
+		row[0] = mapping[row[0]]
 
 		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
 		_, err = outputFile.WriteString(outputRow)
