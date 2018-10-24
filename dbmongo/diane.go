@@ -74,8 +74,6 @@ type Diane struct {
 	ConcesBrevEtDroitsSim                *float64 `json:"conces_brev_et_droits_sim" bson:"conces_brev_et_droits_sim"`
 	NotePreface                          *float64 `json:"note_preface" bson:"note_preface"`
 	NombreEtabSecondaire                 *int     `json:"nombre_etab_secondaire" bson:"nombre_etab_secondaire"`
-	//CapitalSocialOuIndividuel2         *float64 `json:"capital_social_ou_individuel_2" bson:"capital_social_ou_individuel_2"`
-	//ResultatNetConsolide2              *float64 `json:"resultat_net_consolide_2" bson:"resultat_net_consolide_2"`
 }
 
 func parseDiane(paths []string) chan *Diane {
