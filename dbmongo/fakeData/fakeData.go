@@ -33,6 +33,17 @@ func main() {
 		fmt.Println("OK -> " + outputCompte)
 	}
 
+	// Traitement altares
+	altares := viper.GetString("altares")
+	outputAltares := outputFileName(prefixOutput, altares)
+	fmt.Print("Fake altares: ")
+	err = readAndRandomAltares(altares, outputAltares, mapping)
+	if err != nil {
+		fmt.Println("Fail : " + err.Error())
+		panic("Interruption.")
+	} else {
+		fmt.Println("OK -> " + outputAltares)
+	}
 	// Traitement des débits
 	debits := viper.GetString("debits")
 	outputDebits := outputFileName(viper.GetString("prefixOutput"), debits)
