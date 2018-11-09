@@ -17,7 +17,7 @@ Rdir/RData/*
 Rdir/exploration/*
 Rdir/pipes/my_log_dir/*
 Rdir/pipes/RNNs/*
-dbmongo/config.toml
+dbmongo/config.toml*
 dbmongo/debug
 dbmongo/dbmongo
 dbmongo/fakeData/config.toml

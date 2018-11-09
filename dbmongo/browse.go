@@ -107,12 +107,12 @@ func predictionBrowse(c *gin.Context) {
 	}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from":         "Browser",
+		"from":         "Entreprise",
 		"localField":   "siren",
 		"foreignField": "_id",
 		"as":           "entreprise"}})
 
-	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.bdf", 0}}}})
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.batch.1802.bdf", 0}}}})
 
 	pipeline = append(pipeline, bson.M{"$project": bson.M{"entreprise": 0}})
 

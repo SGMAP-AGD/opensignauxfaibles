@@ -111,21 +111,6 @@ func (mr *MapReduceJS) load(routine string, scope string) error {
 	return nil
 }
 
-func dataPrediction(c *gin.Context) {
-	var prediction []Prediction
-	var etablissement []ValueEtablissement
-	var siret []string
-
-	db.DB.C("prediction").Find(nil).Sort("-prob").Limit(50).All(&prediction)
-	for _, r := range prediction {
-		siret = append(siret, r.Siret)
-	}
-
-	query := bson.M{"_id": bson.M{"$in": siret}}
-	db.DB.C("Etablissement").Find(query).All(&etablissement)
-	c.JSON(200, bson.M{"prediction": prediction, "etablissement": etablissement})
-}
-
 func reduceHandler(c *gin.Context) {
 	algo := c.Params.ByName("algo")
 	batchKey := c.Params.ByName("batch")
@@ -369,7 +354,7 @@ func compactEntreprise(siren string) error {
 		Finalize: string(MREntreprise.Finalize),
 		Out:      output,
 		Scope: bson.M{
-			"batches": batches,
+			"batches": batchesID,
 			"types": []string{
 				"bdf",
 				"diane",
