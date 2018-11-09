@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
 )
@@ -70,7 +69,6 @@ func nextBatchHandler(c *gin.Context) {
 
 func nextBatch() error {
 	batch := lastBatch()
-	spew.Dump(batch)
 	newBatchID, err := nextBatchID(batch.ID.Key)
 	if err != nil {
 		return fmt.Errorf("Mauvais numéro de batch: " + err.Error())
@@ -141,7 +139,6 @@ func listBatch(c *gin.Context) {
 	var batch []AdminBatch
 	err := db.DB.C("Admin").Find(bson.M{"_id.type": "batch"}).Sort("-_id.key").All(&batch)
 	if err != nil {
-		spew.Dump(err)
 		c.JSON(500, err)
 		return
 	}

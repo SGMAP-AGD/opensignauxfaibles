@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
-) 
+)
 
 // AdminID Collection key
 type AdminID struct {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/chrnin/ganboard"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -63,7 +62,6 @@ func getKBTasks(c *gin.Context) {
 	if err == nil {
 		c.JSON(200, allTasks)
 	} else {
-		spew.Dump(err)
 		c.JSON(500, err)
 	}
 }

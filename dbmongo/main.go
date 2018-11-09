@@ -41,6 +41,8 @@ func wshandler(w http.ResponseWriter, r *http.Request, jwt string) {
 
 }
 
+const identityKey = "id"
+
 func main() {
 	// Lancer Rserve en background
 
@@ -60,51 +62,24 @@ func main() {
 
 	r.Use(cors.New(config))
 
-	var identityKey = "id"
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "test zone",
 		Key:         []byte("secret key"),
 		Timeout:     time.Hour,
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
-		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*User); ok {
-				return jwt.MapClaims{
-					identityKey: v.UserName,
-				}
-			}
-			return jwt.MapClaims{}
-		},
+		PayloadFunc: payload,
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
-			return &User{
-				UserName: claims["id"].(string),
+			return &AdminUser{
+				ID: AdminID{
+					Type: "credential",
+					Key:  claims["id"].(string),
+				},
 			}
 		},
-		Authenticator: func(c *gin.Context) (interface{}, error) {
-			var loginVals login
-			if err := c.ShouldBind(&loginVals); err != nil {
-				return "", jwt.ErrMissingLoginValues
-			}
-			userID := loginVals.Username
-			password := loginVals.Password
-
-			if (userID == "admin" && password == "admin") || (userID == "test" && password == "test") {
-				return &User{
-					UserName:  userID,
-					LastName:  "Bo-Yi",
-					FirstName: "Wu",
-				}, nil
-			}
-			return nil, jwt.ErrFailedAuthentication
-		},
-		Authorizator: func(data interface{}, c *gin.Context) bool {
-			if v, ok := data.(*User); ok && v.UserName == "admin" {
-				return true
-			}
-
-			return false
-		},
+		Authenticator: authenticator,
+		Authorizator:  authorizator,
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, gin.H{
 				"code":    code,
@@ -124,7 +99,7 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
 	r.POST("/login", authMiddleware.LoginHandler)
-
+	r.GET("/hash/:password", hashPassword)
 	r.GET("/ws/:jwt", func(c *gin.Context) {
 		wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
 	})

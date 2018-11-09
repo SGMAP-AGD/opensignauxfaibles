@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 
 	"github.com/cnf/structhash"
@@ -146,7 +145,6 @@ func importAPDemande(batch *AdminBatch) error {
 								hash: apdemande,
 							}}}}}
 			if value.Value.Batch == nil {
-				spew.Dump(value)
 			}
 			db.ChanEtablissement <- &value
 		}
@@ -223,7 +221,6 @@ func importAPConso(batch *AdminBatch) error {
 								hash: apconso,
 							}}}}}
 			if value.Value.Batch == nil {
-				spew.Dump(value)
 			}
 			db.ChanEtablissement <- &value
 		}
