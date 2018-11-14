@@ -12,7 +12,7 @@
         <v-card-title>
         </v-card-title>
         <v-card-text>
-          <v-container style="min-height: 5000px;">
+          <v-container>
             <v-layout wrap>
               <v-flex xs12>
                           <v-toolbar

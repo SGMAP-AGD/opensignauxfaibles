@@ -57,8 +57,7 @@
         <v-btn flat lazy icon slot="activator" >
           <v-icon small color="grey darken-4">fa-bell</v-icon>
         </v-btn>
-        <v-card
-        style="min-height: 90vh;">
+        <v-card>
           <v-toolbar
           style="vertical-align: middle"
           class="headline"
@@ -188,7 +187,11 @@ export default {
         { title: 'Données',
           action: '/data',
           icon: 'fa-database',
-          color: 'red darken-4' }
+          color: 'red darken-4' },
+        { title: 'Administration',
+          action: '/admin',
+          icon: 'fa-users',
+          color: 'gray darken-4' }
       ],
       avatar: {
         debug: {icon: 'fa-cogs', color: 'blue'},
@@ -248,7 +251,6 @@ v-list {
   color: "black";
 }
 #app {
-  min-height: 5000px;
   background-image: url("/static/bgapp.png");
 }
 .span {

@@ -20,7 +20,6 @@
       </v-tab>
       <v-tab-item
       dark
-      style="min-height: 10000px;"
       v-for="(batch, rank) in batches"
       :key="rank"
       >

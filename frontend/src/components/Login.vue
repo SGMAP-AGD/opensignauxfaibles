@@ -1,5 +1,29 @@
 <template>
-<v-container fluid >
+      <v-container fluid fill-height>
+        <v-layout align-center justify-center>
+          <v-flex xs12 sm8 md4>
+            <v-card class="elevation-12">
+                              <v-form @submit="login">
+
+              <v-toolbar dark color="primary">
+                <v-toolbar-title>Identification</v-toolbar-title>
+                <v-spacer></v-spacer>
+              </v-toolbar>
+              <v-card-text>
+                  <v-text-field prepend-icon="person" label="Nom d'utilisateur" v-model="username"></v-text-field >
+                  <v-text-field prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" type="submit">Login</v-btn>
+              </v-card-actions>
+                              </v-form>
+
+            </v-card>
+          </v-flex>
+        </v-layout>
+</v-container>
+<!-- <v-container fluid >
   <v-layout align-center justify-center>
     <v-flex xs4>
       <v-card class="elevation-6">
@@ -21,7 +45,7 @@
       </v-card>
     </v-flex>
   </v-layout>
-</v-container>
+</v-container> -->
 </template>
 
 <script>

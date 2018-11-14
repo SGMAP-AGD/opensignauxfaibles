@@ -1,6 +1,8 @@
 <template>
 <div>
-
+  <v-navigation-drawer class="drawer">
+    Hi !
+  </v-navigation-drawer>
   <v-container grid-list-md text-xs-center>
     <v-layout>
       <v-flex key="database" xs3>
@@ -68,5 +70,8 @@ li {
 }
 a {
   color: #42b983;
+}
+.drawer {
+  z-index: 1;
 }
 </style>

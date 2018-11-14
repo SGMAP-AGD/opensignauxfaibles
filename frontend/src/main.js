@@ -8,7 +8,17 @@ import 'vuetify/dist/vuetify.min.css'
 import store from './store'
 import axios from 'axios'
 
-Vue.use(Vuetify)
+// Helpers
+import colors from 'vuetify/es5/util/colors'
+
+Vue.use(Vuetify, {
+  theme: {
+    primary: colors.indigo.darken4, // #E53935
+    secondary: colors.indigo.lighten4, // #FFCDD2
+    accent: colors.red.base // #3F51B5
+  }
+})
+
 
 Vue.config.productionTip = false
 
