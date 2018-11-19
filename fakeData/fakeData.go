@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -29,38 +30,45 @@ func run(name string, handler randomizer, mapping map[string]string) error {
 }
 
 func main() {
-
-	checkPtr := flag.String("check", "", "Check configuration.")
-	randomPtr := flag.String("random", "", "Randomize datasource.")
-	uniquePtr := flag.Bool("unique", false, "Measure unique values of a metric.")
+	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Parse()
 
-	fmt.Printf("textPtr: %s, metricPtr: %s, uniquePtr: %t\n", *checkPtr, *randomPtr, *uniquePtr)
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic("Erreur à la lecture de la configuration:" + err.Error())
+	}
 
-	// viper.SetConfigName("config")
-	// viper.SetConfigType("toml")
-	// viper.AddConfigPath(".")
-	// err := viper.ReadInConfig()
-	// if err != nil {
-	// 	panic("Erreur à la lecture de la configuration:" + err.Error())
-	// }
+	// Génération des numéros de comptes
+	outputCompte := outputFileName(viper.GetString("prefixOutput"), viper.GetString("comptes"))
+	fmt.Print("Fake comptes: ")
+	mapping, err := readAndRandomComptes(viper.GetString("comptes"), outputCompte)
+	if err != nil {
+		fmt.Println("Fail : " + err.Error())
+		fmt.Println("Interruption.")
+	} else {
+		fmt.Println("OK -> " + outputCompte)
+	}
 
-	// // Génération des numéros de comptes
-	// outputCompte := outputFileName(viper.GetString("prefixOutput"), viper.GetString("comptes"))
-	// fmt.Print("Fake comptes: ")
-	// mapping, err := readAndRandomComptes(viper.GetString("comptes"), outputCompte)
+	// Traitement Banque de France
+	err = run("bdf", readAndRandomBDF, mapping)
+	if err != nil {
+		panic(err)
+	}
+
+	// // Traitement Effectifs
+	// err = run("emploi", readAndRandomEmploi, mapping)
 	// if err != nil {
-	// 	fmt.Println("Fail : " + err.Error())
-	// 	fmt.Println("Interruption.")
-	// } else {
-	// 	fmt.Println("OK -> " + outputCompte)
+	// 	panic(err)
 	// }
 
 	// // Traitement des délais
-	// // err = run("delais", readAndRandomDelais, mapping)
-	// // if err != nil {
-	// // 	panic(err)
-	// // }
+	// err = run("delais", readAndRandomDelais, mapping)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// // Traitement sirene
 	// err = run("sirene", readAndRandomSirene, mapping)
@@ -68,56 +76,29 @@ func main() {
 	// 	panic(err)
 	// }
 
-	// // err = run("debits", readAndRandomDebits, mapping)
-	// // if err != nil {
-	// // 	panic(err)
-	// // }
-	// // // Traitement des débits
-	// // debits := viper.GetString("debits")
-	// // outputDebits := outputFileName(viper.GetString("prefixOutput"), debits)
-	// // fmt.Print("Fake débits: ")
-	// // err = readAndRandomDebits(debits, outputDebits, mapping)
-	// // if err != nil {
-	// // 	fmt.Println("Fail : " + err.Error())
-	// // 	fmt.Println("Interruption.")
-	// // } else {
-	// // 	fmt.Println("OK -> " + outputDebits)
-	// // }
+	// // Traitement débits
+	// err = run("debits", readAndRandomDebits, mapping)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// // // Traitement altares
-	// // altares := viper.GetString("altares")
-	// // outputAltares := outputFileName(prefixOutput, altares)
-	// // fmt.Print("Fake altares: ")
-	// // err = readAndRandomAltares(altares, outputAltares, mapping)
-	// // if err != nil {
-	// // 	fmt.Println("Fail : " + err.Error())
-	// // 	panic("Interruption.")
-	// // } else {
-	// // 	fmt.Println("OK -> " + outputAltares)
-	// // }
-	// // // Traitement des débits
-	// // debits := viper.GetString("debits")
-	// // outputDebits := outputFileName(viper.GetString("prefixOutput"), debits)
-	// // fmt.Print("Fake débits: ")
-	// // err = readAndRandomDebits(debits, outputDebits, mapping)
-	// // if err != nil {
-	// // 	fmt.Println("Fail : " + err.Error())
-	// // 	fmt.Println("Interruption.")
-	// // } else {
-	// // 	fmt.Println("OK -> " + outputDebits)
-	// // }
+	// // Traitement altares
+	// err = run("altares", readAndRandomAltares, mapping)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// // // Traitement des cotisations
-	// // cotisations := viper.GetString("cotisations")
-	// // outputCotisations := outputFileName(viper.GetString("prefixOutput"), cotisations)
-	// // fmt.Print("Fake cotisations: ")
-	// // err = readAndRandomCotisations(cotisations, outputCotisations, mapping)
-	// // if err != nil {
-	// // 	fmt.Println("Fail : " + err.Error())
-	// // 	fmt.Println("Interruption.")
-	// // } else {
-	// // 	fmt.Println("OK -> " + outputCotisations)
-	// // }
+	// // Traitement cotisations
+	// err = run("cotisations", readAndRandomCotisations, mapping)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// // Traitement predictions
+	// err = run("prediction", readAndRandomPrediction, mapping)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func outputFileName(prefixOutput string, fileName string) string {

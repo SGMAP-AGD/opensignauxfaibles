@@ -8,12 +8,11 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/globalsign/mgo"
 )
 
-// Prediction ligne de prédiction.
+// Prediction prédiction
 type Prediction struct {
 	ID struct {
 		Siret string `json:"siret" bson:"siret"`
@@ -34,54 +33,8 @@ type Prediction struct {
 	CCSF          bool    `json:"ccsf" bson:"ccsf"`
 }
 
-func readAndRandomPrediction(fileName string, outputFileName string, mapping map[string]string) error {
-	// source
-	file, err := os.Open(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	// destination
-	outputFile, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE, 0660)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
-
-	reader := csv.NewReader(bufio.NewReader(file))
-	reader.Comma = ';'
-
-	// ligne de titre
-	row, err := reader.Read()
-	outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
-	_, err = outputFile.WriteString(outputRow)
-	if err != nil {
-		return err
-	}
-
-	for {
-		row, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		row[0] = mapping[row[0]]
-		row[3] = ""
-		row[4] = "21"
-		row[5] = "Bourgogne-Franche-Comté"
-		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
-		_, err = outputFile.WriteString(outputRow)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func importPrediction(mapping map[string]string) {
-
-	csvFile, _ := os.Open("./prediction_1809_utf.csv")
+func main() {
+	csvFile, _ := os.Open("/home/christophe/Project/data-fake/fake-prediction.csv")
 
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 	reader.LazyQuotes = true
@@ -154,7 +107,7 @@ func importPrediction(mapping map[string]string) {
 		fmt.Println(err)
 		return
 	}
-	db := mongodb.DB("signauxfaibles")
+	db := mongodb.DB("fakesignauxfaibles")
 
 	db.C("Prediction").Insert(prediction...)
 }

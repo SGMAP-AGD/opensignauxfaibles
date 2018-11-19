@@ -10,7 +10,6 @@ import (
 
 // prepareMRJob charge les fichiers MapReduce et fournit les paramètres pour l'exécution
 func prepareMRJob(batchKey string, id string, typeJob string, target string) (*mgo.MapReduce, *bson.M, error) {
-
 	query := &bson.M{
 		"_id": id,
 	}
@@ -123,7 +122,6 @@ func predictionBrowse(c *gin.Context) {
 		return
 	}
 	c.JSON(200, result)
-
 }
 
 // func predictionBrowse(c *gin.Context) {
