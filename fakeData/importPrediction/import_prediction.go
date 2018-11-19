@@ -100,14 +100,16 @@ func main() {
 
 		prediction = append(prediction, p)
 	}
-
+	fmt.Println(len(prediction))
 	mongodb, err := mgo.Dial("")
 	if err != nil {
 		fmt.Println("pouet pouet")
 		fmt.Println(err)
 		return
 	}
+
 	db := mongodb.DB("fakesignauxfaibles")
 
-	db.C("Prediction").Insert(prediction...)
+	err = db.C("Prediction").Insert(prediction...)
+	fmt.Println(err)
 }

@@ -39,7 +39,7 @@ func parseAltares(path string) chan *Altares {
 	codeJournalIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Code du journal" })
 	codeEvenementIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Code de la nature de l'événement" })
 	siretIndex := sliceIndex(len(fields), func(i int) bool { return fields[i] == "Siret" })
-
+	fmt.Println(dateEffetIndex, dateParutionIndex, codeEvenementIndex, codeJournalIndex, siretIndex)
 	go func() {
 		for {
 			row, error := reader.Read()
@@ -48,7 +48,6 @@ func parseAltares(path string) chan *Altares {
 			} else if error != nil {
 				// log.Fatal(error)
 			}
-
 			dateEffet, err := time.Parse("2006-01-02", row[dateEffetIndex])
 			dateParution, _ := time.Parse("2006-01-02", row[dateParutionIndex])
 

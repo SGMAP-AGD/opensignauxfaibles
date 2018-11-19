@@ -10,9 +10,10 @@ function finalize(k, o) {
             m[type] = (m[type] || new Set())
 
             var keys = Object.keys(o.batch[batch][type])
+            o.batch[batch].compact.delete = (o.batch[batch].compact.delete||{})
+
             if (deleteOld.has(type) && o.batch[batch].compact.status == false) {
                 var discardKeys = [...m[type]].filter(key => !(new Set(keys).has(key)))
-                o.batch[batch].compact.delete = (o.batch[batch].compact.delete||{})
                 o.batch[batch].compact.delete[type] = discardKeys;
                 discardKeys.forEach(key => {
                     m[type].delete(key)

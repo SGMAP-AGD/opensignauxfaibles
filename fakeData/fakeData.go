@@ -59,46 +59,46 @@ func main() {
 	}
 
 	// // Traitement Effectifs
-	// err = run("emploi", readAndRandomEmploi, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("emploi", readAndRandomEmploi, mapping)
+	if err != nil {
+		panic(err)
+	}
 
 	// // Traitement des délais
-	// err = run("delais", readAndRandomDelais, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("delais", readAndRandomDelais, mapping)
+	if err != nil {
+		panic(err)
+	}
 
 	// // Traitement sirene
-	// err = run("sirene", readAndRandomSirene, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("sirene", readAndRandomSirene, mapping)
+	if err != nil {
+		panic(err)
+	}
 
 	// // Traitement débits
-	// err = run("debits", readAndRandomDebits, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("debits", readAndRandomDebits, mapping)
+	if err != nil {
+		panic(err)
+	}
 
 	// // Traitement altares
-	// err = run("altares", readAndRandomAltares, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("altares", readAndRandomAltares, mapping)
+	if err != nil {
+		panic(err)
+	}
 
 	// // Traitement cotisations
-	// err = run("cotisations", readAndRandomCotisations, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = run("cotisations", readAndRandomCotisations, mapping)
+	if err != nil {
+		panic(err)
+	}
 
-	// // Traitement predictions
-	// err = run("prediction", readAndRandomPrediction, mapping)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// Traitement predictions
+	err = run("prediction", readAndRandomPrediction, mapping)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func outputFileName(prefixOutput string, fileName string) string {

@@ -27,7 +27,7 @@ func readAndRandomAltares(fileName string, outputFileName string, mapping map[st
 
 	// ligne de titre
 	row, err := reader.Read()
-	outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"
+	outputRow := strings.Join(row, ",") + "\n"
 	_, err = outputFile.WriteString(outputRow)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func readAndRandomAltares(fileName string, outputFileName string, mapping map[st
 		newSiret, ok := mapping[row[idx["Siret"]]]
 		output[idx["Siret"]] = newSiret
 		if ok {
-			outputRow := "\"" + strings.Join(output, "\";\"") + "\"\n"
+			outputRow := strings.Join(output, ",") + "\n"
 
 			_, err = outputFile.WriteString(outputRow)
 			if err != nil {

@@ -63,7 +63,6 @@ func parseBDF(path []string) chan *BDF {
 							e++
 							errorLines = append(errorLines, n)
 						}
-
 					}
 				}
 			}

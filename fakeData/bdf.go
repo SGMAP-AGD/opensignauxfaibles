@@ -10,9 +10,7 @@ import (
 )
 
 func readAndRandomBDF(fileName string, outputFileName string, mapping map[string]string) error {
-
 	file, err := xlsx.OpenFile(fileName)
-
 	if err != nil {
 		return err
 	}
@@ -24,7 +22,6 @@ func readAndRandomBDF(fileName string, outputFileName string, mapping map[string
 		sirens[k[0:9]] = v[0:9]
 	}
 	for _, sheet := range file.Sheets {
-
 		for _, row := range sheet.Rows[1:] {
 			row.Cells[3].Value = ""
 			siren := strings.Replace(row.Cells[0].Value, " ", "", -1)
@@ -53,11 +50,9 @@ func readAndRandomBDF(fileName string, outputFileName string, mapping map[string
 			if row.Cells[10].Value != "" {
 				row.Cells[10].Value = fmt.Sprintf("%f", c10*(rand.Float64()*0.5+0.75))
 			}
-
 		}
 		outputFile.Sheet["Sheet1"] = sheet
 	}
-
 	err = file.Save(outputFileName)
 
 	return nil
