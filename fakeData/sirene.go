@@ -85,9 +85,9 @@ func readAndRandomSirene(fileName string, outputFileName string, mapping map[str
 			// siren
 			output[0] = v[0:9]
 			// nic
-			output[1] = v[9:13]
+			output[1] = v[9:14]
 			// nic siege
-			output[65] = v[9:13]
+			output[65] = v[9:14]
 
 			output[16] = "21"
 			output[19] = "RUE"
