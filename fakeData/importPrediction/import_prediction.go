@@ -36,6 +36,8 @@ type Prediction struct {
 func main() {
 	csvFile, _ := os.Open("/home/christophe/Project/data-fake/fake-prediction.csv")
 
+	predictionDict := make(map[string]Prediction)
+
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 	reader.LazyQuotes = true
 	reader.Comma = ';'
@@ -50,66 +52,76 @@ func main() {
 			fmt.Println("niktoo")
 			log.Fatal(error)
 		}
+		if line[0] != "" {
+			proba, _ := strconv.ParseFloat(line[1], 64)
+			diff, _ := strconv.ParseFloat(line[2], 64)
+			effectif, _ := strconv.Atoi(line[11])
+			var ccsf bool
+			if line[12] == "" {
+				ccsf = false
+			} else {
+				ccsf = true
+			}
 
-		proba, _ := strconv.ParseFloat(line[1], 64)
-		diff, _ := strconv.ParseFloat(line[2], 64)
-		effectif, _ := strconv.Atoi(line[11])
-		var ccsf bool
-		if line[12] == "" {
-			ccsf = false
-		} else {
-			ccsf = true
+			var defaultUrssaf bool
+			if line[7] == "TRUE" {
+				defaultUrssaf = true
+			} else {
+				defaultUrssaf = false
+			}
+
+			var connu bool
+			if line[8] == "0" {
+				connu = false
+			} else {
+				connu = true
+			}
+
+			p := Prediction{
+				ID: struct {
+					Siret string `json:"siret" bson:"siret"`
+					Batch string `json:"batch" bson:"batch"`
+					Algo  string `json:"algo" bson:"algo"`
+				}{
+					Siret: line[0],
+					Batch: "1802",
+					Algo:  "algo1",
+				},
+				Prob:          proba,
+				Diff:          diff,
+				RaiSoc:        line[3],
+				Departement:   line[4],
+				Region:        line[5],
+				EtatProCol:    line[6],
+				DefaultUrssaf: defaultUrssaf,
+				Connu:         connu,
+				Niveau1:       line[10],
+				Effectif:      effectif,
+				CCSF:          ccsf,
+			}
+
+			predictionDict[line[0]] = p
 		}
-
-		var defaultUrssaf bool
-		if line[7] == "TRUE" {
-			defaultUrssaf = true
-		} else {
-			defaultUrssaf = false
-		}
-
-		var connu bool
-		if line[8] == "0" {
-			connu = false
-		} else {
-			connu = true
-		}
-
-		p := Prediction{
-			ID: struct {
-				Siret string `json:"siret" bson:"siret"`
-				Batch string `json:"batch" bson:"batch"`
-				Algo  string `json:"algo" bson:"algo"`
-			}{
-				Siret: line[0],
-				Batch: "1802",
-				Algo:  "algo1",
-			},
-			Prob:          proba,
-			Diff:          diff,
-			RaiSoc:        line[3],
-			Departement:   line[4],
-			Region:        line[5],
-			EtatProCol:    line[6],
-			DefaultUrssaf: defaultUrssaf,
-			Connu:         connu,
-			Niveau1:       line[10],
-			Effectif:      effectif,
-			CCSF:          ccsf,
-		}
-
-		prediction = append(prediction, p)
 	}
-	fmt.Println(len(prediction))
+
+	for _, v := range predictionDict {
+		prediction = append(prediction, v)
+	}
+
 	mongodb, err := mgo.Dial("")
 	if err != nil {
-		fmt.Println("pouet pouet")
-		fmt.Println(err)
+		fmt.Println("Insertion interrompue: " + err.Error())
 		return
 	}
 
 	db := mongodb.DB("fakesignauxfaibles")
 
 	err = db.C("Prediction").Insert(prediction...)
-	fmt.Println(err)
+
+	if err != nil {
+		fmt.Println("Insertion interrompue: " + err.Error())
+		return
+	}
+
+	fmt.Println("Prédictions insérées: " + strconv.Itoa(len(prediction)))
 }

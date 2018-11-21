@@ -17,7 +17,7 @@ type randomizer func(string, string, map[string]string) error
 // run execute une fonction de randomisation
 func run(name string, handler randomizer, mapping map[string]string) error {
 	file := viper.GetString(name)
-	outputFile := outputFileName(viper.GetString("prefixOutput"), file)
+	outputFile := outputFileNamePrefixer(viper.GetString("prefixOutput"), file)
 	fmt.Print("Fake " + name + ": ")
 	err := handler(file, outputFile, mapping)
 	if err != nil {
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	// Génération des numéros de comptes
-	outputCompte := outputFileName(viper.GetString("prefixOutput"), viper.GetString("comptes"))
+	outputCompte := outputFileNamePrefixer(viper.GetString("prefixOutput"), viper.GetString("comptes"))
 	fmt.Print("Fake comptes: ")
 	mapping, err := readAndRandomComptes(viper.GetString("comptes"), outputCompte)
 	if err != nil {
@@ -58,37 +58,37 @@ func main() {
 		panic(err)
 	}
 
-	// // Traitement Effectifs
+	// Traitement Effectifs
 	err = run("emploi", readAndRandomEmploi, mapping)
 	if err != nil {
 		panic(err)
 	}
 
-	// // Traitement des délais
+	// Traitement des délais
 	err = run("delais", readAndRandomDelais, mapping)
 	if err != nil {
 		panic(err)
 	}
 
-	// // Traitement sirene
+	// Traitement sirene
 	err = run("sirene", readAndRandomSirene, mapping)
 	if err != nil {
 		panic(err)
 	}
 
-	// // Traitement débits
+	// Traitement débits
 	err = run("debits", readAndRandomDebits, mapping)
 	if err != nil {
 		panic(err)
 	}
 
-	// // Traitement altares
+	// Traitement altares
 	err = run("altares", readAndRandomAltares, mapping)
 	if err != nil {
 		panic(err)
 	}
 
-	// // Traitement cotisations
+	// Traitement cotisations
 	err = run("cotisations", readAndRandomCotisations, mapping)
 	if err != nil {
 		panic(err)
@@ -101,7 +101,7 @@ func main() {
 	}
 }
 
-func outputFileName(prefixOutput string, fileName string) string {
+func outputFileNamePrefixer(prefixOutput string, fileName string) string {
 	path := strings.Split(fileName, "/")
 	path[len(path)-1] = prefixOutput + path[len(path)-1]
 

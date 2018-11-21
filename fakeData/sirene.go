@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-func newWords(wordList []string) {
-
-}
 func readAndRandomSirene(fileName string, outputFileName string, mapping map[string]string) error {
 	// source
 	file, err := os.Open(fileName)
@@ -61,23 +58,7 @@ func readAndRandomSirene(fileName string, outputFileName string, mapping map[str
 	}
 
 	wordLength := float64(len(wordList))
-	length := int(rand.Float32()*5) + 1
-
-	// sirene.APE = row[42]
-	// sirene.NatureActivite = row[52]
-	// sirene.ActiviteSaisoniere = row[55]
-	// sirene.ModaliteActivite = row[56]
-	// sirene.Productif = row[57]
-	// sirene.NatureJuridique = row[71]
-	// sirene.Categorie = row[82]
-	// sirene.Creation, _ = time.Parse("20060102", row[50])
-	// sirene.IndiceMonoactivite, _ = strconv.Atoi(row[85])
-	// sirene.TrancheCA, _ = strconv.Atoi(row[89])
-	// sirene.Sigle = row[61]
-	// sirene.DebutActivite, _ = time.Parse("20060102", row[51])
-	// sirene.Longitude, _ = strconv.ParseFloat(row[100], 64)
-	// sirene.Lattitude, _ = strconv.ParseFloat(row[101], 64)
-	// sirene.Adresse = [7]string{row[2], row[3], row[4], row[5], row[6], row[7], row[8]}
+	length := int(rand.Float64()*4) + 1
 
 	for _, v := range mapping {
 		if len(v) == 14 {
@@ -111,7 +92,7 @@ func readAndRandomSirene(fileName string, outputFileName string, mapping map[str
 			// raison sociale
 			output[2] = strings.Join(sentence, " ")
 
-			outputRow := strings.Join(output, ",") + "\n"
+			outputRow := "\"" + strings.Join(output, "\",\"") + "\"\n"
 			_, err = outputFile.WriteString(outputRow)
 			if err != nil {
 				return err

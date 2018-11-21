@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/globalsign/mgo"
+	"github.com/spf13/viper"
 )
 
 // Prediction ligne de prédiction.
@@ -34,6 +35,34 @@ type Prediction struct {
 	CCSF          bool    `json:"ccsf" bson:"ccsf"`
 }
 
+func readSireneRaisonSociale(sirenePath string) map[string]string {
+	// source
+	file, err := os.Open(sirenePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(bufio.NewReader(file))
+	reader.Comma = ','
+
+	reader.Read()
+
+	raisoc := make(map[string]string)
+	for {
+		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		siret := row[0] + row[1]
+		raisoc[siret] = row[2]
+	}
+
+	return raisoc
+}
+
 func readAndRandomPrediction(fileName string, outputFileName string, mapping map[string]string) error {
 	// source
 	file, err := os.Open(fileName)
@@ -49,6 +78,8 @@ func readAndRandomPrediction(fileName string, outputFileName string, mapping map
 	}
 	defer outputFile.Close()
 
+	sireneFile := outputFileNamePrefixer(viper.GetString("prefixOutput"), viper.GetString("sirene"))
+	raisoc := readSireneRaisonSociale(sireneFile)
 	reader := csv.NewReader(bufio.NewReader(file))
 	reader.Comma = ';'
 
@@ -65,8 +96,8 @@ func readAndRandomPrediction(fileName string, outputFileName string, mapping map
 		if err == io.EOF {
 			break
 		}
+		row[3] = raisoc[mapping[row[0]]]
 		row[0] = mapping[row[0]]
-		row[3] = ""
 		row[4] = "21"
 		row[5] = "Bourgogne-Franche-Comté"
 		outputRow := "\"" + strings.Join(row, "\";\"") + "\"\n"

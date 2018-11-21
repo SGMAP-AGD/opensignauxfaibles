@@ -33,22 +33,22 @@ func readAndRandomBDF(fileName string, outputFileName string, mapping map[string
 			c9, _ := strconv.ParseFloat(row.Cells[9].Value, 64)
 			c10, _ := strconv.ParseFloat(row.Cells[10].Value, 64)
 			if row.Cells[5].Value != "" {
-				row.Cells[5].Value = fmt.Sprintf("%f", c5*(rand.Float64()*0.5+0.75))
+				row.Cells[5].Value = fmt.Sprintf("%f", c5*(rand.Float64()+0.50))
 			}
 			if row.Cells[6].Value != "" {
-				row.Cells[6].Value = fmt.Sprintf("%f", c6*(rand.Float64()*0.5+0.75))
+				row.Cells[6].Value = fmt.Sprintf("%f", c6*(rand.Float64()+0.50))
 			}
 			if row.Cells[7].Value != "" {
-				row.Cells[7].Value = fmt.Sprintf("%f", c7*(rand.Float64()*0.5+0.75))
+				row.Cells[7].Value = fmt.Sprintf("%f", c7*(rand.Float64()+0.50))
 			}
 			if row.Cells[8].Value != "" {
-				row.Cells[8].Value = fmt.Sprintf("%f", c8*(rand.Float64()*0.5+0.75))
+				row.Cells[8].Value = fmt.Sprintf("%f", c8*(rand.Float64()+0.50))
 			}
 			if row.Cells[9].Value != "" {
-				row.Cells[9].Value = fmt.Sprintf("%f", c9*(rand.Float64()*0.5+0.75))
+				row.Cells[9].Value = fmt.Sprintf("%f", c9*(rand.Float64()+0.50))
 			}
 			if row.Cells[10].Value != "" {
-				row.Cells[10].Value = fmt.Sprintf("%f", c10*(rand.Float64()*0.5+0.75))
+				row.Cells[10].Value = fmt.Sprintf("%f", c10*(rand.Float64()+0.50))
 			}
 		}
 		outputFile.Sheet["Sheet1"] = sheet
