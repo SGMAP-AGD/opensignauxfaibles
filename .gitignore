@@ -20,6 +20,6 @@ Rdir/pipes/RNNs/*
 dbmongo/config.toml*
 dbmongo/debug
 dbmongo/dbmongo
-dbmongo/fakeData/config.toml
+dbmongo/tools/fakeData/config.toml
 .Rproj.user
 
