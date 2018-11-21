@@ -372,6 +372,7 @@
     mounted () {
       this.$axios.get('/api/data/etablissement/1802/' + this.siret).then(response => {
         this.etablissement = response.data.etablissement[0].value
+        console.log(this.etablissement)
         this.entreprise = response.data.entreprise[0].value
       })
       this.$axios.get('/api/data/naf').then(response => { this.naf = response.data })
@@ -437,7 +438,7 @@
             show: true,
             type: 'category',
             axisTick: false,
-            data: this.etablissement.array_debit.map(d => d.periode)
+            data: (this.etablissement.array_debit || []).map(d => d.periode)
           },
           yAxis: {
             type: 'value',
@@ -448,13 +449,13 @@
             smooth: true,
             name: 'Cotisation',
             type: 'line',
-            data: this.etablissement.array_debit.map(d => d.cotisation)
+            data: (this.etablissement.array_debit || []).map(d => d.cotisation)
           }, {
             color: 'red',
             smooth: true,
             name: 'Dette URSSAF',
             type: 'line',
-            data: this.etablissement.array_debit.map(d => d.montant_part_ouvriere + d.montant_part_patronale)
+            data: (this.etablissement.array_debit || []).map(d => d.montant_part_ouvriere + d.montant_part_patronale)
           }]
         }
       }

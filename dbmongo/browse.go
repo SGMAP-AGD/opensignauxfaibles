@@ -10,7 +10,6 @@ import (
 
 // prepareMRJob charge les fichiers MapReduce et fournit les paramètres pour l'exécution
 func prepareMRJob(batchKey string, id string, typeJob string, target string) (*mgo.MapReduce, *bson.M, error) {
-
 	query := &bson.M{
 		"_id": id,
 	}
@@ -107,12 +106,12 @@ func predictionBrowse(c *gin.Context) {
 	}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from":         "Browser",
+		"from":         "Entreprise",
 		"localField":   "siren",
 		"foreignField": "_id",
 		"as":           "entreprise"}})
 
-	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.bdf", 0}}}})
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.batch.1802.bdf", 0}}}})
 
 	pipeline = append(pipeline, bson.M{"$project": bson.M{"entreprise": 0}})
 
@@ -123,7 +122,6 @@ func predictionBrowse(c *gin.Context) {
 		return
 	}
 	c.JSON(200, result)
-
 }
 
 // func predictionBrowse(c *gin.Context) {

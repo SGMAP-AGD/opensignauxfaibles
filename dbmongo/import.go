@@ -72,6 +72,7 @@ var importFunctions = map[string]func(*AdminBatch) error{
 func purge(c *gin.Context) {
 	db.DB.C("Etablissement").RemoveAll(nil)
 	db.DB.C("Entreprise").RemoveAll(nil)
+	db.DB.C("Prediction").RemoveAll(nil)
 	c.String(200, "Done")
 }
 

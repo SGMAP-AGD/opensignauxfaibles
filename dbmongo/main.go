@@ -47,7 +47,6 @@ func main() {
 	// Lancer Rserve en background
 
 	// InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-
 	go r()
 	go messageSocketAddClient()
 

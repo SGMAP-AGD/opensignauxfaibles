@@ -321,8 +321,13 @@
         this.loading = true
         var self = this
         this.$axios.get('/api/data/prediction').then(response => {
-          this.prediction = response.data
-          this.prediction.bdf = this.prediction.bdf.sort((a, b) => a.annee < b.annee)
+          var prediction = response.data
+          console.log(prediction)
+          prediction.forEach(p => {
+            p.bdf = Object.keys((p.bdf || {})).map(b => p.bdf[b]).sort((a, b) => a.annee < b.annee)
+          })
+          console.log(prediction)
+          this.prediction = prediction
           self.loading = false
         })
       }

@@ -1,51 +1,18 @@
 <template>
-      <v-container fluid fill-height>
-        <v-layout align-center justify-center>
-          <v-flex xs12 sm8 md4>
-            <v-card class="elevation-12">
-                              <v-form @submit="login">
-
-              <v-toolbar dark color="primary">
-                <v-toolbar-title>Identification</v-toolbar-title>
-                <v-spacer></v-spacer>
-              </v-toolbar>
-              <v-card-text>
-                  <v-text-field prepend-icon="person" label="Nom d'utilisateur" v-model="username"></v-text-field >
-                  <v-text-field prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="primary" type="submit">Login</v-btn>
-              </v-card-actions>
-                              </v-form>
-
-            </v-card>
-          </v-flex>
-        </v-layout>
-</v-container>
-<!-- <v-container fluid >
-  <v-layout align-center justify-center>
-    <v-flex xs4>
-      <v-card class="elevation-6">
+  <v-container fluid fill-height>
+    <v-layout align-center wrap justify-center>
+      <v-flex class="login" xs12 sm6 md3>
+        <span><v-img class="center" max-width="150px" src="/static/logo_signaux_faibles_cercle.svg"></v-img></span>      
+        <h1><span class="fblue">Signaux</span>·<span class="fred">Faibles</span></h1>
+        <hline></hline>
         <v-form @submit="login">
-        <v-toolbar class="toolbar" id="toolbar" card color="indigo darken-1">
-          <v-spacer> </v-spacer>
-            Identification
-          <v-spacer> </v-spacer>
-        </v-toolbar>
-        <v-card-text>
-          <v-text-field label="Nom d'utilisateur" v-model="username" outline></v-text-field >
-          <v-text-field type="password" label="Mot de passe" v-model="password" outline></v-text-field>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn block outline  color="indigo darken-4" flat type="submit">LOGIN</v-btn>
-        </v-card-actions>
-                  </v-form>
-
-      </v-card>
-    </v-flex>
-  </v-layout>
-</v-container> -->
+          <v-text-field   prepend-icon="person" label="Nom d'utilisateur" v-model="username"></v-text-field >
+          <v-text-field  prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
+          <v-btn color="primary" type="submit">Login</v-btn>
+        </v-form>
+      </v-flex>
+    </v-layout>
+  </v-container>
 </template>
 
 <script>
@@ -80,9 +47,26 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
+  .login {
+        text-align: center;     /* will center text in <p>, which is not a flex item */
+        align-items: center
+  }
+  h1 {
+    font-family: 'Quicksand', sans-serif;
+  }
+  .center {
+    display: block;
+    margin: 0 auto;
+  }
   #toolbar {
     font-size: 25px;
     color: white;
+  }
+  span.fblue {
+      color: #20449a
+  }
+  span.fred {
+      color: #e9222e
   }
 </style>

@@ -198,10 +198,10 @@ func processBatch() {
 	importBatch(&batch)
 	compactEntreprise("")
 	compactEtablissement("")
-	for _, algo := range []string{"algo1", "algo2"} {
-		_, err := reduce(batch, algo, "")
-		fmt.Println(err)
-	}
+	// for _, algo := range []string{"algo1", "algo2"} {
+	// 	_, err := reduce(batch, algo, "")
+	// 	fmt.Println(err)
+	// }
 	status.setDBStatus(nil)
 }
 

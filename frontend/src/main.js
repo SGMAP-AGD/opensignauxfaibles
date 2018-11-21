@@ -13,12 +13,11 @@ import colors from 'vuetify/es5/util/colors'
 
 Vue.use(Vuetify, {
   theme: {
-    primary: colors.indigo.darken4, // #E53935
+    primary: '#20459a',
     secondary: colors.indigo.lighten4, // #FFCDD2
     accent: colors.red.base // #3F51B5
   }
 })
-
 
 Vue.config.productionTip = false
 

@@ -1,6 +1,6 @@
 <template>
   <v-app id="app">
-    <v-toolbar
+    <!-- <v-toolbar
     class="toolbar"
     dense
     color="grey lighten-3"
@@ -113,7 +113,7 @@
           </v-btn>
       </v-tooltip>
 
-    </v-toolbar>
+    </v-toolbar> -->
     <v-content>
         <Login v-if="!login" :state="login"/>
         <router-view v-if="login" />
@@ -212,46 +212,19 @@ export default {
 }
 </script>
 
-<style scoped>
- @import url('https://fonts.googleapis.com/css?family=Quicksand');
-body {
-  font-family: 'Quicksand', sans-serif;
-}
-.gray {
-  color: #606060;
-  font-family: 'Quicksand', sans-serif;
-}
-#blue {
-  color: #20449a;
-  font-family: 'Quicksand', sans-serif;
-}
-#red {
-  color: #e9222e;
-  font-family: 'Quicksand', sans-serif;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-v-list {
-  font-family: 'Quicksand', sans-serif;
-}
-</style>
-
 <style>
+ @import url('https://fonts.googleapis.com/css?family=Quicksand');
+  body {
+    font-family: 'Quicksand', sans-serif;
+
+  }
 .toolbar {
   background-image: url("/static/bgtoolbar.png");
   color: "black";
 }
 #app {
-  background-image: url("/static/bgapp.png");
+  
+  background-color: #c4d9e4;
 }
 .span {
   max-height: 10px
