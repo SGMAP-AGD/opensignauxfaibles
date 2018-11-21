@@ -31,6 +31,7 @@ const store = new Vuex.Store({
       username: null,
       password: null
     },
+    appDrawer: true,
     token: null,
     types: null,
     features: null,
@@ -57,6 +58,9 @@ const store = new Vuex.Store({
   mutations: {
     updateActiveTab (state, activeTab) {
       state.activeTab = activeTab
+    },
+    drawer (state, val) {
+      state.appDrawer = val
     },
     SOCKET_ONOPEN (state, event) {
       Vue.prototype.$socket = event.currentTarget
@@ -167,6 +171,9 @@ const store = new Vuex.Store({
     }
   },
   actions: {
+    setDrawer (context, val) {
+      context.commit('drawer', val)
+    },
     updateActiveTab (context, activeTab) {
       context.commit('updateActiveTab', activeTab)
     },
