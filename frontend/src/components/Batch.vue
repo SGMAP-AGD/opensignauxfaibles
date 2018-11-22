@@ -3,9 +3,8 @@
       
     <v-navigation-drawer
     class="elevation-6"
-    absolute
-    permanent
-    style="z-index: 1"
+    right app
+    v-model="rightDrawer"
     >
       <v-list dense class="pt-0">
           <!-- <v-list-tile >
@@ -172,6 +171,14 @@ export default {
       },
       set (batch) {
         this.$store.dispatch('saveBatch', batch).then(r => this.$store.dispatch('checkEpoch'))
+      }
+    },
+    rightDrawer: {
+      get () {
+        return this.$store.state.rightDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setRightDrawer', val)
       }
     },
     features () {

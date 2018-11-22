@@ -66,10 +66,12 @@ export default {
     color: white;
   }
   span.fblue {
-      color: #20459a
+    font-family: 'Quicksand', sans-serif;
+    color: #20459a
   }
   span.fred {
-      color: #e9222e
+    font-family: 'Quicksand', sans-serif;
+    color: #e9222e
   }
   .box {
     background-color: #fff;

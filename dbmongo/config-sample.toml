@@ -1,11 +1,14 @@
 # Valeurs codées en dur, décommenter pour surcharger
 
 # APP_BIND = ":3000"
-# APP_DATA = "./data-raw/")
-# DB_HOST = "127.0.0.1")
-# DB_PORT = "27017")
-# DB = "opensignauxfaibles"
-# FIRST_BATCH = "YYMM"
-# NAF_L1 = "/path/to/naf1.csv"
-# NAF_L5 = "/path/to/naf5.csv"
-# NAF_5TO1 = "/path/to/5to1.csv"
+# APP_DATA = "/home/christophe/Project/data-raw"
+# NAF_L1 =   "/home/christophe/Project/data-raw/naf/naf1.csv"
+# NAF_L2 =   "/home/christophe/Project/data-raw/naf/naf2.csv"
+# NAF_L3 =   "/home/christophe/Project/data-raw/naf/naf3.csv"
+# NAF_L4 =   "/home/christophe/Project/data-raw/naf/naf4.csv"
+# NAF_l5 =   "/home/christophe/Project/data-raw/naf/naf5.csv"
+# NAF_5to1 = "/home/christophe/Project/data-raw/naf/5to1.csv"
+# DB_HOST = "127.0.0.1"
+# DB_PORT = "27017"
+# DB = "signauxfaibles"
+# FIRST_BATCH = "1802"

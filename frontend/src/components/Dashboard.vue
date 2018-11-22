@@ -1,7 +1,25 @@
 <template>
+<div>
+  <v-toolbar class="toolbar" color="#c9aec5" dense app>
+    <v-btn icon @click="drawer=!drawer">
+    <v-icon 
+    medium
+    class="fa-rotate-180"
+    v-if="!drawer"
+    color="#4a0c41"
+    key="toolbar"
+    >mdi-backburger
+    </v-icon>
+    </v-btn>
+    <div style="width: 100%; text-align: center;" class="titre">
+      Tableau de Bord
+    </div>
+    <v-spacer></v-spacer>
+    <v-icon color="#4a0c41" medium @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
+  </v-toolbar>
   <v-container fluid grid-list-md text-xs-center>
       <v-layout row wrap justify-start>
-        <v-flex xs12>TABLEAU DE BORD</v-flex>
+        <v-flex xs12></v-flex>
       
         <v-flex xs6>
           <v-card>
@@ -14,9 +32,8 @@
                 <v-list-tile avatar>
                   Effectué: x% 
                 </v-list-tile>
-
                 <v-list-tile avatar>
-                    En attente: y%
+                  En attente: y%
                 </v-list-tile>
               </v-list>
             </v-card-text>
@@ -46,6 +63,8 @@
       </v-layout>
     
   </v-container>
+
+  </div>
 </template>
 
 <script>
@@ -53,6 +72,14 @@ export default {
   computed: {
     message () {
       return this.$store.getters.reverseLog
+    },
+    drawer: {
+      get () {
+        return this.$store.state.appDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setDrawer', val)
+      }
     }
   }
 }
@@ -72,5 +99,12 @@ li {
 }
 a {
   color: #42b983;
+}
+div.titre {
+  font-family: 'Signika', sans-serif;
+  font-weight: 500;
+  color: primary;
+  font-size: 28px;
+  color: #4a0c41
 }
 </style>

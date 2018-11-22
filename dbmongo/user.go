@@ -22,7 +22,7 @@ type AdminUser struct {
 	LastName       string  `json:"lastName" bson:"lastName"`
 }
 
-type AdminLevel string
+// type AdminLevel string
 
 const levelAdmin = "admin"
 const levelPowerUser = "powerUser"

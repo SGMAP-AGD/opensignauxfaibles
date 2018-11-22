@@ -1,23 +1,10 @@
 <template>
   <v-app id="app">
     <v-content>
-      <NavigationDrawer v-if="login && drawer"/>
-      <v-icon large v-if="login"  @click="drawer=!drawer">menu</v-icon>
-      <Login v-if="!login" :state="login"/>
-      <router-view v-if="login" />
+        <NavigationDrawer v-if="login && drawer"/>
+        <Login v-if="!login" :state="login"/>
+        <router-view v-if="login" />
     </v-content>
-
-    <v-footer class="elevation-4">
-      <v-btn 
-        flat 
-        icon 
-        color="blue"
-        href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
-        <v-icon>fab fa-github</v-icon>
-      </v-btn>
-    </v-footer>
-
-
   </v-app>
 </template>
 
@@ -107,17 +94,22 @@ export default {
 
 <style>
  @import url('https://fonts.googleapis.com/css?family=Quicksand');
+ @import url('https://fonts.googleapis.com/css?family=Signika');
   body {
     font-family: 'Quicksand', sans-serif;
   }
-.toolbar {
-  background-image: url("/static/bgtoolbar.png");
-  color: "black";
-}
-#app {
-  background-color: #e7e7e7;
-}
-.span {
-  max-height: 10px
+  .toolbar {
+    background:         radial-gradient( circle at center, red, blue);
+    color: "black";
+    font-family: 'Quicksand', sans-serif;
+    background-repeat: repeat;
+    background-image: url("/static/bgtoolbar.png");
+  }
+  #app {
+    background-color: #e7e7e7;
+    background: radial-gradient(circle at center, #fff, #ddd 85%, #bbb 100%);
+  }
+  .span {
+    max-height: 10px
 }
 </style>

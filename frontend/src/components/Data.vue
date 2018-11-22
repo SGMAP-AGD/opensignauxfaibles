@@ -1,5 +1,28 @@
 <template>
   <div>
+<div>
+  <v-toolbar class="toolbar" color="#dcc4c6" dense app>
+    <v-btn icon @click="drawer=!drawer">
+    <v-icon 
+    medium
+    class="fa-rotate-180"
+    v-if="!drawer"
+    color="secondary"
+    key="toolbar"
+    >
+    mdi-backburger
+     </v-icon>
+    </v-btn>
+    <div style="width: 100%; text-align: center;"  class="titre">
+      Données
+    </div>
+    <v-spacer></v-spacer>
+    <v-icon color="secondary" medium @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+  </v-toolbar>
+  <div style="width:100%">
+    <Batch
+    batchKey="1802"/>
+  </div>
     <v-tabs
       v-model="currentBatchKey"
       color="red darken-4"
@@ -16,7 +39,7 @@
         ripple
         dark
       >
-        {{ batch.substring(2,4) }}/20{{ batch.substring(0,2)}}
+        {{ batch.substring(2,4) }}/20{{ batch.substring(0,2) }}
       </v-tab>
       <v-tab-item
       dark
@@ -27,6 +50,7 @@
           :batchKey="batch"/>
       </v-tab-item>
     </v-tabs> 
+  </div>
   </div>
 </template>
 
@@ -42,6 +66,22 @@ export default {
     }
   },
   computed: {
+    drawer: {
+      get () {
+        return this.$store.state.appDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setDrawer', val)
+      }
+    },
+    rightDrawer: {
+      get () {
+        return this.$store.state.rightDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setRightDrawer', val)
+      }
+    },
     currentBatchKey: {
       get () {
         return this.$store.state.currentBatchKey
@@ -58,3 +98,13 @@ export default {
   name: 'Data'
 }
 </script>
+
+<style scoped>
+  div.titre {
+    color: #8e0000;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+    color: primary;
+    font-size: 28px;
+  }
+</style>

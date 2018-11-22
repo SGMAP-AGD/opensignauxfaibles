@@ -1,5 +1,22 @@
 <template>
 <div>
+  <v-toolbar class="toolbar" color="#eee" dense app>
+    <v-btn icon @click="drawer=!drawer">
+    <v-icon 
+        class="fa-rotate-180"
+
+    medium
+    v-if="!drawer"
+    color="#444"
+    key="toolbar"
+    >mdi-backburger</v-icon>
+    </v-btn>
+    <div style="width: 100%; text-align: center;"  class="titre">
+      Administration
+    </div>
+    <v-spacer></v-spacer>
+    <v-icon color="#444" medium @click="rightDrawer=!rightDrawer">fa-cog</v-icon>
+  </v-toolbar>
   <v-container grid-list-md text-xs-center>
     <v-layout>
       <v-flex key="database" xs3>
@@ -56,6 +73,16 @@ export default {
       .then(response => alert(JSON.stringify(response.data, null, 2)))
     }
   },
+  computed: {
+    drawer: {
+      get () {
+        return this.$store.state.appDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setDrawer', val)
+      }
+    }
+  },
   data () {
     return {
       to: '',
@@ -82,5 +109,12 @@ a {
 }
 .drawer {
   z-index: 1;
+}
+div.titre {
+  color: #444;
+  font-family: 'Signika', sans-serif;
+  font-weight: 500;
+  color: primary;
+  font-size: 28px;
 }
 </style>

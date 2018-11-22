@@ -14,7 +14,7 @@ import colors from 'vuetify/es5/util/colors'
 Vue.use(Vuetify, {
   theme: {
     primary: '#20459a',
-    secondary: colors.indigo.lighten4, // #FFCDD2
+    secondary: '#8e0000',
     accent: colors.red.base // #3F51B5
   }
 })
