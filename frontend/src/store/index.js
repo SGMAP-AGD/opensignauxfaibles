@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue from 'vue/dist/vue.js'
 import Vuex from 'vuex'
 import axios from 'axios'
 import createPersistedState from 'vuex-persistedstate'
@@ -25,7 +25,7 @@ axiosClient.interceptors.request.use(
 )
 
 const store = new Vuex.Store({
-  plugins: [createPersistedState({storage: window.sessionStorage})],
+  plugins: [createPersistedState({ storage: window.sessionStorage })],
   state: {
     credentials: {
       username: null,
@@ -255,7 +255,7 @@ const store = new Vuex.Store({
   },
   getters: {
     axiosConfig (state) {
-      return {headers: {Authorization: 'Bearer ' + state.token}}
+      return { headers: { Authorization: 'Bearer ' + state.token } }
     },
     messages (state) {
       return state.socket.message.map(m => {
@@ -301,12 +301,12 @@ if (store.state.token != null) {
 }
 
 setInterval(
-    function () {
-      if (store.state.token != null) {
-        store.commit('refreshToken')
-      }
-    },
-    180000)
+  function () {
+    if (store.state.token != null) {
+      store.commit('refreshToken')
+    }
+  },
+  180000)
 
 // setInterval(
 //       function () {
