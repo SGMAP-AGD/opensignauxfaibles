@@ -4,7 +4,6 @@
       <v-flex class="login" xs12 sm6 md3>
         <span><v-img class="center" max-width="100px" src="/static/logo_signaux_faibles_cercle.svg"></v-img></span>
         <h1><span class="fblue">Signaux</span>·<span class="fred">Faibles</span></h1>
-        <hline></hline>
       </v-flex>
       <v-flex class="login" xs12 sm6 md3>
           <v-form @submit="login">
