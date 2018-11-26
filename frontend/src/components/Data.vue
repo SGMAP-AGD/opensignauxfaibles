@@ -1,10 +1,9 @@
 <template>
   <div>
 <div>
-  <v-toolbar class="toolbar" color="#dcc4c6" dense app>
-    <v-btn icon @click="drawer=!drawer">
+  <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
     <v-icon 
-    medium
+    @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
     color="secondary"
@@ -12,12 +11,11 @@
     >
     mdi-backburger
      </v-icon>
-    </v-btn>
     <div style="width: 100%; text-align: center;"  class="titre">
       Données
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="secondary" medium @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+    <v-icon color="secondary"  @click="rightDrawer=!rightDrawer">fa-database</v-icon>
   </v-toolbar>
   <div style="width:100%">
     <Batch
@@ -105,6 +103,6 @@ export default {
     font-family: 'Signika', sans-serif;
     font-weight: 500;
     color: primary;
-    font-size: 28px;
+    font-size: 18px;
   }
 </style>

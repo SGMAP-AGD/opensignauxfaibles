@@ -1,21 +1,21 @@
 <template>
 <div>
-  <v-toolbar class="toolbar" color="#eee" dense app>
-    <v-btn icon @click="drawer=!drawer">
+  <v-toolbar class="toolbar" height="35px" color="#ffffff" dense app>
+    
     <v-icon 
         class="fa-rotate-180"
-
-    medium
+@click="drawer=!drawer"
+    
     v-if="!drawer"
     color="#444"
     key="toolbar"
     >mdi-backburger</v-icon>
-    </v-btn>
+    
     <div style="width: 100%; text-align: center;"  class="titre">
       Administration
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#444" medium @click="rightDrawer=!rightDrawer">fa-cog</v-icon>
+    <v-icon color="#444"  @click="rightDrawer=!rightDrawer">fa-cog</v-icon>
   </v-toolbar>
   <v-container grid-list-md text-xs-center>
     <v-layout>
@@ -115,6 +115,6 @@ div.titre {
   font-family: 'Signika', sans-serif;
   font-weight: 500;
   color: primary;
-  font-size: 28px;
+    font-size: 18px;
 }
 </style>

@@ -1,21 +1,20 @@
 <template>
 <div>
-  <v-toolbar class="toolbar" color="#c9aec5" dense app>
-    <v-btn icon @click="drawer=!drawer">
+  <v-toolbar class="toolbar" color="#c9aec5" height="35px" app>
+
     <v-icon 
-    medium
+    @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
     color="#4a0c41"
     key="toolbar"
     >mdi-backburger
     </v-icon>
-    </v-btn>
     <div style="width: 100%; text-align: center;" class="titre">
       Tableau de Bord
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#4a0c41" medium @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
+    <v-icon color="#4a0c41" @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
   </v-toolbar>
   <v-container fluid grid-list-md text-xs-center>
       <v-layout row wrap justify-start>

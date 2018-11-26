@@ -107,7 +107,11 @@ export default {
   }
   #app {
     background-color: #e7e7e7;
-    background: radial-gradient(circle at center, #fff, #ddd 85%, #bbb 100%);
+    background: radial-gradient(circle at center, rgb(255, 255, 255), rgb(228, 228, 228) 75%, rgb(204, 204, 204) 100%);
+  }
+  .rightDrawer {
+    position: fixed;
+    right: 0px;
   }
   .span {
     max-height: 10px

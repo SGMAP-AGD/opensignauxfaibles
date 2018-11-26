@@ -98,6 +98,9 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
 	r.POST("/login", authMiddleware.LoginHandler)
+	r.GET("/recovery/get/:email", sendRecoveryEmailHandler)
+	r.GET("/recovery/check/:email", sendRecoveryEmailHandler)
+
 	r.GET("/hash/:password", hashPassword)
 	r.GET("/ws/:jwt", func(c *gin.Context) {
 		wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))

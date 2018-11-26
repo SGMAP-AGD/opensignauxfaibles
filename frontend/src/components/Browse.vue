@@ -1,23 +1,23 @@
 <template>
 <div>
-  <v-toolbar class="toolbar" color="#b0c5ff" dense app>
-    <v-btn icon @click="drawer=!drawer">
+  <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
+    
     <v-icon 
+     @click="drawer=!drawer"
     class="fa-rotate-180"
-    medium
     v-if="!drawer"
     color="primary"
     key="toolbar"
     >mdi-backburger</v-icon>
-    </v-btn>
+    
     <div style="width: 100%; text-align: center;"  class="titre">
       Détection
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="primary" medium @click="rightDrawer=!rightDrawer">mdi-magnify</v-icon>
+    <v-icon color="primary" @click="rightDrawer=!rightDrawer">mdi-magnify</v-icon>
   </v-toolbar>
   <div style="width:100%">
-  <v-navigation-drawer :class="rightDrawer?'elevation-6':''" v-model="rightDrawer" right app>
+  <v-navigation-drawer :class="(rightDrawer?'elevation-6':'') + 'rightDrawer'" v-model="rightDrawer" right app>
     <v-toolbar flat class="transparent">
       <v-list class="pa-0">
         <v-list-tile avatar>
@@ -168,6 +168,6 @@ div.titre {
   font-family: 'Signika', sans-serif;
   font-weight: 500;
   color: primary;
-  font-size: 28px;
+  font-size: 18px;
 }
 </style>

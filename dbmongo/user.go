@@ -1,7 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"math/rand"
+	"net/smtp"
+	"time"
+
 	jwt "github.com/appleboy/gin-jwt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -88,4 +94,46 @@ func hashPassword(c *gin.Context) {
 	} else {
 		c.JSON(200, string(hashedPassword))
 	}
+}
+
+func getRecoveryCode() int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	recorveryCode := int((rand.Float64() * 1000000))
+	return recorveryCode
+}
+func sendRecoveryEmailHandler(c *gin.Context) {
+	address := c.Params.ByName("email")
+	err := sendRecoveryEmail(address)
+	if err != nil {
+		c.JSON(500, err.Error())
+	} else {
+		c.JSON(200, nil)
+	}
+
+}
+
+func sendRecoveryEmail(address string) error {
+	// smtpAddress := viper.GetString("smtpAddress")
+	// smtpUser := viper.GetString("smtpUser")
+	// smtpPassword := viper.GetString("smtpPass")
+
+	c, err := smtp.Dial("localhost:25")
+	if err != nil {
+		spew.Dump(err)
+	}
+	defer c.Close()
+	// Set the sender and recipient.
+	c.Mail("christophe@zbouboutchi.net")
+	c.Rcpt("christophe@zbouboutchi.net")
+	// Send the email body.
+	wc, err := c.Data()
+	if err != nil {
+		spew.Dump(err)
+	}
+	defer wc.Close()
+	buf := bytes.NewBufferString("This is the email body.")
+	if _, err = buf.WriteTo(wc); err != nil {
+		spew.Dump(err)
+	}
+	return err
 }
