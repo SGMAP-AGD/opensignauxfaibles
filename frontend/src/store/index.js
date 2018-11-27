@@ -19,12 +19,22 @@ var axiosClient = axios.create(
 
 axiosClient.interceptors.request.use(
   config => {
-    if (store.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.state.token
+    if (sessionStore.state.token != null) config.headers['Authorization'] = 'Bearer ' + sessionStore.state.token
     return config
   }
 )
 
-const store = new Vuex.Store({
+const localStore = new Vuex.Store({
+  plugins: [createPersistedState({ storage: window.localStorage })],
+  state: {
+    browserToken: null
+  },
+  getters: {
+    browserToken (state) { return state.browserToken }
+  }
+})
+
+const sessionStore = new Vuex.Store({
   plugins: [createPersistedState({ storage: window.sessionStorage })],
   state: {
     credentials: {
@@ -76,7 +86,6 @@ const store = new Vuex.Store({
     SOCKET_ONERROR (state, event) {
       console.error(state, event)
     },
-    // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
       if ('journalEvent' in message) {
         let m = message.journalEvent
@@ -92,7 +101,6 @@ const store = new Vuex.Store({
         state.files = message.files
       }
     },
-    // mutations for reconnect methods
     SOCKET_RECONNECT (state, count) {
       console.info(state, count)
     },
@@ -100,13 +108,19 @@ const store = new Vuex.Store({
       wsConnect(state)
     },
     login (state) {
-      axiosClient.post('/login', state.credentials).then(response => {
+      let credentials = {
+        email: state.credentials.email,
+        password: state.credentials.password,
+        browserToken: localStorage.state.browserToken
+      }
+
+      axiosClient.post('/login', credentials).then(response => {
         state.token = response.data.token
         wsConnect(state)
-        store.commit('updateRefs')
-        store.commit('updateBatches')
-        store.commit('updateDbStatus')
-        store.commit('updateLogs')
+        state.commit('updateRefs')
+        state.commit('updateBatches')
+        state.commit('updateDbStatus')
+        state.commit('updateLogs')
       })
     },
     refreshToken (state) {
@@ -115,7 +129,6 @@ const store = new Vuex.Store({
       })
     },
     logout (state) {
-      // vm.$disconnect()
       state.credentials.username = null
       state.credentials.password = null
       state.token = null
@@ -239,7 +252,7 @@ const store = new Vuex.Store({
     checkEpoch (context) {
       if (context.state.token != null) {
         axiosClient.get('/api/admin/epoch').then(response => {
-          if (response.data !== store.state.epoch) {
+          if (response.data !== sessionStore.state.epoch) {
             context.commit('setEpoch', response.data)
             context.commit('updateRefs')
             context.commit('updateBatches')
@@ -281,7 +294,7 @@ function wsConnect (state) {
     Vue._installedPlugins.splice(index, 1)
   }
   Vue.use(VueNativeSock, 'ws://localhost:3000/ws/' + state.token, {
-    store: store,
+    store: sessionStore,
     format: 'json',
     connectManually: true,
     reconnection: true,
@@ -291,29 +304,26 @@ function wsConnect (state) {
   vm.$connect()
 }
 
-if (store.state.token != null) {
-  wsConnect(store.state)
-  store.commit('refreshToken')
-  store.commit('updateRefs')
-  store.commit('updateDbStatus')
-  store.commit('updateBatches')
-  store.commit('updateLogs')
+if (sessionStore.state.token != null) {
+  wsConnect(sessionStore.state)
+  sessionStore.commit('refreshToken')
+  sessionStore.commit('updateRefs')
+  sessionStore.commit('updateDbStatus')
+  sessionStore.commit('updateBatches')
+  sessionStore.commit('updateLogs')
 }
 
 setInterval(
   function () {
-    if (store.state.token != null) {
-      store.commit('refreshToken')
+    if (sessionStore.state.token != null) {
+      sessionStore.commit('refreshToken')
     }
   },
   180000)
 
-// setInterval(
-//       function () {
-//         if (store.state.token != null && !store.state.socket.isConnected === false) {
-//           store.dispatch('checkEpoch')
-//         }
-//       },
-//       1000)
+var store = {
+  sessionStore: sessionStore,
+  localStore: localStore
+}
 
 export default store

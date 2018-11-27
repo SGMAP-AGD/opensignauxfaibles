@@ -62,23 +62,16 @@ func main() {
 	r.Use(cors.New(config))
 
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:       "test zone",
-		Key:         []byte("secret key"),
-		Timeout:     time.Hour,
-		MaxRefresh:  time.Hour,
-		IdentityKey: identityKey,
-		PayloadFunc: payload,
-		IdentityHandler: func(c *gin.Context) interface{} {
-			claims := jwt.ExtractClaims(c)
-			return &AdminUser{
-				ID: AdminID{
-					Type: "credential",
-					Key:  claims["id"].(string),
-				},
-			}
-		},
-		Authenticator: authenticator,
-		Authorizator:  authorizator,
+		Realm:           "test zone",
+		Key:             []byte("secret key"),
+		SendCookie:      false,
+		Timeout:         time.Hour,
+		MaxRefresh:      time.Hour,
+		IdentityKey:     identityKey,
+		PayloadFunc:     payload,
+		IdentityHandler: identityHandler,
+		Authenticator:   authenticator,
+		Authorizator:    authorizator,
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, gin.H{
 				"code":    code,
@@ -99,7 +92,7 @@ func main() {
 
 	r.POST("/login", authMiddleware.LoginHandler)
 	r.GET("/recovery/get/:email", sendRecoveryEmailHandler)
-	r.GET("/recovery/check/:email", sendRecoveryEmailHandler)
+	r.GET("/recovery/check/:email/:code", checkRecoveryEmailHandler)
 
 	r.GET("/hash/:password", hashPassword)
 	r.GET("/ws/:jwt", func(c *gin.Context) {

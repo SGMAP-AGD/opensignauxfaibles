@@ -65,9 +65,9 @@
         </v-list-tile>
       </v-list>
     <v-footer class="elevation-6" style="color: blue; width:100%; position: fixed; bottom: 0px;">
-      <v-btn 
-        flat 
-        icon 
+      <v-btn
+        flat
+        icon
         color="blue"
         href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
         <v-icon>fab fa-github</v-icon>

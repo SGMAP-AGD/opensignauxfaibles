@@ -7,10 +7,11 @@
       </v-flex>
       <v-flex class="login" xs12 sm6 md3>
           <v-form @submit="login">
-          <v-text-field solo prepend-icon="person" label="Adresse électronique" v-model="username"></v-text-field >
-          <v-text-field solo prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
+          <v-text-field  prepend-icon="person" label="Adresse électronique" v-model="username"></v-text-field >
+          <v-text-field  prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
           <v-btn round color="primary" type="submit">Connexion</v-btn><br/>
-          <v-dialog 
+          <v-dialog
+            persistent
             height="400px"
             width="500"
             v-model="passwordHelp"
@@ -18,10 +19,10 @@
           <a slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
           <v-card >
             <v-toolbar color="#eef" class="toolbar elevation-1" dense>
-              <v-toolbar-avatar><v-icon>mdi-lock-question</v-icon></v-toolbar-avatar>
+              <v-icon>mdi-lock-question</v-icon>
               <v-spacer></v-spacer>
               <span style="font-size: 15px; font-weight: 600">
-              Récupération du compte
+                Récupération du compte
               </span>
             </v-toolbar>
 
@@ -31,13 +32,26 @@
                 Saisissez votre adresse électronique, un code de récupération vous sera envoyé.
               </v-card-text>
               <v-card-text>
-                <v-text-field  prepend-icon="mdi-at" label="Adresse E-Mail" v-model="recovery"></v-text-field >
+                <v-text-field
+                prepend-icon="mdi-at"
+                label="Adresse E-Mail"
+                :rules="[rules.required, rules.email]"
+                v-model="recoveryEmail">
+                </v-text-field >
               </v-card-text>
                 <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn
                   color="primary"
                   flat
+                  @click="passwordHelp = false"
+                >
+                  annuler
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  flat
+                  :disabled="!validEmail"
                   @click="getRecovery()"
                 >
                   suivant
@@ -57,9 +71,51 @@
                 <v-btn
                   color="primary"
                   flat
+                  @click="rollbackRecovery()"
+                >
+                  recommencer
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  flat
                   @click="checkRecovery()"
                 >
                   suivant
+                </v-btn>
+              </v-card-actions>
+            </div>
+            <div v-if="state==3">
+              <v-card-text>
+                Etape 1 · Etape 2 · <b>Fin</b><br/>
+                Saisissez votre nouveau mot de passe
+              </v-card-text>
+              <v-card-text>
+                <v-text-field
+                  prepend-icon="fa-key"
+                  type="password"
+                  label="Nouveau mot de passe"
+                  :rules="[rules.complexity]"
+                  v-model="newPassword">
+                </v-text-field >
+                <v-progress-linear :color="passwordStrengthColor" v-model="passwordStrength"></v-progress-linear>
+                Mot de passe {{passwordStrengthComment}}
+              </v-card-text>
+                <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+                  flat
+                  @click="rollbackRecovery()"
+                >
+                  recommencer
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  flat
+                  :disabled="passwordStrength<77"
+                  @click="setPasswordRecovery()"
+                >
+                  terminer
                 </v-btn>
               </v-card-actions>
             </div>
@@ -72,17 +128,57 @@
 </template>
 
 <script>
-
+import zxcvbn from 'zxcvbn'
+console.log()
 export default {
   data () {
     return {
       passwordHelp: false,
       recoveryEmail: null,
       recoveryCode: null,
-      state: 1
+      newPassword: null,
+      newPasswordConfirm: null,
+      state: 1,
+      rules: {
+        required: value => !!value || 'Obligatoire.',
+        email: value => this.validEmail || 'Adresse invalide.',
+        samePassword: value => this.samePassword || 'Mot de passe différents'
+      }
     }
   },
   computed: {
+    validEmail () {
+      const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      return pattern.test(this.recoveryEmail)
+    },
+    samePassword () {
+      return this.newPassword === this.newPasswordConfirm
+    },
+    passwordStrength () {
+      return zxcvbn(this.newPassword || '').score * 25 + 2
+    },
+    passwordStrengthComment () {
+      if (this.passwordStrength < 50) {
+        return 'insuffisant'
+      } else if (this.passwordStrength < 75) {
+        return 'faible'
+      } else if (this.passwordStrength < 100) {
+        return 'acceptable'
+      } else {
+        return 'résistant'
+      }
+    },
+    passwordStrengthColor () {
+      if (this.passwordStrength < 50) {
+        return 'red'
+      } else if (this.passwordStrength < 75) {
+        return 'orange'
+      } else if (this.passwordStrength < 100) {
+        return 'yellow'
+      } else {
+        return 'green'
+      }
+    },
     username: {
       get (username) {
         return this.$store.state.credentials.username
@@ -109,15 +205,25 @@ export default {
     },
     getRecovery () {
       let self = this
-      this.$axios.get('/recovery/get/' + this.pass).then(r => {
+      this.$axios.get('/recovery/get/' + this.recoveryEmail).then(r => {
         self.state = 2
       })
     },
     checkRecovery () {
       let self = this
-      this.$axios.get('/recovery/check/' + this.recovery + '/' + this.recoveryCode).then(r => {
-        self.state = 2
+      this.$axios.get('/recovery/check/' + this.recoveryEmail + '/' + this.recoveryCode).then(r => {
+        self.state = 3
       })
+    },
+    setPasswordRecovery () {
+      let self = this
+      this.$axios.get('/recovery/setPassword/' + this.recoveryEmail + '/' + this.recoveryCode + '/' + this.newPassword).then(r => {
+        
+        self.state = 1
+      })
+    },
+    rollbackRecovery () {
+      this.state = 1
     }
   }
 }

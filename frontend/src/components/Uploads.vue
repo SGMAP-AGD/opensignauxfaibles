@@ -5,7 +5,7 @@
     flat
     icon=""
     slot="activator">
-      <v-progress-circular 
+      <v-progress-circular
       color="indigo"
       :width="2"
       v-model="globalUploads">
@@ -20,10 +20,10 @@
           masquer les téléversements terminés
         </v-btn>
       </v-toolbar>
-      <v-card-text 
-      v-for="(upload, index) in uploads" 
+      <v-card-text
+      v-for="(upload, index) in uploads"
       :key="index">
-        {{ upload.name }} 
+        {{ upload.name }}
         <v-progress-linear :value="upload.amount"></v-progress-linear>
       </v-card-text>
     </v-card>
