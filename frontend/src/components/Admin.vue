@@ -1,16 +1,13 @@
 <template>
 <div>
   <v-toolbar class="toolbar" height="35px" color="#ffffff" dense app>
-    
-    <v-icon 
-        class="fa-rotate-180"
-@click="drawer=!drawer"
-    
-    v-if="!drawer"
-    color="#444"
-    key="toolbar"
+    <v-icon
+      class="fa-rotate-180"
+      @click="drawer=!drawer"
+      v-if="!drawer"
+      color="#444"
+      key="toolbar"
     >mdi-backburger</v-icon>
-    
     <div style="width: 100%; text-align: center;"  class="titre">
       Administration
     </div>
@@ -63,14 +60,14 @@ export default {
   methods: {
     cloneDatabase () {
       axios.get('http://localhost:3000/api/admin/clone/' + this.to)
-      .then(response => alert(JSON.stringify(response.data, null, 2)))
+        .then(response => alert(JSON.stringify(response.data, null, 2)))
     },
     go () {
       this.$axios.get('/api/processBatch').then(r => { this.d = r.data })
     },
     purgeDatabase () {
       this.$axios.get('/api/purge')
-      .then(response => alert(JSON.stringify(response.data, null, 2)))
+        .then(response => alert(JSON.stringify(response.data, null, 2)))
     }
   },
   computed: {

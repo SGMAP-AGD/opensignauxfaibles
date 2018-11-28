@@ -10,7 +10,6 @@
 
 <script>
 import Login from '@/components/Login'
-import Uploads from '@/components/Uploads'
 import NavigationDrawer from '@/components/NavigationDrawer'
 
 export default {
@@ -20,7 +19,7 @@ export default {
       this.menu.color = this.items[key].color
     }
   },
-  components: { Login, Uploads, NavigationDrawer },
+  components: { Login, NavigationDrawer },
   computed: {
     uploads () {
       return this.$store.getters.getUploads
@@ -74,10 +73,10 @@ export default {
           color: 'gray darken-4' }
       ],
       avatar: {
-        debug: {icon: 'fa-cogs', color: 'blue'},
-        info: {icon: 'fa-info', color: 'green'},
-        warning: {icon: 'fa-exclamation-triangle', color: 'yellow'},
-        critical: {icon: 'fa-sad-cry', color: 'red'}
+        debug: { icon: 'fa-cogs', color: 'blue' },
+        info: { icon: 'fa-info', color: 'green' },
+        warning: { icon: 'fa-exclamation-triangle', color: 'yellow' },
+        critical: { icon: 'fa-sad-cry', color: 'red' }
       }
     }
   },
@@ -102,9 +101,7 @@ export default {
     background:         radial-gradient( circle at center, red, blue);
     color: "black";
     font-family: 'Quicksand', sans-serif;
-    background-repeat: repeat;
-    background-image: url("/static/bgtoolbar.png");
-  }
+    background: radial-gradient(ellipse at top, #fafafa, #f0f0f5 35%, #dbdbdb 55%, #bbbbbb 100%, transparent);  }
   #app {
     background-color: #e7e7e7;
     background: radial-gradient(circle at center, rgb(255, 255, 255), rgb(228, 228, 228) 75%, rgb(204, 204, 204) 100%);

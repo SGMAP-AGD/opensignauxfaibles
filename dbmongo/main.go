@@ -91,8 +91,10 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("static/", true)))
 
 	r.POST("/login", authMiddleware.LoginHandler)
-	r.GET("/recovery/get/:email", sendRecoveryEmailHandler)
-	r.GET("/recovery/check/:email/:code", checkRecoveryEmailHandler)
+	r.POST("/login/get", loginGetHandler)
+	r.POST("/login/check", loginCheckHandler)
+	r.GET("/login/recovery/get/:email", sendRecoveryEmailHandler)
+	r.GET("/login/recovery/check/:email/:code", checkRecoveryEmailHandler)
 
 	r.GET("/hash/:password", hashPassword)
 	r.GET("/ws/:jwt", func(c *gin.Context) {

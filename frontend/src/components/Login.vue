@@ -7,7 +7,7 @@
       </v-flex>
       <v-flex class="login" xs12 sm6 md3>
           <v-form @submit="login">
-          <v-text-field  prepend-icon="person" label="Adresse électronique" v-model="username"></v-text-field >
+          <v-text-field  prepend-icon="person" label="Adresse électronique" v-model="email"></v-text-field >
           <v-text-field  prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
           <v-btn round color="primary" type="submit">Connexion</v-btn><br/>
           <v-dialog
@@ -16,7 +16,7 @@
             width="500"
             v-model="passwordHelp"
           >
-          <a slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
+          <a v-if="browserToken" slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
           <v-card >
             <v-toolbar color="#eef" class="toolbar elevation-1" dense>
               <v-icon>mdi-lock-question</v-icon>
@@ -121,7 +121,27 @@
             </div>
           </v-card>
           </v-dialog>
-          </v-form>
+        </v-form>
+        <v-dialog
+        v-model="verifDialog"
+        width="500"
+        >
+          <v-card>
+            <v-toolbar color="#eef" class="toolbar elevation-1" dense>
+              <v-icon>mdi-lock</v-icon>
+              <v-spacer></v-spacer>
+              Validation de votre connexion
+            </v-toolbar>
+            C'est la première fois que vous vous identifiez sur ce navigateur, merci de confirmer cette connexion en saisissant le code que vous allez recevoir à l'adresse {{ email }}.
+            <v-text-field length=6 solo prepend-icon="mdi-pound" label="Code de vérification" v-model="loginCode"></v-text-field >
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+              @click="checkLogin"
+              >se connecter</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-flex>
     </v-layout>
   </v-container>
@@ -143,7 +163,9 @@ export default {
         required: value => !!value || 'Obligatoire.',
         email: value => this.validEmail || 'Adresse invalide.',
         samePassword: value => this.samePassword || 'Mot de passe différents'
-      }
+      },
+      verifDialog: false,
+      loginCode: ''
     }
   },
   computed: {
@@ -179,12 +201,12 @@ export default {
         return 'green'
       }
     },
-    username: {
-      get (username) {
-        return this.$store.state.credentials.username
+    email: {
+      get () {
+        return this.$store.state.credentials.email
       },
-      set (username) {
-        this.$store.commit('setUser', username)
+      set (email) {
+        this.$store.commit('setEmail', email)
       }
     },
     password: {
@@ -197,11 +219,22 @@ export default {
     },
     token () {
       return this.$store.state.token
+    },
+    browserToken () {
+      return this.$localStore.state.browserToken
     }
   },
   methods: {
+    checkLogin () {
+      this.$store.dispatch('checkLogin', this.loginCode)
+    },
     login () {
-      this.$store.commit('login')
+      if (this.browserToken != null) {
+        this.$store.commit('login')
+      } else {
+        this.$store.dispatch('getLogin')
+        this.verifDialog = true
+      }
     },
     getRecovery () {
       let self = this
@@ -218,7 +251,6 @@ export default {
     setPasswordRecovery () {
       let self = this
       this.$axios.get('/recovery/setPassword/' + this.recoveryEmail + '/' + this.recoveryCode + '/' + this.newPassword).then(r => {
-        
         self.state = 1
       })
     },

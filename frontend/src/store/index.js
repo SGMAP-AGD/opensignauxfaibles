@@ -29,6 +29,11 @@ const localStore = new Vuex.Store({
   state: {
     browserToken: null
   },
+  mutations: {
+    setBrowserToken (state, browserToken) {
+      state.browserToken = browserToken
+    }
+  },
   getters: {
     browserToken (state) { return state.browserToken }
   }
@@ -38,7 +43,7 @@ const sessionStore = new Vuex.Store({
   plugins: [createPersistedState({ storage: window.sessionStorage })],
   state: {
     credentials: {
-      username: null,
+      email: null,
       password: null
     },
     appDrawer: false,
@@ -111,7 +116,7 @@ const sessionStore = new Vuex.Store({
       let credentials = {
         email: state.credentials.email,
         password: state.credentials.password,
-        browserToken: localStorage.state.browserToken
+        browserToken: localStore.state.browserToken
       }
 
       axiosClient.post('/login', credentials).then(response => {
@@ -129,7 +134,7 @@ const sessionStore = new Vuex.Store({
       })
     },
     logout (state) {
-      state.credentials.username = null
+      state.credentials.email = null
       state.credentials.password = null
       state.token = null
       state.types = null
@@ -140,8 +145,8 @@ const sessionStore = new Vuex.Store({
       state.socket.message = []
       state.uploads = []
     },
-    setUser (state, username) {
-      state.credentials.username = username
+    setEmail (state, email) {
+      state.credentials.email = email
     },
     setPassword (state, password) {
       state.credentials.password = password
@@ -188,6 +193,25 @@ const sessionStore = new Vuex.Store({
     }
   },
   actions: {
+    getLogin (context) {
+      let credentials = {
+        email: context.state.credentials.email,
+        password: context.state.credentials.password
+      }
+
+      axiosClient.post('/login/get', credentials)
+    },
+    checkLogin (context, checkCode) {
+      let credentials = {
+        email: context.state.credentials.email,
+        password: context.state.credentials.password,
+        checkCode: checkCode
+      }
+
+      axiosClient.post('/login/check', credentials).then(response => {
+        localStore.commit('setBrowserToken', response.data.browserToken)
+      })
+    },
     setDrawer (context, val) {
       context.commit('drawer', val)
     },
