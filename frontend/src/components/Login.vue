@@ -10,117 +10,118 @@
           <v-text-field  prepend-icon="person" label="Adresse électronique" v-model="email"></v-text-field >
           <v-text-field  prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
           <v-btn round color="primary" type="submit">Connexion</v-btn><br/>
+          <div v-if="browserToken">
           <v-dialog
             persistent
             height="400px"
             width="500"
             v-model="passwordHelp"
           >
-          <a v-if="browserToken" slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
-          <v-card >
-            <v-toolbar color="#eef" class="toolbar elevation-1" dense>
-              <v-icon>mdi-lock-question</v-icon>
-              <v-spacer></v-spacer>
-              <span style="font-size: 15px; font-weight: 600">
-                Récupération du compte
-              </span>
-            </v-toolbar>
-
-            <div v-if="state==1">
-              <v-card-text>
-                <b>Etape 1</b> · Etape 2 · Fin<br/>
-                Saisissez votre adresse électronique, un code de récupération vous sera envoyé.
-              </v-card-text>
-              <v-card-text>
-                <v-text-field
-                prepend-icon="mdi-at"
-                label="Adresse E-Mail"
-                :rules="[rules.required, rules.email]"
-                v-model="recoveryEmail">
-                </v-text-field >
-              </v-card-text>
-                <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="primary"
-                  flat
-                  @click="passwordHelp = false"
-                >
-                  annuler
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  flat
-                  :disabled="!validEmail"
-                  @click="getRecovery()"
-                >
-                  suivant
-                </v-btn>
-              </v-card-actions>
-            </div>
-            <div v-if="state==2">
-              <v-card-text>
-                Etape 1 · <b>Etape 2</b> · Fin<br/>
-                Saisissez le code de récupération reçu dans votre boite aux lettres électronique
-              </v-card-text>
-              <v-card-text>
-                <v-text-field length=6 solo prepend-icon="mdi-pound" label="Code de récupération" v-model="recoveryCode"></v-text-field >
-              </v-card-text>
-                <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="primary"
-                  flat
-                  @click="rollbackRecovery()"
-                >
-                  recommencer
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  flat
-                  @click="checkRecovery()"
-                >
-                  suivant
-                </v-btn>
-              </v-card-actions>
-            </div>
-            <div v-if="state==3">
-              <v-card-text>
-                Etape 1 · Etape 2 · <b>Fin</b><br/>
-                Saisissez votre nouveau mot de passe
-              </v-card-text>
-              <v-card-text>
-                <v-text-field
-                  prepend-icon="fa-key"
-                  type="password"
-                  label="Nouveau mot de passe"
-                  :rules="[rules.complexity]"
-                  v-model="newPassword">
-                </v-text-field >
-                <v-progress-linear :color="passwordStrengthColor" v-model="passwordStrength"></v-progress-linear>
-                Mot de passe {{passwordStrengthComment}}
-              </v-card-text>
-                <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="primary"
-                  flat
-                  @click="rollbackRecovery()"
-                >
-                  recommencer
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  flat
-                  :disabled="passwordStrength<77"
-                  @click="setPasswordRecovery()"
-                >
-                  terminer
-                </v-btn>
-              </v-card-actions>
-            </div>
-          </v-card>
-          </v-dialog>
+            <a slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
+              <v-card >
+                <v-toolbar color="#eef" class="toolbar elevation-1" dense>
+                  <v-icon>mdi-lock-question</v-icon>
+                  <v-spacer></v-spacer>
+                  <span style="font-size: 15px; font-weight: 600">
+                    Récupération du compte
+                  </span>
+                </v-toolbar>
+                <div v-if="state==1">
+                  <v-card-text>
+                    <b>Etape 1</b> · Etape 2 · Fin<br/>
+                    Saisissez votre adresse électronique, un code de récupération vous sera envoyé.
+                  </v-card-text>
+                  <v-card-text>
+                    <v-text-field
+                    prepend-icon="mdi-at"
+                    label="Adresse E-Mail"
+                    :rules="[rules.required, rules.email]"
+                    v-model="recoveryEmail">
+                    </v-text-field >
+                  </v-card-text>
+                    <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      color="primary"
+                      flat
+                      @click="passwordHelp = false"
+                    >
+                      annuler
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      flat
+                      :disabled="!validEmail"
+                      @click="getRecovery()"
+                    >
+                      suivant
+                    </v-btn>
+                  </v-card-actions>
+                </div>
+                <div v-if="state==2">
+                  <v-card-text>
+                    Etape 1 · <b>Etape 2</b> · Fin<br/>
+                    Saisissez le code de récupération reçu dans votre boite aux lettres électronique
+                  </v-card-text>
+                  <v-card-text>
+                    <v-text-field length=6 solo prepend-icon="mdi-pound" label="Code de récupération" v-model="recoveryCode"></v-text-field >
+                  </v-card-text>
+                    <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      color="primary"
+                      flat
+                      @click="rollbackRecovery()"
+                    >
+                      recommencer
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      flat
+                      @click="checkRecovery()"
+                    >
+                      suivant
+                    </v-btn>
+                  </v-card-actions>
+                </div>
+                <div v-if="state==3">
+                  <v-card-text>
+                    Etape 1 · Etape 2 · <b>Fin</b><br/>
+                    Saisissez votre nouveau mot de passe
+                  </v-card-text>
+                  <v-card-text>
+                    <v-text-field
+                      prepend-icon="fa-key"
+                      type="password"
+                      label="Nouveau mot de passe"
+                      :rules="[rules.complexity]"
+                      v-model="newPassword">
+                    </v-text-field >
+                    <v-progress-linear :color="passwordStrengthColor" v-model="passwordStrength"></v-progress-linear>
+                    Mot de passe {{passwordStrengthComment}}
+                  </v-card-text>
+                    <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      color="primary"
+                      flat
+                      @click="rollbackRecovery()"
+                    >
+                      recommencer
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      flat
+                      :disabled="passwordStrength<77"
+                      @click="setPasswordRecovery()"
+                    >
+                      terminer
+                    </v-btn>
+                  </v-card-actions>
+                </div>
+              </v-card>
+            </v-dialog>
+          </div>
         </v-form>
         <v-dialog
         v-model="verifDialog"
@@ -165,7 +166,8 @@ export default {
         samePassword: value => this.samePassword || 'Mot de passe différents'
       },
       verifDialog: false,
-      loginCode: ''
+      loginCode: '',
+
     }
   },
   computed: {
@@ -237,21 +239,32 @@ export default {
       }
     },
     getRecovery () {
+      console.log("tototatatiti")
       let self = this
-      this.$axios.get('/recovery/get/' + this.recoveryEmail).then(r => {
+      let parameters = {
+        email: this.recoveryEmail,
+        browserToken: this.browserToken
+      }
+      this.$axios.post('/login/recovery/get', parameters).then(r => {
         self.state = 2
       })
     },
     checkRecovery () {
-      let self = this
-      this.$axios.get('/recovery/check/' + this.recoveryEmail + '/' + this.recoveryCode).then(r => {
-        self.state = 3
-      })
+      this.state = 3
     },
     setPasswordRecovery () {
       let self = this
-      this.$axios.get('/recovery/setPassword/' + this.recoveryEmail + '/' + this.recoveryCode + '/' + this.newPassword).then(r => {
-        self.state = 1
+      let parameters = {
+        email: this.recoveryEmail,
+        browserToken: this.browserToken,
+        code: this.recoveryCode,
+        password: this.newPassword
+      }
+      this.$axios.post('/login/recovery/setPassword', parameters).then(r => {
+        this.passwordHelp = false
+        this.email = this.recoveryEmail
+        this.password = this.newPassword
+        this.$store.commit('login')
       })
     },
     rollbackRecovery () {

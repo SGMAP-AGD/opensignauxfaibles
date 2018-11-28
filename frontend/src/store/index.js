@@ -209,7 +209,9 @@ const sessionStore = new Vuex.Store({
       }
 
       axiosClient.post('/login/check', credentials).then(response => {
+        console.log(response.data)
         localStore.commit('setBrowserToken', response.data.browserToken)
+        context.commit('login')
       })
     },
     setDrawer (context, val) {

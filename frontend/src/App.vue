@@ -101,6 +101,7 @@ export default {
     background:         radial-gradient( circle at center, red, blue);
     color: "black";
     font-family: 'Quicksand', sans-serif;
+    text-shadow: 0px 0px  3px rgb(141, 141, 141), 0px 0px  2px rgb(255, 255, 255);
     background: radial-gradient(ellipse at top, #fafafa, #f0f0f5 35%, #dbdbdb 55%, #bbbbbb 100%, transparent);  }
   #app {
     background-color: #e7e7e7;

@@ -2,12 +2,12 @@ package main
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -34,14 +34,6 @@ type AdminUser struct {
 	FirstName      string    `json:"firstName" bson:"firstName"`
 	LastName       string    `json:"lastName" bson:"lastName"`
 	BrowserTokens  []string  `json:"browserTokens" bson:"browserTokens"`
-}
-
-// Browser mappe les informations contenues dans un browserToken
-type Browser struct {
-	Name      string    `json:"name" bson:"name"`
-	IP        string    `json:"ip" bson:"ip"`
-	Created   time.Time `json:"created" bson:"created"`
-	UserEmail string    `json:"email" bson:"email"`
 }
 
 func (user AdminUser) save() error {
@@ -71,10 +63,13 @@ func loginUser(username string, password string, browserToken string) (AdminUser
 		return AdminUser{}, err
 	}
 	err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
-	if err == nil {
+
+	_, errToken := readBrowserToken(browserToken)
+
+	if err == nil && errToken == nil {
 		return user, nil
 	}
-	return AdminUser{}, err
+	return AdminUser{}, errors.New("nop")
 }
 
 func loginUserWithCredentials(username string, password string) (AdminUser, error) {
@@ -116,7 +111,7 @@ func authenticator(c *gin.Context) (interface{}, error) {
 }
 
 func authorizator(data interface{}, c *gin.Context) bool {
-	if v, ok := data.(*AdminUser); ok && v.ID.Key == "admin" {
+	if v, ok := data.(*AdminUser); ok && v.Level == "admin" {
 		return true
 	}
 	return false
@@ -138,56 +133,37 @@ func payload(data interface{}) jwt.MapClaims {
 	return jwt.MapClaims{}
 }
 
-func hashPassword(c *gin.Context) {
-	password := c.Params.ByName("password")
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(500, err)
-	} else {
-		c.JSON(200, string(hashedPassword))
-	}
-}
-
 func getCode() int {
 	i, _ := rand.Int(rand.Reader, big.NewInt(1000000))
 	return int(i.Int64())
 }
 
-func sendRecoveryEmailHandler(c *gin.Context) {
-	address := c.Params.ByName("email")
-	err := sendRecoveryEmail(address)
+func getRecoveryEmailHandler(c *gin.Context) {
+	var request struct {
+		Email        string `json:"email"`
+		BrowserToken string `json:"browserToken"`
+	}
+	err := c.ShouldBind(&request)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(400, "Bad Parameters 1")
+		return
+	}
+
+	email := request.Email
+	browser, err := readBrowserToken(request.BrowserToken)
+	fmt.Println(err)
+	if err != nil || browser.Email != email {
+		c.JSON(400, "Bad Parameters 2")
+		return
+	}
+
+	err = sendRecoveryEmail(email)
 	if err != nil {
 		c.JSON(500, err.Error())
 	} else {
 		c.JSON(200, nil)
 	}
-}
-
-func checkRecoveryEmailHandler(c *gin.Context) {
-	email := c.Params.ByName("email")
-	code := c.Params.ByName("code")
-
-	err := checkRecoveryEmail(email, code)
-	if err != nil {
-		c.JSON(401, err.Error())
-	} else {
-		c.JSON(200, nil)
-	}
-}
-
-func checkRecoveryEmail(email string, code string) error {
-	user, err := loadUser(email)
-	if err != nil {
-		return err
-	}
-	err = bcrypt.CompareHashAndPassword(user.HashedRecovery, []byte(code))
-	if err != nil {
-		return err
-	}
-	user.HashedRecovery = nil
-	user.TimeRecovery = time.Time{}
-	err = user.save()
-	return err
 }
 
 func sendRecoveryEmail(email string) error {
@@ -199,7 +175,7 @@ func sendRecoveryEmail(email string) error {
 			user.HashedRecovery = hashedPassword
 			user.TimeRecovery = time.Now()
 			err = user.save()
-			spew.Dump(err)
+
 			if err == nil {
 				fmt.Println(recoveryCode)
 			}
@@ -212,7 +188,6 @@ func sendRecoveryEmail(email string) error {
 	// smtpAddress := viper.GetString("smtpAddress")
 	// smtpUser := viper.GetString("smtpUser")
 	// smtpPassword := viper.GetString("smtpPass")
-
 	// c, err := smtp.Dial("localhost:25")
 	// if err != nil {
 	// 	spew.Dump(err)
@@ -232,6 +207,56 @@ func sendRecoveryEmail(email string) error {
 	// 	spew.Dump(err)
 	// }
 	// return err
+}
+
+func checkRecoverySetPassword(c *gin.Context) {
+	var request struct {
+		Email        string `json:"email"`
+		RecoveryCode string `json:"code"`
+		Password     string `json:"password"`
+		BrowserToken string `json:"browserToken"`
+	}
+	err := c.ShouldBind(&request)
+
+	if err != nil {
+		c.JSON(400, "Bad Parameters")
+	}
+
+	browser, err := readBrowserToken(request.BrowserToken)
+	if err != nil {
+		c.JSON(400, "Bad Parameters")
+	}
+
+	email := request.Email
+	code := request.RecoveryCode
+	password := request.Password
+	fmt.Println(password)
+	if browser.Email != email {
+		c.JSON(400, "Bad Parameters")
+	}
+
+	user, err := loadUser(email)
+	if err != nil {
+		c.JSON(400, "Bad Parameters")
+	}
+	err = bcrypt.CompareHashAndPassword(user.HashedRecovery, []byte(code))
+	if err != nil {
+		c.JSON(500, "Server side error")
+	}
+	user.HashedRecovery = nil
+	user.TimeRecovery = time.Time{}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		c.JSON(500, "Server side error")
+	}
+	user.HashedPassword = hashedPassword
+	err = user.save()
+
+	if err != nil {
+		c.JSON(500, "Server side error")
+	}
 
 }
 
@@ -285,9 +310,16 @@ func loginCheckHandler(c *gin.Context) {
 	err := loginCheck(email, password, checkCode)
 
 	if err != nil {
-		c.JSON(401, "Authentification Incorrecte")
+		c.JSON(401, "Erreur d'authentification")
 	} else {
-		c.JSON(200, "Welcome")
+		browser := Browser{
+			IP:      c.ClientIP(),
+			Created: time.Now(),
+			Email:   email,
+			Name:    "gabuzomeuh",
+		}
+		browserToken, _ := forgeBrowserToken(browser)
+		c.JSON(200, browserToken)
 	}
 }
 

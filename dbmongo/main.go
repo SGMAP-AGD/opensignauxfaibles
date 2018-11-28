@@ -93,10 +93,8 @@ func main() {
 	r.POST("/login", authMiddleware.LoginHandler)
 	r.POST("/login/get", loginGetHandler)
 	r.POST("/login/check", loginCheckHandler)
-	r.GET("/login/recovery/get/:email", sendRecoveryEmailHandler)
-	r.GET("/login/recovery/check/:email/:code", checkRecoveryEmailHandler)
-
-	r.GET("/hash/:password", hashPassword)
+	r.POST("/login/recovery/get", getRecoveryEmailHandler)
+	r.POST("/login/recovery/setPassword", checkRecoverySetPassword)
 	r.GET("/ws/:jwt", func(c *gin.Context) {
 		wshandler(c.Writer, c.Request, c.Params.ByName("jwt"))
 	})
