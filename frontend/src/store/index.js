@@ -112,22 +112,7 @@ const sessionStore = new Vuex.Store({
     SOCKET_RECONNECT_ERROR (state) {
       wsConnect(state)
     },
-    login (state) {
-      let credentials = {
-        email: state.credentials.email,
-        password: state.credentials.password,
-        browserToken: localStore.state.browserToken
-      }
 
-      axiosClient.post('/login', credentials).then(response => {
-        state.token = response.data.token
-        wsConnect(state)
-        state.commit('updateRefs')
-        state.commit('updateBatches')
-        state.commit('updateDbStatus')
-        state.commit('updateLogs')
-      })
-    },
     refreshToken (state) {
       axiosClient.get('/api/refreshToken').then(response => {
         state.token = response.data.token
@@ -190,9 +175,28 @@ const sessionStore = new Vuex.Store({
     },
     updateTabs (state, tabs) {
       state.tabs = tabs
+    },
+    setToken (state, token) {
+      state.token = token
     }
   },
   actions: {
+    login (context) {
+      let credentials = {
+        email: context.state.credentials.email,
+        password: context.state.credentials.password,
+        browserToken: localStore.state.browserToken
+      }
+
+      axiosClient.post('/login', credentials).then(response => {
+        context.commit('setToken', response.data.token)
+        wsConnect(context)
+        context.commit('updateRefs')
+        context.commit('updateBatches')
+        context.commit('updateDbStatus')
+        context.commit('updateLogs')
+      })
+    },
     getLogin (context) {
       let credentials = {
         email: context.state.credentials.email,

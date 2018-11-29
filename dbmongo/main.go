@@ -62,8 +62,8 @@ func main() {
 	r.Use(cors.New(config))
 
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:           "test zone",
-		Key:             []byte("secret key"),
+		Realm:           "Signaux-Faibles",
+		Key:             []byte(viper.GetString("jwtSecret")),
 		SendCookie:      false,
 		Timeout:         time.Hour,
 		MaxRefresh:      time.Hour,

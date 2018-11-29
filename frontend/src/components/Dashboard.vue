@@ -1,8 +1,7 @@
 <template>
 <div>
   <v-toolbar class="toolbar" color="#c9aec5" height="35px" app>
-
-    <v-icon 
+    <v-icon
     @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
@@ -19,7 +18,6 @@
   <v-container fluid grid-list-md text-xs-center>
       <v-layout row wrap justify-start>
         <v-flex xs12></v-flex>
-      
         <v-flex xs6>
           <v-card>
             <v-card-title class="headline font-weight-thin" >
@@ -29,7 +27,7 @@
             <v-card-text>
               <v-list>
                 <v-list-tile avatar>
-                  Effectué: x% 
+                  Effectué: x%
                 </v-list-tile>
                 <v-list-tile avatar>
                   En attente: y%
@@ -47,8 +45,8 @@
             <v-card-text>
               <v-list>
                 <v-list-tile avatar>
-                  Planifiées: x% 
-                </v-list-tile>  
+                  Planifiées: x%
+                </v-list-tile>
                 <v-list-tile avatar>
                   Effectuées: y%
                 </v-list-tile>
@@ -60,7 +58,6 @@
           </v-card>
         </v-flex>
       </v-layout>
-    
   </v-container>
 
   </div>
@@ -101,9 +98,8 @@ a {
 }
 div.titre {
   font-family: 'Signika', sans-serif;
+  color: #4a0c41;
   font-weight: 500;
-  color: primary;
-  font-size: 28px;
-  color: #4a0c41
+  font-size: 18px
 }
 </style>

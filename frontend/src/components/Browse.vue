@@ -1,15 +1,13 @@
 <template>
 <div>
   <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
-    
-    <v-icon 
+    <v-icon
      @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
     color="primary"
     key="toolbar"
     >mdi-backburger</v-icon>
-    
     <div style="width: 100%; text-align: center;"  class="titre">
       Détection
     </div>
@@ -31,7 +29,6 @@
           <v-list-tile-avatar>
             <v-icon @click="drawer=!drawer">mdi-chevron-left</v-icon>
           </v-list-tile-avatar>
-          
         </v-list-tile>
       </v-list>
     </v-toolbar>
@@ -72,9 +69,7 @@
             <v-list-tile-title>Administration</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
-
         <v-divider></v-divider>
-
         <v-list-tile @click="logout()">
           <v-list-tile-action>
             <v-icon>logout</v-icon>
@@ -85,9 +80,9 @@
         </v-list-tile>
       </v-list>
     <v-footer class="elevation-6" style="color: blue; width:100%; position: fixed; bottom: 0px;">
-      <v-btn 
-        flat 
-        icon 
+      <v-btn
+        flat
+        icon
         color="blue"
         href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
         <v-icon>fab fa-github</v-icon>
@@ -99,9 +94,6 @@
 </template>
 
 <script>
-import PredictionTable from '@/components/PredictionTable'
-import Etablissement from '@/components/Etablissement'
-
 export default {
   data () {
     return {
@@ -157,7 +149,6 @@ export default {
       return this.$store.state.batches.filter(b => b.readonly === true).map(batch => batch.id.key)
     }
   },
-  components: { PredictionTable, Etablissement },
   name: 'Browse'
 }
 </script>

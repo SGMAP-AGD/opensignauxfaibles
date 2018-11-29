@@ -2,16 +2,11 @@
     <div >
       
     <v-navigation-drawer
-    class="elevation-6"
+    :class="rightDrawer?'elevation-6':''"
     right app
     v-model="rightDrawer"
     >
       <v-list dense class="pt-0">
-          <!-- <v-list-tile >
-            <v-list-tile-content class="text-xs-center">
-                          <v-icon large>fa-database</v-icon>
-            </v-list-tile-content>
-          </v-list-tile> -->
         <v-list-group>
           <v-list-tile slot="activator" bgcolor="red">
             <v-list-tile-action>
@@ -211,10 +206,8 @@ export default {
   color: #700;
   font-size: 15px;
 }
-.widget {
-  position: absolute;
-  left: 320px;
+/* .widget {
   top: 20px; 
-  right: 20px;
-}
+  
+} */
 </style>

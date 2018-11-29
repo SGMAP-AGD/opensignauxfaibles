@@ -166,7 +166,7 @@ export default {
         samePassword: value => this.samePassword || 'Mot de passe différents'
       },
       verifDialog: false,
-      loginCode: '',
+      loginCode: ''
 
     }
   },
@@ -232,14 +232,13 @@ export default {
     },
     login () {
       if (this.browserToken != null) {
-        this.$store.commit('login')
+        this.$store.dispatch('login')
       } else {
         this.$store.dispatch('getLogin')
         this.verifDialog = true
       }
     },
     getRecovery () {
-      console.log("tototatatiti")
       let self = this
       let parameters = {
         email: this.recoveryEmail,
@@ -253,7 +252,6 @@ export default {
       this.state = 3
     },
     setPasswordRecovery () {
-      let self = this
       let parameters = {
         email: this.recoveryEmail,
         browserToken: this.browserToken,
@@ -264,7 +262,7 @@ export default {
         this.passwordHelp = false
         this.email = this.recoveryEmail
         this.password = this.newPassword
-        this.$store.commit('login')
+        this.$store.dispatch('login')
       })
     },
     rollbackRecovery () {

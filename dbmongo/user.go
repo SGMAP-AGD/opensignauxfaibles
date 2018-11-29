@@ -96,7 +96,6 @@ func authenticator(c *gin.Context) (interface{}, error) {
 	var loginVals login
 
 	if err := c.ShouldBind(&loginVals); err != nil {
-		fmt.Println(err)
 		return "", jwt.ErrMissingLoginValues
 	}
 	email := loginVals.Email
@@ -144,7 +143,6 @@ func getRecoveryEmailHandler(c *gin.Context) {
 		BrowserToken string `json:"browserToken"`
 	}
 	err := c.ShouldBind(&request)
-	fmt.Println(err)
 	if err != nil {
 		c.JSON(400, "Bad Parameters 1")
 		return
@@ -152,7 +150,6 @@ func getRecoveryEmailHandler(c *gin.Context) {
 
 	email := request.Email
 	browser, err := readBrowserToken(request.BrowserToken)
-	fmt.Println(err)
 	if err != nil || browser.Email != email {
 		c.JSON(400, "Bad Parameters 2")
 		return
@@ -230,7 +227,6 @@ func checkRecoverySetPassword(c *gin.Context) {
 	email := request.Email
 	code := request.RecoveryCode
 	password := request.Password
-	fmt.Println(password)
 	if browser.Email != email {
 		c.JSON(400, "Bad Parameters")
 	}
@@ -264,7 +260,6 @@ func loginGetHandler(c *gin.Context) {
 	var loginVals login
 
 	if err := c.ShouldBind(&loginVals); err != nil {
-		fmt.Println(err)
 		c.JSON(401, "requête malformée")
 		return
 	}
@@ -324,8 +319,6 @@ func loginCheckHandler(c *gin.Context) {
 }
 
 func loginCheck(email string, password string, checkCode string) error {
-	fmt.Println(email, password, checkCode)
-
 	user, err := loginUserWithCredentials(email, password)
 	if err != nil {
 		return err

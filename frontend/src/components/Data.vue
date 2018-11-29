@@ -2,7 +2,7 @@
   <div>
 <div>
   <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
-    <v-icon 
+    <v-icon
     @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
@@ -15,7 +15,7 @@
       Données
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="secondary"  @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+    <v-icon color="secondary" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
   </v-toolbar>
   <div style="width:100%">
     <Batch
@@ -44,10 +44,10 @@
       v-for="(batch, rank) in batches"
       :key="rank"
       >
-          <Batch 
+          <Batch
           :batchKey="batch"/>
       </v-tab-item>
-    </v-tabs> 
+    </v-tabs>
   </div>
   </div>
 </template>
