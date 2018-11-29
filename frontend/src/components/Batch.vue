@@ -1,96 +1,13 @@
 <template>
-    <div >
-      
-    <v-navigation-drawer
-    :class="rightDrawer?'elevation-6':''"
-    right app
-    v-model="rightDrawer"
-    >
-      <v-list dense class="pt-0">
-        <v-list-group>
-          <v-list-tile slot="activator" bgcolor="red">
-            <v-list-tile-action>
-              <v-icon>fa-cogs</v-icon>
-            </v-list-tile-action>
-            <v-list-tile-content class="title">
-              Paramètres
-            </v-list-tile-content>
-          </v-list-tile>
-          <v-list-tile
-          v-for="param in parameters"
-          :key="batchKey + param.key"
-          ripple
-          @click="setCurrentType(param.key)">
-            <v-list-tile-content> 
-              <v-list-tile-title
-              :class="(param.key===currentType) ? 'selected': null"
-              >{{ param.text }}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-list-group>
-        <v-list-group>
-          <v-list-tile slot="activator">
-            <v-list-tile-action>
-              <v-icon>fa-copy</v-icon>
-            </v-list-tile-action> 
-            <v-list-tile-title class="title">
-              Fichiers
-            </v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile
-          v-for="type in types"
-          :key="type.text"
-          @click="setCurrentType(type.type)"
-          >
-            <v-list-tile-content>
-              <v-list-tile-title
-              :class="(type.type==currentType) ? 'selected': null">
-              {{ type.text }}
-              </v-list-tile-title>
-            </v-list-tile-content>
-            <v-list-tile-action>
-              <v-icon 
-              @click="toggleComplete(type.type)"
-              >{{ currentBatch.complete_types.includes(type.type)?'mdi-square-inc':'mdi-shape-square-plus' }}</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <v-divider></v-divider>
-        </v-list-group>
-        <v-list-group>
-          <v-list-tile slot="activator">
-            <v-list-tile-action>
-              <v-icon>fa-microchip</v-icon>
-            </v-list-tile-action> 
-            <v-list-tile-title class="title">
-              Traitements
-            </v-list-tile-title>
-          </v-list-tile>
-          <v-divider></v-divider>
-          <v-list-tile
-          v-for="process in processes"
-          :key="batchKey + process.key"
-          @click="setCurrentType(process.key)"
-          >
-            <v-list-tile-content>
-              <v-list-tile-title
-              :class="(process.key==currentType) ? 'selected': null">
-              {{ process.text }}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-list-group>
-      </v-list>
-      
-    </v-navigation-drawer>
-
     <div class="widget">
-      <BatchDate 
+      <BatchDate
       class="elevation-6"
       :key="batchKey + 'batchDate'"
       :date="currentType"
       :param="parameters.filter(p => p.key === currentType)[0]"
       v-if="parameters.map(p => p.key).includes(currentType)"
       />
-      <BatchFile 
+      <BatchFile
       :key="batchKey + 'batchFile'"
       :type="currentType"
       v-if="types.map(t => t.type).includes(currentType)"
@@ -101,8 +18,6 @@
       v-if="processes.map(p => p.key).includes(currentType)"
       />
     </div>
-
-  </div>
 </template>
 
 <script>
@@ -114,35 +29,34 @@ export default {
   props: ['batchKey'],
   data () {
     return {
-      currentType: null,
       parameters: [
-        {text: 'Date de début', key: 'dateDebut', prop: 'date_debut'},
-        {text: 'Date de fin', key: 'dateFin', prop: 'date_fin'},
-        {text: 'Date de fin effectifs', key: 'dateFinEffectif', prop: 'date_fin_effectif'}
+        { text: 'Date de début', key: 'dateDebut', prop: 'date_debut' },
+        { text: 'Date de fin', key: 'dateFin', prop: 'date_fin' },
+        { text: 'Date de fin effectifs', key: 'dateFinEffectif', prop: 'date_fin_effectif' }
       ],
       processes: [
-        {text: 'Suppression',
+        { text: 'Suppression',
           color: 'red',
           key: 'reset',
           img: '/static/poubelle.png',
           description: 'Retour au batch précédent',
           do (self) { self.$axios.get('/api/batch/revert') }
         },
-        {text: 'Purger',
+        { text: 'Purger',
           color: 'blue',
           key: 'purge',
           img: '/static/gomme.svg',
           description: 'Retour au paramétrage',
           do (self) { self.$axios.get('/api/batch/purge') }
         },
-        {text: 'Calcul Prédictions',
+        { text: 'Calcul Prédictions',
           color: 'green',
           key: 'predict',
           img: '/static/warning.png',
           description: 'Intégration des données et calcul des prédictions.',
           do (self) { self.$axios.get('/api/batch/process') }
         },
-        {text: 'Clôture',
+        { text: 'Clôture',
           color: 'black',
           key: 'close',
           img: '/static/warning.png',
@@ -153,13 +67,21 @@ export default {
     }
   },
   computed: {
+    currentType: {
+      get () {
+        return this.$store.state.currentType
+      },
+      set (type) {
+        this.$store.dispatch('setCurrentType', type)
+      }
+    },
     currentBatchKey () {
       return this.$store.state.currentBatchKey
     },
     currentBatch: {
       get () {
         if (this.$store.state.batches !== []) {
-          return this.$store.state.batches[this.currentBatchKey]
+          return this.$store.getters.batches[this.currentBatchKey]
         } else {
           return null
         }
@@ -184,9 +106,6 @@ export default {
     }
   },
   methods: {
-    setCurrentType (type) {
-      this.currentType = type
-    },
     toggleComplete (type) {
       let batch = this.currentBatch
       if (batch.complete_types.includes(type)) {
@@ -206,8 +125,4 @@ export default {
   color: #700;
   font-size: 15px;
 }
-/* .widget {
-  top: 20px; 
-  
-} */
 </style>

@@ -17,18 +17,30 @@ export default {
     }
   },
   computed: {
-    currentBatchKey () {
-      return this.$store.state.currentBatchKey
+    currentBatch: {
+      get () {
+        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
+          return this.$store.state.batches[this.currentBatchKey]
+        } else {
+          return {'params': {}}
+        }
+      },
+      set (batch) {
+        this.$store.dispatch('saveBatch', batch).then(r => this.$store.dispatch('checkEpoch'))
+      }
     },
-    currentBatch () {
-      if (this.$store.state.batches != null) {
-        return this.$store.state.batches[this.currentBatchKey]
+    currentBatchKey: {
+      get () {
+        return this.$store.state.currentBatchKey
+      },
+      set (value) {
+        this.$store.commit('setCurrentBatchKey', value)
       }
     },
     currentDate: {
       get () {
         if (this.$store.state.batches != null) {
-          var date = this.currentBatch.params[this.param.prop].substring(0, 7)
+          var date = (this.currentBatch.params[this.param.prop] || '').substring(0, 7)
           date = (date < '1970-01') ? new Date().toISOString().substring(0, 7) : date
           return date
         }

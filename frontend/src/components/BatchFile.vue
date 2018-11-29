@@ -142,7 +142,7 @@
             >
               <template
               slot="item"
-              slot-scope="{index, item, parent}"
+              slot-scope="{ index, item }"
               >
                   <v-list-tile style="width: 100%">
                     <v-list-tile-content>
@@ -260,25 +260,32 @@ export default {
     currentType () {
       return this.$store.state.types.filter(t => t.type === this.type)[0]
     },
-    currentBatchKey () {
-      return this.$store.state.currentBatchKey
-    },
     currentBatch: {
       get () {
-        if (this.$store.state.batches !== []) {
+        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
           return this.$store.state.batches[this.currentBatchKey]
         } else {
-          return null
+          return { 'params': {} }
         }
       },
       set (batch) {
         this.$store.dispatch('saveBatch', batch).then(r => this.$store.dispatch('checkEpoch'))
       }
     },
+    currentBatchKey: {
+      get () {
+        console.log(this.$store.state.currentBatchKey)
+        return this.$store.state.currentBatchKey
+      },
+      set (value) {
+        this.$store.commit('setCurrentBatchKey', value)
+      }
+    },
     currentFiles () {
       if (this.$store.state.batches !== []) {
         return (this.currentBatch.files[this.type] || []).map(f => this.fileDetail(f))
       }
+      return null
     },
     files () {
       var files = (this.$store.state.files || []).map(f => {

@@ -1,54 +1,111 @@
 <template>
   <div>
-<div>
-  <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
-    <v-icon
-    @click="drawer=!drawer"
-    class="fa-rotate-180"
-    v-if="!drawer"
-    color="secondary"
-    key="toolbar"
+    <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
+      <v-icon
+      @click="drawer=!drawer"
+      class="fa-rotate-180"
+      v-if="!drawer"
+      color="secondary"
+      key="toolbar"
+      >
+      mdi-backburger
+      </v-icon>
+      <div style="width: 100%; text-align: center;"  class="titre">
+        Données
+      </div>
+      <v-spacer></v-spacer>
+      <v-icon color="secondary" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+    </v-toolbar>
+    <v-navigation-drawer
+      :class="rightDrawer?'elevation-6':''"
+      right app
+      v-model="rightDrawer"
     >
-    mdi-backburger
-     </v-icon>
-    <div style="width: 100%; text-align: center;"  class="titre">
-      Données
+      <v-list dense class="pt-0">
+        <v-toolbar>
+          <v-select
+            :items="batches"
+            v-model="currentBatchKey"
+            label="Lot d'intégration"
+          ></v-select>
+        </v-toolbar>
+        <v-list-group>
+          <v-list-tile slot="activator" bgcolor="red">
+            <v-list-tile-action>
+              <v-icon>fa-cogs</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content class="title">
+              Paramètres
+            </v-list-tile-content>
+          </v-list-tile>
+          <v-list-tile
+          v-for="param in parameters"
+          :key="currentBatchKey + param.key"
+          ripple
+          @click="setCurrentType(param.key)">
+            <v-list-tile-content>
+              <v-list-tile-title
+              :class="(param.key===currentType) ? 'selected': null"
+              >{{ param.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list-group>
+        <v-list-group>
+          <v-list-tile slot="activator">
+            <v-list-tile-action>
+              <v-icon>fa-copy</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-title class="title">
+              Fichiers
+            </v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile
+          v-for="type in types"
+          :key="type.text"
+          @click="setCurrentType(type.type)"
+          >
+            <v-list-tile-content>
+              <v-list-tile-title
+              :class="(type.type==currentType) ? 'selected': null">
+              {{ type.text }}
+              </v-list-tile-title>
+            </v-list-tile-content>
+            <v-list-tile-action>
+              <v-icon
+              @click="toggleComplete(type.type)"
+              >{{ currentBatch.complete_types.includes(type.type)?'mdi-square-inc':'mdi-shape-square-plus' }}</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+          <v-divider></v-divider>
+        </v-list-group>
+        <v-list-group>
+          <v-list-tile slot="activator">
+            <v-list-tile-action>
+              <v-icon>fa-microchip</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-title class="title">
+              Traitements
+            </v-list-tile-title>
+          </v-list-tile>
+          <v-divider></v-divider>
+          <v-list-tile
+          v-for="process in processes"
+          :key="currentBatchKey + process.key"
+          @click="setCurrentType(process.key)"
+          >
+            <v-list-tile-content>
+              <v-list-tile-title
+              :class="(process.key==currentType) ? 'selected': null">
+              {{ process.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list-group>
+      </v-list>
+    </v-navigation-drawer>
+    <div style="width:100%">
+      <Batch
+      batchKey="1802"/>
     </div>
-    <v-spacer></v-spacer>
-    <v-icon color="secondary" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
-  </v-toolbar>
-  <div style="width:100%">
-    <Batch
-    batchKey="1802"/>
-  </div>
-    <v-tabs
-      v-model="currentBatchKey"
-      color="red darken-4"
-      dark
-      fixed
-      slider-color="red accent-2"
-      show-arrows
-      next-icon="fa-arrow-alt-circle-right"
-      prev-icon="fa-arrow-alt-circle-left"
-    >
-      <v-tab
-        v-for="batch in batches"
-        :key="batch"
-        ripple
-        dark
-      >
-        {{ batch.substring(2,4) }}/20{{ batch.substring(0,2) }}
-      </v-tab>
-      <v-tab-item
-      dark
-      v-for="(batch, rank) in batches"
-      :key="rank"
-      >
-          <Batch
-          :batchKey="batch"/>
-      </v-tab-item>
-    </v-tabs>
-  </div>
   </div>
 </template>
 
@@ -61,9 +118,23 @@ export default {
   methods: {
     setCurrentBatchKey (batchKey) {
       this.currentBatchKey = batchKey
+    },
+    setCurrentType (type) {
+      this.currentType = type
     }
   },
   computed: {
+    types () {
+      return this.$store.state.types
+    },
+    currentType: {
+      get () {
+        return this.$store.state.currentType
+      },
+      set (type) {
+        this.$store.dispatch('setCurrentType', type)
+      }
+    },
     drawer: {
       get () {
         return this.$store.state.appDrawer
@@ -80,6 +151,18 @@ export default {
         this.$store.dispatch('setRightDrawer', val)
       }
     },
+    currentBatch: {
+      get () {
+        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
+          return this.$store.state.batches[this.currentBatchKey]
+        } else {
+          return {'complete_types': []}
+        }
+      },
+      set (batch) {
+        this.$store.dispatch('saveBatch', batch).then(r => this.$store.dispatch('checkEpoch'))
+      }
+    },
     currentBatchKey: {
       get () {
         return this.$store.state.currentBatchKey
@@ -90,6 +173,45 @@ export default {
     },
     batches () {
       return this.$store.state.batches.map(batch => batch.id.key)
+    }
+  },
+  data () {
+    return {
+      parameters: [
+        { text: 'Date de début', key: 'dateDebut', prop: 'date_debut' },
+        { text: 'Date de fin', key: 'dateFin', prop: 'date_fin' },
+        { text: 'Date de fin effectifs', key: 'dateFinEffectif', prop: 'date_fin_effectif' }
+      ],
+      processes: [
+        { text: 'Suppression',
+          color: 'red',
+          key: 'reset',
+          img: '/static/poubelle.png',
+          description: 'Retour au batch précédent',
+          do (self) { self.$axios.get('/api/batch/revert') }
+        },
+        { text: 'Purger',
+          color: 'blue',
+          key: 'purge',
+          img: '/static/gomme.svg',
+          description: 'Retour au paramétrage',
+          do (self) { self.$axios.get('/api/batch/purge') }
+        },
+        { text: 'Calcul Prédictions',
+          color: 'green',
+          key: 'predict',
+          img: '/static/warning.png',
+          description: 'Intégration des données et calcul des prédictions.',
+          do (self) { self.$axios.get('/api/batch/process') }
+        },
+        { text: 'Clôture',
+          color: 'black',
+          key: 'close',
+          img: '/static/warning.png',
+          description: 'Clôture du batch en cours et création du suivant',
+          do (self) { self.$axios.get('/api/batch/next') }
+        }
+      ]
     }
   },
   components: { Batch },

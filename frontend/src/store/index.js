@@ -54,7 +54,7 @@ const sessionStore = new Vuex.Store({
     files: [],
     batches: [],
     dbstatus: null,
-    currentBatchKey: 0,
+    currentBatchKey: null,
     currentType: null,
     epoch: 0,
     socket: {
@@ -181,6 +181,14 @@ const sessionStore = new Vuex.Store({
     }
   },
   actions: {
+    updateBatches (context) {
+      axiosClient.get('/api/admin/batch').then(response => {
+        context.commit('updateBatches', response.data)
+      })
+    },
+    setCurrentType (context, type) {
+      context.commit('setCurrentType', type)
+    },
     login (context) {
       let credentials = {
         email: context.state.credentials.email,
@@ -297,6 +305,12 @@ const sessionStore = new Vuex.Store({
     }
   },
   getters: {
+    batches (state) {
+      return state.batches.reduce((accu, batch) => {
+        accu[batch.id.key] = batch
+        return accu
+      }, {})
+    },
     axiosConfig (state) {
       return { headers: { Authorization: 'Bearer ' + state.token } }
     },
