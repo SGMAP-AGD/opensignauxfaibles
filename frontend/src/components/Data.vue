@@ -24,7 +24,7 @@
       <v-list dense class="pt-0">
         <v-toolbar>
           <v-select
-            :items="batches"
+            :items="batchesKeys"
             v-model="currentBatchKey"
             label="Lot d'intégration"
           ></v-select>
@@ -103,17 +103,40 @@
       </v-list>
     </v-navigation-drawer>
     <div style="width:100%">
-      <Batch
-      batchKey="1802"/>
+      <div v-if="currentBatchKey != null">
+        <BatchDate
+        class="elevation-6"
+        :key="currentBatchKey + 'batchDate'"
+        :date="currentType"
+        :param="parameters.filter(p => p.key === currentType)[0]"
+        v-if="parameters.map(p => p.key).includes(currentType)"
+        />
+        <BatchFile
+        :key="currentBatchKey + 'batchFile'"
+        :type="currentType"
+        v-if="types.map(t => t.type).includes(currentType)"
+        />
+        <BatchProcess
+        :key="currentBatchKey + 'batchProcess'"
+        :process="processes.filter(p => p.key === currentType)[0]"
+        v-if="processes.map(p => p.key).includes(currentType)"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import Batch from '@/components/Batch'
+import BatchFile from '@/components/BatchFile'
+import BatchDate from '@/components/BatchDate'
+import BatchProcess from '@/components/BatchProcess'
+
+// import Batch from '@/components/Batch'
+
 export default {
   mounted () {
-    this.$store.commit('updateBatches')
+    this.$store.dispatch('updateBatches')
+    this.$store.dispatch('updateRefs')
   },
   methods: {
     setCurrentBatchKey (batchKey) {
@@ -153,10 +176,10 @@ export default {
     },
     currentBatch: {
       get () {
-        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
-          return this.$store.state.batches[this.currentBatchKey]
+        if (this.currentBatchKey in this.$store.getters.batchesObject) {
+          return this.$store.getters.batchesObject[this.currentBatchKey]
         } else {
-          return {'complete_types': []}
+          return { 'complete_types': [] }
         }
       },
       set (batch) {
@@ -171,8 +194,8 @@ export default {
         this.$store.commit('setCurrentBatchKey', value)
       }
     },
-    batches () {
-      return this.$store.state.batches.map(batch => batch.id.key)
+    batchesKeys () {
+      return (this.$store.state.batches || []).map(batch => batch.id.key)
     }
   },
   data () {
@@ -214,7 +237,7 @@ export default {
       ]
     }
   },
-  components: { Batch },
+  components: { BatchDate, BatchFile, BatchProcess },
   name: 'Data'
 }
 </script>

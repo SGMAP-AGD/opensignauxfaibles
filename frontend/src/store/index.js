@@ -136,10 +136,8 @@ const sessionStore = new Vuex.Store({
     setPassword (state, password) {
       state.credentials.password = password
     },
-    updateBatches (state) {
-      axiosClient.get('/api/admin/batch').then(response => {
-        state.batches = response.data
-      })
+    updateBatches (state, batches) {
+      state.batches = batches
     },
     updateDbStatus (state) {
       axiosClient.get('/api/admin/status').then(response => {
@@ -148,11 +146,6 @@ const sessionStore = new Vuex.Store({
     },
     setEpoch (state, epoch) {
       state.epoch = epoch
-    },
-    updateRefs (state) {
-      axiosClient.get('/api/admin/types').then(response => { state.types = response.data.sort((a, b) => a.text.localeCompare(b.text)) })
-      axiosClient.get('/api/admin/features').then(response => { state.features = response.data })
-      axiosClient.get('/api/admin/files').then(response => { state.files = response.data.sort((a, b) => a.name.localeCompare(b.name)) })
     },
     updateLogs (state) {
       axiosClient.get('/api/admin/getLogs').then(response => { state.socket.message = (response.data || []) })
@@ -178,12 +171,32 @@ const sessionStore = new Vuex.Store({
     },
     setToken (state, token) {
       state.token = token
+    },
+    updateTypes (state, types) {
+      state.types = types.sort((a, b) => a.text.localeCompare(b.text))
+    },
+    updateFeatures (state, features) {
+      state.features = features
+    },
+    updateFiles (state, files) {
+      state.files = files.sort((a, b) => a.name.localeCompare(b.name))
     }
   },
   actions: {
     updateBatches (context) {
       axiosClient.get('/api/admin/batch').then(response => {
         context.commit('updateBatches', response.data)
+      })
+    },
+    updateRefs (context) {
+      axiosClient.get('/api/admin/types').then(response => {
+        context.commit('updateTypes', response.data)
+      })
+      axiosClient.get('/api/admin/features').then(response => {
+        context.commit('updateFeatures', response.data)
+      })
+      axiosClient.get('/api/admin/files').then(response => {
+        context.commit('updateFiles', response.data)
       })
     },
     setCurrentType (context, type) {
@@ -199,10 +212,6 @@ const sessionStore = new Vuex.Store({
       axiosClient.post('/login', credentials).then(response => {
         context.commit('setToken', response.data.token)
         wsConnect(context)
-        context.commit('updateRefs')
-        context.commit('updateBatches')
-        context.commit('updateDbStatus')
-        context.commit('updateLogs')
       })
     },
     getLogin (context) {
@@ -292,9 +301,9 @@ const sessionStore = new Vuex.Store({
         axiosClient.get('/api/admin/epoch').then(response => {
           if (response.data !== sessionStore.state.epoch) {
             context.commit('setEpoch', response.data)
-            context.commit('updateRefs')
-            context.commit('updateBatches')
-            context.commit('updateDbStatus')
+            context.dispatch('updateRefs')
+            context.dispatch('updateBatches')
+            // context.commit('updateDbStatus')
           }
         }).catch(error => {
           if (error.response.status === 401) {
@@ -305,11 +314,17 @@ const sessionStore = new Vuex.Store({
     }
   },
   getters: {
-    batches (state) {
-      return state.batches.reduce((accu, batch) => {
+    batchesObject (state) {
+      return (state.batches || []).reduce((accu, batch) => {
         accu[batch.id.key] = batch
         return accu
       }, {})
+    },
+    batchesArray (state) {
+      return (state.batches || [])
+    },
+    batchesKeys (state) {
+      return (state.batches || []).map(batch => batch.id.key)
     },
     axiosConfig (state) {
       return { headers: { Authorization: 'Bearer ' + state.token } }
@@ -351,10 +366,10 @@ function wsConnect (state) {
 if (sessionStore.state.token != null) {
   wsConnect(sessionStore.state)
   sessionStore.commit('refreshToken')
-  sessionStore.commit('updateRefs')
-  sessionStore.commit('updateDbStatus')
-  sessionStore.commit('updateBatches')
-  sessionStore.commit('updateLogs')
+  // sessionStore.dispatch('updateRefs')
+  // sessionStore.commit('updateDbStatus')
+  // sessionStore.dispatch('updateBatches')
+  // sessionStore.dispatch('updateLogs')
 }
 
 setInterval(

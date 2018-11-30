@@ -1,165 +1,156 @@
 <template>
-  <v-card class="elevation-6" >
-      <v-toolbar
-        class="elevation-2 toolbar"
-        color="red darken-4"
-        dark
-        card
-      >
-      <v-toolbar-title class="headline">{{ currentType.text }}</v-toolbar-title>
-    </v-toolbar>
+  <div>
+    <h1>Paramétrage du lot {{ currentBatchKey}}: {{ currentType.text }}</h1>
+    <v-tabs
+    v-model="active"
+    light
+    slider-color="indigo darken-4"
+    >
+      <v-tab ripple>
+        Fichiers
+      </v-tab>
+      <v-tab ripple>
+        Téléverser
+      </v-tab>
+      <v-tab ripple>
+        Relier
+      </v-tab>
+      <v-tab-item>
 
-      <v-tabs
-      v-model="active"
-      light
-      slider-color="indigo darken-4"
-      >
-        <v-tab ripple>
-          Fichiers
-        </v-tab>
-        <v-tab ripple>
-          Téléverser
-        </v-tab>
-        <v-tab ripple>
-          Relier    
-        </v-tab>
-        <v-tab-item>
+        <v-list style="width: 100%">
+          <v-list-tile style="width: 100%">
+            <v-list-tile-content>
+              <span class="strong">{{ currentFiles.length }} fichier{{ (currentFiles.length>0?"s":"") }}</span>
+            </v-list-tile-content>
+            <v-list-tile-action>
+              <span class="light">{{ formatBytes(currentFiles.reduce((m,f) => m+f.size, 0)) }}</span>
+            </v-list-tile-action>
+          </v-list-tile>
 
-          <v-list style="width: 100%">
-            <v-list-tile style="width: 100%">
-              <v-list-tile-content>
-                <span class="strong">{{ currentFiles.length }} fichier{{ (currentFiles.length>0?"s":"") }}</span>
-              </v-list-tile-content>
-              <v-list-tile-action>
-                <span class="light">{{ formatBytes(currentFiles.reduce((m,f) => m+f.size, 0)) }}</span>
-              </v-list-tile-action> 
-            </v-list-tile>
-
-            <v-divider></v-divider>
-            <v-list-tile style="width: 100%"
-            v-for="(file, index) in currentFiles"
-            :key="index"
-            ripple
-            @click="removeMark(file.name)"
-            :class="removeFiles.includes(file.name)?'todelete':'tokeep'"
-            >
-              <v-list-tile-content>
-                <span class="strong">{{ file.filename }}</span>
-                <span class="light">{{ file.pathname }}</span>
-              </v-list-tile-content>
-              <v-list-tile-action>
-                <span class="light">{{ file.psize }}</span>
-                <span class="light">{{ file.pdate }}</span>
-              </v-list-tile-action>
-            </v-list-tile>
-          </v-list>
-          <v-btn 
-          block 
-          flat 
-          v-if="removeFiles.length > 0"
-          @click="remove()"
+          <v-divider></v-divider>
+          <v-list-tile style="width: 100%"
+          v-for="(file, index) in currentFiles"
+          :key="index"
+          ripple
+          @click="removeMark(file.name)"
+          :class="removeFiles.includes(file.name)?'todelete':'tokeep'"
           >
-          <v-icon >fa-trash</v-icon>
-          </v-btn>
-        
-        </v-tab-item>
-        <v-tab-item>
-          <v-container fluid grid-list-md>
-            <v-layout wrap>
-              <v-flex xs12>
-                <v-container fluid grid-list-md>
-                  <v-data-iterator
-                    :items="filesUploadArray"
-                    :rows-per-page-items="rowsPerPageItems"
-                    :pagination.sync="pagination"
-                    content-tag="v-layout"
-                    no-data-text="Ajouter des fichiers"
-                    row
-                    wrap
+            <v-list-tile-content>
+              <span class="strong">{{ file.filename }}</span>
+              <span class="light">{{ file.pathname }}</span>
+            </v-list-tile-content>
+            <v-list-tile-action>
+              <span class="light">{{ file.psize }}</span>
+              <span class="light">{{ file.pdate }}</span>
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+        <v-btn
+        block
+        flat
+        v-if="removeFiles.length > 0"
+        @click="remove()"
+        >
+        <v-icon >fa-trash</v-icon>
+        </v-btn>
+
+      </v-tab-item>
+      <v-tab-item>
+        <v-container fluid grid-list-md>
+          <v-layout wrap>
+            <v-flex xs12>
+              <v-container fluid grid-list-md>
+                <v-data-iterator
+                  :items="filesUploadArray"
+                  :rows-per-page-items="rowsPerPageItems"
+                  :pagination.sync="pagination"
+                  no-data-text="Ajouter des fichiers"
+                  row
+                  wrap
+                >
+                  <v-flex
+                    slot="item"
+                    slot-scope="props"
+                    xs4
                   >
-                    <v-flex
-                      slot="item"
-                      slot-scope="props"
-                      xs4
-                    >
-                      <v-card class="elevation-3">
-                        <v-card-title><h4>{{ props.item.file.name }}</h4></v-card-title>
-                        <v-divider></v-divider>
-                        <v-list dense>
-                          <v-list-tile>
-                            <v-list-tile-content>type:</v-list-tile-content>
-                            <v-list-tile-content class="align-end">{{ props.item.type }}</v-list-tile-content>
-                          </v-list-tile>
-                          <v-list-tile>
-                            <v-list-tile-content>taille:</v-list-tile-content>
-                            <v-list-tile-content class="align-end">{{ formatBytes(props.item.file.size) }}</v-list-tile-content>
-                          </v-list-tile>
-                        </v-list>
-                      </v-card>
-                    </v-flex>
-                  </v-data-iterator>
-                </v-container>
-              </v-flex>
-              <v-flex xs12 text-xs-center>
-                <v-btn
-                flat
-                @click="fileSelect()">
-                <label 
-                ref="input-file-id"
-                for="input-file-id"  
-                class="md-button md-raised md-primary">
-                  <v-icon>fa-plus</v-icon>
-                </label>
-                </v-btn>
-                <input
-                style="display: none"
-                id="input-file-id"
-                ref="file"
-                multiple
-                v-on:change="handleFileUpload()"
-                type="file"/>
-                <v-btn flat :disabled="filesUploadArray.length == 0" color="success" v-on:click="submitFile()"><v-icon>fa-upload</v-icon></v-btn>
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-tab-item>
-        <v-tab-item
-        class="pa-3 ma-3">
-          <v-flex xs11>
-            <v-combobox 
-            multiple
-            deletableChips
-            chips
-            flat
-            v-model="addFiles"
-            :items="files"
-            item-text="filename"
-            item-value="name"
-            label="Relier un ancien fichier"
-            ripple
-            append-outer-icon="fa-plus-square"
-            @click:append-outer="add"
+                    <v-card class="elevation-3">
+                      <v-card-title><h4>{{ props.item.file.name }}</h4></v-card-title>
+                      <v-divider></v-divider>
+                      <v-list dense>
+                        <v-list-tile>
+                          <v-list-tile-content>type:</v-list-tile-content>
+                          <v-list-tile-content class="align-end">{{ props.item.type }}</v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile>
+                          <v-list-tile-content>taille:</v-list-tile-content>
+                          <v-list-tile-content class="align-end">{{ formatBytes(props.item.file.size) }}</v-list-tile-content>
+                        </v-list-tile>
+                      </v-list>
+                    </v-card>
+                  </v-flex>
+                </v-data-iterator>
+              </v-container>
+            </v-flex>
+            <v-flex xs12 text-xs-center>
+              <v-btn
+              flat
+              @click="fileSelect()">
+              <label
+              ref="input-file-id"
+              for="input-file-id"
+              class="md-button md-raised md-primary">
+                <v-icon>fa-plus</v-icon>
+              </label>
+              </v-btn>
+              <input
+              style="display: none"
+              id="input-file-id"
+              ref="file"
+              multiple
+              v-on:change="handleFileUpload()"
+              type="file"/>
+              <v-btn flat :disabled="filesUploadArray.length == 0" color="success" v-on:click="submitFile()"><v-icon>fa-upload</v-icon></v-btn>
+            </v-flex>
+          </v-layout>
+        </v-container>
+      </v-tab-item>
+      <v-tab-item
+      class="pa-3 ma-3">
+        <v-flex xs11>
+          <v-combobox
+          multiple
+          deletableChips
+          chips
+          flat
+          v-model="addFiles"
+          :items="files"
+          item-text="filename"
+          item-value="name"
+          label="Relier un ancien fichier"
+          ripple
+          append-outer-icon="fa-plus-square"
+          @click:append-outer="add"
+          >
+            <template
+            slot="item"
+            slot-scope="{ index, item }"
             >
-              <template
-              slot="item"
-              slot-scope="{ index, item }"
-              >
-                  <v-list-tile style="width: 100%">
-                    <v-list-tile-content>
-                      <span class="strong">{{ item.filename }}</span>
-                      <span class="light">{{ item.pathname }}</span>
-                    </v-list-tile-content>
-                    <v-list-tile-action>
-                      <span class="light">{{ item.psize }}</span>
-                      <span class="light">{{ item.pdate }}</span>
-                    </v-list-tile-action>
-                  </v-list-tile>
-              </template>
-            </v-combobox>
-          </v-flex>
-        </v-tab-item>
-      </v-tabs>
-  </v-card>
+                <v-list-tile style="width: 100%">
+                  <v-list-tile-content>
+                    <span class="strong">{{ item.filename }}</span>
+                    <span class="light">{{ item.pathname }}</span>
+                  </v-list-tile-content>
+                  <v-list-tile-action>
+                    <span class="light">{{ item.psize }}</span>
+                    <span class="light">{{ item.pdate }}</span>
+                  </v-list-tile-action>
+                </v-list-tile>
+            </template>
+          </v-combobox>
+        </v-flex>
+      </v-tab-item>
+    </v-tabs>
+  </div>
 </template>
 
 <script>
@@ -262,10 +253,10 @@ export default {
     },
     currentBatch: {
       get () {
-        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
-          return this.$store.state.batches[this.currentBatchKey]
+        if (this.currentBatchKey in this.$store.getters.batchesObject) {
+          return this.$store.getters.batchesObject[this.currentBatchKey]
         } else {
-          return { 'params': {} }
+          return { 'complete_types': [] }
         }
       },
       set (batch) {
@@ -274,7 +265,6 @@ export default {
     },
     currentBatchKey: {
       get () {
-        console.log(this.$store.state.currentBatchKey)
         return this.$store.state.currentBatchKey
       },
       set (value) {

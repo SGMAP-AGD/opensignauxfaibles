@@ -1,4 +1,5 @@
 <template>
+<div>
   <v-date-picker
   landscape
   locale="fr-FR"
@@ -6,6 +7,8 @@
   type="month"
   v-model="currentDate">
   </v-date-picker>
+      {{ JSON.stringify(this.currentBatch, null, 2) }}
+</div>
 </template>
 
 <script>
@@ -19,10 +22,10 @@ export default {
   computed: {
     currentBatch: {
       get () {
-        if (this.$store.state.batches !== [] && this.currentBatchKey in this.$store.state.batches) {
-          return this.$store.state.batches[this.currentBatchKey]
+        if (this.currentBatchKey in this.$store.getters.batchesObject) {
+          return this.$store.getters.batchesObject[this.currentBatchKey]
         } else {
-          return {'params': {}}
+          return { 'complete_types': [] }
         }
       },
       set (batch) {
