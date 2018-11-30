@@ -1,6 +1,18 @@
 <template>
 <div>
-  <v-toolbar height="35px" class="toolbar" color="#ffffff"  app>
+  <v-toolbar
+    height="35px"
+    class="toolbar"
+    color="#ffffff"
+    extension-height="48px"
+    app>
+    <div v-if="rightDrawer" slot="extension">
+      <v-spacer></v-spacer>
+      <v-text-field width="50%"
+      label="nom, siret ..."></v-text-field>
+      <v-spacer></v-spacer>
+    </div>
+
     <v-icon
      @click="drawer=!drawer"
     class="fa-rotate-180"

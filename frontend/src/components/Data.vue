@@ -21,15 +21,20 @@
       right app
       v-model="rightDrawer"
     >
-      <v-list dense class="pt-0">
+      <v-list  two-line class="pt-0">
         <v-toolbar>
+          <v-icon @click="rightDrawer=!rightDrawer" color="secondary">fa-database</v-icon>
+          <v-spacer></v-spacer>
+          Lot {{ currentBatchKey }}
+        </v-toolbar>
+        <v-list-tile three-line>
           <v-select
             :items="batchesKeys"
             v-model="currentBatchKey"
             label="Lot d'intégration"
           ></v-select>
-        </v-toolbar>
-        <v-list-group>
+        </v-list-tile>
+        <v-list-group v-if="currentBatchKey != null">
           <v-list-tile slot="activator" bgcolor="red">
             <v-list-tile-action>
               <v-icon>fa-cogs</v-icon>
@@ -50,7 +55,7 @@
             </v-list-tile-content>
           </v-list-tile>
         </v-list-group>
-        <v-list-group>
+        <v-list-group v-if="currentBatchKey != null">
           <v-list-tile slot="activator">
             <v-list-tile-action>
               <v-icon>fa-copy</v-icon>
@@ -78,7 +83,7 @@
           </v-list-tile>
           <v-divider></v-divider>
         </v-list-group>
-        <v-list-group>
+        <v-list-group v-if="currentBatchKey != null">
           <v-list-tile slot="activator">
             <v-list-tile-action>
               <v-icon>fa-microchip</v-icon>
@@ -168,7 +173,11 @@ export default {
     },
     rightDrawer: {
       get () {
-        return this.$store.state.rightDrawer
+        if (this.currentBatchKey == null) {
+          return true
+        } else {
+          return this.$store.state.rightDrawer
+        }
       },
       set (val) {
         this.$store.dispatch('setRightDrawer', val)
