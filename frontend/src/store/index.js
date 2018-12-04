@@ -64,12 +64,10 @@ const sessionStore = new Vuex.Store({
     },
     uploads: [],
     activeTab: null,
-    tabs: [{
-      'type': 'Prediction',
-      'param': '09/2018',
-      'batch': '1802'
-    }
-    ]
+    prediction: [],
+    predictionParameters: {},
+    height: 0,
+    scrollTop: 0
   },
   mutations: {
     updateActiveTab (state, activeTab) {
@@ -180,9 +178,33 @@ const sessionStore = new Vuex.Store({
     },
     updateFiles (state, files) {
       state.files = files.sort((a, b) => a.name.localeCompare(b.name))
+    },
+    storePrediction (state, prediction) {
+      state.prediction = prediction
+    },
+    setPredictionParameters (state, parameters) {
+      state.predictionParameters = parameters
+    },
+    setHeight (state, height) {
+      state.height = height
+    },
+    setScrollTop (state, scrollTop) {
+      state.scrollTop = scrollTop
     }
   },
   actions: {
+    setHeight (context, height) {
+      context.commit('setHeight', height)
+    },
+    setScrollTop (context, scrollTop) {
+      context.commit('setScrollTop', scrollTop)
+    },
+    setPredictionParameters (context, parameters) {
+      context.commit('setPredictionParameters', parameters)
+      axiosClient.post('/api/data/prediction', context.state.parameters).then(response => {
+        context.commit('storePrediction', response.data)
+      })
+    },
     updateBatches (context) {
       axiosClient.get('/api/admin/batch').then(response => {
         context.commit('updateBatches', response.data)
@@ -230,7 +252,6 @@ const sessionStore = new Vuex.Store({
       }
 
       axiosClient.post('/login/check', credentials).then(response => {
-        console.log(response.data)
         localStore.commit('setBrowserToken', response.data.browserToken)
         context.commit('login')
       })
@@ -366,10 +387,6 @@ function wsConnect (state) {
 if (sessionStore.state.token != null) {
   wsConnect(sessionStore.state)
   sessionStore.commit('refreshToken')
-  // sessionStore.dispatch('updateRefs')
-  // sessionStore.commit('updateDbStatus')
-  // sessionStore.dispatch('updateBatches')
-  // sessionStore.dispatch('updateLogs')
 }
 
 setInterval(

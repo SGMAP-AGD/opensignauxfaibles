@@ -315,6 +315,7 @@ func compactEntrepriseHandler(c *gin.Context) {
 		return
 	}
 }
+
 func compactEntreprise(siren string) error {
 	batches, _ := getBatches()
 

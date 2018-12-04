@@ -372,7 +372,6 @@
     mounted () {
       this.$axios.get('/api/data/etablissement/1802/' + this.siret).then(response => {
         this.etablissement = response.data.etablissement[0].value
-        console.log(this.etablissement)
         this.entreprise = response.data.entreprise[0].value
       })
       this.$axios.get('/api/data/naf').then(response => { this.naf = response.data })

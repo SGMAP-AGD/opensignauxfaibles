@@ -5,7 +5,7 @@
       @click="drawer=!drawer"
       class="fa-rotate-180"
       v-if="!drawer"
-      color="secondary"
+      color="rgb(241, 195, 195)"
       key="toolbar"
       >
       mdi-backburger
@@ -14,7 +14,7 @@
         Données
       </div>
       <v-spacer></v-spacer>
-      <v-icon color="secondary" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+      <v-icon color="rgb(241, 195, 195)" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
     </v-toolbar>
     <v-navigation-drawer
       :class="rightDrawer?'elevation-6':''"
@@ -210,9 +210,18 @@ export default {
   data () {
     return {
       parameters: [
-        { text: 'Date de début', key: 'dateDebut', prop: 'date_debut' },
-        { text: 'Date de fin', key: 'dateFin', prop: 'date_fin' },
-        { text: 'Date de fin effectifs', key: 'dateFinEffectif', prop: 'date_fin_effectif' }
+        { text: 'Date de début',
+          key: 'dateDebut',
+          prop: 'date_debut',
+          desc: 'Début de la période des paramètres' },
+        { text: 'Date de fin',
+          key: 'dateFin',
+          prop: 'date_fin',
+          desc: 'Fin de la période des paramètres' },
+        { text: 'Date de fin effectifs',
+          key: 'dateFinEffectif',
+          prop: 'date_fin_effectif',
+          desc: 'Dernière date du fichier effectif' }
       ],
       processes: [
         { text: 'Suppression',
@@ -253,7 +262,7 @@ export default {
 
 <style scoped>
   div.titre {
-    color: #8e0000;
+    color: rgb(241, 195, 195);
     font-family: 'Signika', sans-serif;
     font-weight: 500;
     color: primary;

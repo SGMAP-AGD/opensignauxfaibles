@@ -1,13 +1,12 @@
 <template>
-<div>
+<div class='centerDiv'>
+  <h1>{{ param.text }}</h1>
   <v-date-picker
-  landscape
   locale="fr-FR"
   color="red darken-4"
   type="month"
   v-model="currentDate">
   </v-date-picker>
-      {{ JSON.stringify(this.currentBatch, null, 2) }}
 </div>
 </template>
 
@@ -46,7 +45,7 @@ export default {
           var date = (this.currentBatch.params[this.param.prop] || '').substring(0, 7)
           date = (date < '1970-01') ? new Date().toISOString().substring(0, 7) : date
           return date
-        }
+        } else return new Date().toISOString().substring(0, 7)
       },
       set (month) {
         var batch = this.currentBatch
@@ -57,3 +56,10 @@ export default {
   }
 }
 </script>
+
+<style>
+.centerDiv {
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>

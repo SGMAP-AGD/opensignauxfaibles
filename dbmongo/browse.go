@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -56,10 +57,28 @@ func prepareMRJob(batchKey string, id string, typeJob string, target string) (*m
 	return job, query, nil
 }
 
-// etablissementBrowseHandler traite les requêtes au format browser
-func etablissementBrowseHandler(c *gin.Context) {
-	batchKey := c.Params.ByName("batchKey")
-	siret := c.Params.ByName("siret")
+// browserIndexHandler traite les requêtes d'indexation
+func browserIndexHandler(c *gin.Context) {
+	var index struct {
+		BatchKey string `json:"batch" binding:"required"`
+		Siret    string `json:"siret"`
+	}
+
+	err := c.ShouldBind(&index)
+	if err != nil {
+		c.JSON(500, "Requête malformée: "+err.Error())
+	}
+
+	result, err := browserIndex(index.BatchKey, index.Siret)
+
+	if err != nil {
+		c.JSON(500, "Erreur du traitement: "+err.Error())
+		return
+	}
+	c.JSON(200, result)
+}
+
+func browserIndex(batchKey string, siret string) (interface{}, error) {
 	var siren string
 	if len(siret) == 14 {
 		siren = siret[0:9]
@@ -73,7 +92,7 @@ func etablissementBrowseHandler(c *gin.Context) {
 	jobs[1], queries[1], errMR[1] = prepareMRJob(batchKey, siren, "browser", "entreprise")
 
 	if !allErrors(errMR[:], nil) {
-		c.JSON(500, "Erreur dans la création du job MapReduce: "+errMR[0].Error()+", "+errMR[1].Error())
+		return nil, errors.New("Erreur dans la création du job MapReduce: ")
 	}
 
 	// exécution
@@ -84,23 +103,26 @@ func etablissementBrowseHandler(c *gin.Context) {
 	_, err[0] = db.DB.C("Etablissement").Find(queries[0]).MapReduce(jobs[0], &resultEtablissement)
 	_, err[1] = db.DB.C("Entreprise").Find(queries[1]).MapReduce(jobs[1], &resultEntreprise)
 	if !allErrors(err[:], nil) {
-		c.JSON(500, "Erreur dans l'execution du MapReduce ")
-		return
+		errorMessage := ""
+		if err[0] != nil {
+			errorMessage = errorMessage + "\nEtablissement : " + err[0].Error() + " "
+		}
+		if err[1] != nil {
+			errorMessage = errorMessage + "\nEntreprise: " + err[1].Error()
+		}
+		return nil, errors.New("Erreur dans l'exécution des jobs MapReduce" + errorMessage)
 	}
 
-	c.JSON(200, bson.M{
+	return map[string]interface{}{
 		"etablissement": resultEtablissement,
 		"entreprise":    resultEntreprise,
-	})
+	}, nil
 }
 
 func predictionBrowse(c *gin.Context) {
-	// var result []interface{}
-	// db.DB.C("Prediction").Find(nil).Sort("-prob").All(&result)
-	// c.JSON(200, result)
-
 	var pipeline []bson.M
 
+	pipeline = append(pipeline, bson.M{"$limit": 50})
 	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
 		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
 	}})

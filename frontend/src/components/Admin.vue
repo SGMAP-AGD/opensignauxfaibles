@@ -5,14 +5,14 @@
       class="fa-rotate-180"
       @click="drawer=!drawer"
       v-if="!drawer"
-      color="#444"
+      color="rgb(218, 218, 218)"
       key="toolbar"
     >mdi-backburger</v-icon>
     <div style="width: 100%; text-align: center;"  class="titre">
       Administration
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#444"  @click="rightDrawer=!rightDrawer">fa-cog</v-icon>
+    <v-icon color="rgb(218, 218, 218)"  @click="rightDrawer=!rightDrawer">fa-cog</v-icon>
   </v-toolbar>
   <v-container grid-list-md text-xs-center>
     <v-layout>
@@ -108,7 +108,7 @@ a {
   z-index: 1;
 }
 div.titre {
-  color: #444;
+  color: rgb(218, 218, 218);
   font-family: 'Signika', sans-serif;
   font-weight: 500;
   color: primary;

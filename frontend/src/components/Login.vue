@@ -150,7 +150,6 @@
 
 <script>
 import zxcvbn from 'zxcvbn'
-console.log()
 export default {
   data () {
     return {

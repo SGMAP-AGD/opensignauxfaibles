@@ -46,14 +46,12 @@ const identityKey = "id"
 func main() {
 	// Lancer Rserve en background
 
-	// InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-	go r()
+	// go r()
 	go messageSocketAddClient()
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
-	r.Use(Kanboard())
-	// FIXME: configurer correctement CORS
+	// r.Use(Kanboard())
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8080", "http://opensignauxfaibles.fr:8080", "http://opensignauxfaibles.fr:3000", "http://opensignauxfaibles.fr"}
 	config.AddAllowHeaders("Authorization")
@@ -124,9 +122,8 @@ func main() {
 		api.GET("/data/naf", getNAF)
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
-		api.GET("/data/prediction", predictionBrowse)
-		api.GET("/data/etablissement/:batchKey/:siret", etablissementBrowseHandler)
-		api.GET("/data/etablissement/:batchKey", etablissementBrowseHandler)
+		api.POST("/data/prediction", predictionBrowse)
+		api.POST("/browserIndex", browserIndexHandler)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissementHandler)
 		api.GET("/compact/etablissement", compactEtablissementHandler)

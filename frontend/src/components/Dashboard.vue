@@ -5,7 +5,7 @@
     @click="drawer=!drawer"
     class="fa-rotate-180"
     v-if="!drawer"
-    color="#4a0c41"
+    color="#ffffff"
     key="toolbar"
     >mdi-backburger
     </v-icon>
@@ -13,7 +13,7 @@
       Tableau de Bord
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#4a0c41" @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
+    <v-icon color="#ffffff" @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
   </v-toolbar>
   <v-container fluid grid-list-md text-xs-center>
       <v-layout row wrap justify-start>
@@ -98,7 +98,7 @@ a {
 }
 div.titre {
   font-family: 'Signika', sans-serif;
-  color: #4a0c41;
+  color: #ffffff;
   font-weight: 500;
   font-size: 18px
 }
