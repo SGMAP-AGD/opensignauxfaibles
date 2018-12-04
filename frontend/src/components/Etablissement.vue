@@ -1,302 +1,279 @@
 <template>
   <div>
-    <div class="widget">
-      <v-card>
-        <v-toolbar class="headline toolbar elevation-3" color='indigo lighten-4' card>
-          {{ sirene.raisonsociale }}
-          <v-spacer/>
-          <v-icon 
-          color="red"
-          @click="close()">fa-times-circle</v-icon>
-        </v-toolbar>
-        <v-card-title>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-layout wrap>
-              <v-flex xs12>
-                          <v-toolbar
+    <div>
+      <v-container>
+        <v-layout wrap>
+          <v-flex 
+          xs12
+          md6
+          class="pa-3"
+          style="font-size: 18px">
+            SIRET <b>{{ siret }}</b> <br/>
+            {{ sirene.naturejuridique }}<br/>
+            Création: {{ printDate(sirene.debut_activite) }}
+            <br/><br/>
+            <b>{{ (sirene.adresse || [])[0] }} </b>
+            <br
+            v-if="(sirene.adresse || [])[0] != ''"
+            />
+            {{ (sirene.adresse || [])[1] }} 
+            <br
+            v-if="(sirene.adresse || [])[1] != ''"
+            />
+            {{ (sirene.adresse || [])[2] }} 
+            <br
+            v-if="(sirene.adresse || [])[2] != ''"
+            />
+            {{ (sirene.adresse || [])[3] }} 
+            <br
+            v-if="(sirene.adresse || [])[3] != ''"
+            />
+            {{ (sirene.adresse || [])[4] }}
+            <br
+            v-if="(sirene.adresse || [])[4] != ''"
+            />
+            {{ (sirene.adresse || [])[5] }}
+            <br
+            v-if="(sirene.adresse || [])[5] != ''"
+            />
+            {{ (sirene.adresse || [])[6] }}
+            <br/><br/>
+                            <v-divider/>
+
+            <br/>
             
-            class="mb-2 elevation-3"
-            color="indigo darken-5"
+  
+                            <v-divider/>
+
+            <br/>
+            <b>{{ (naf.n1 || {})[((naf.n5to1 || {})[(sirene.ape || '')] || '')] }}</b><br/>
+            {{ (naf.n5 || {})[(sirene.ape || '')] }}<br/>
+            Code APE: {{ (sirene.ape || '') }}<br/>
+          </v-flex>
+          <v-flex xs12 md6 class="text-xs-right pa-3">
+            <iframe :v-if="sirene.longitude" width="100%" height="360" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" :src="'https://www.openstreetmap.org/export/embed.html?bbox=' + (sirene.longitude - 0.03) + '%2C' + (sirene.lattitude  - 0.03) + '%2C' + (sirene.longitude + 0.03) + '%2C' + (sirene.lattitude + 0.03) + '&amp;layer=mapnik&amp;marker=' + sirene.lattitude + '%2C' + sirene.longitude" style="border: 1px solid black"></iframe><br/><small><a href="https://www.openstreetmap.org/#map=19/47.31581/5.05088">Afficher une carte plus grande</a></small>
+          </v-flex>
+          <v-flex xs12>
+              <v-toolbar
+                class="mb-2"
+                color="indigo darken-5"
+                dark
+                flat
+              >
+                <v-toolbar-title>Informations Financières</v-toolbar-title>
+              </v-toolbar>
+            <v-data-iterator
+            :items="zipDianeBDF"
+            :rows-per-page-items="[3]"
+            :pagination.sync="pagination"
+            content-tag="v-layout"
+            row
+            wrap>
+              <v-flex
+                class="pa-1"
+                slot="item"
+                slot-scope="props"
+                xs12
+                sm6
+                md4
+                lg4
+              >
+                <v-card
+                outline
+                class="elevation-2">
+                  <v-card-title class="subheading font-weight-bold">{{ props.item.annee }}</v-card-title>
+
+                  <v-divider></v-divider>
+
+                  <v-list dense>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Arrété Bilan</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0]||{})['arrete_bilan']?'align-end':'nc align-end'"
+                      >
+
+                        {{ ((props.item.bdf[0]||{})['arrete_bilan'] || 'n/c').substring(0,10) }} 
+                      </v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Taux de marge</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0]||{})['taux_marge']?'align-end':'nc align-end'"
+                      >
+                      {{ round((props.item.bdf[0]||{})['taux_marge'], 2) || 'n/c' }} %</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Frais Financier</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0]||{})['frais_financier']?'align-end':'nc align-end'"
+                      >
+                      {{ round((props.item.bdf[0]||{})['frais_financier'], 2) || 'n/c' }} %</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Frais Financier CT</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0]||{})['financier_court_terme']?'align-end':'nc align-end'"
+                      >
+                      {{ round((props.item.bdf[0]||{})['financier_court_terme'], 2) || 'n/c' }} %</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Délai Fournisseur</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0])?'align-end':'nc align-end'"
+                      >
+                      {{ round((props.item.bdf[0]||{})['delai_fournisseur'], 2) || 'n/c' }} j</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>BDF | Poids FRNG</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.bdf[0])?'align-end':'nc align-end'"
+                      >
+                      {{ round((props.item.bdf[0]||{})['poids_frng'], 2) || 'n/c' }} %</v-list-tile-content>
+                    </v-list-tile>
+
+                    <v-list-tile>
+                      <v-list-tile-content>Diane | Chiffre d'Affaire:</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="((props.item.diane[0]||{})['CA'])?'align-end':'nc align-end'"
+                      >
+                      {{ ((props.item.diane[0]||{})['CA'])||'n/c ' }}k€</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>Diane | Rentabilité Nette</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.diane[0]||{})['rentabilite_nette_pourcent']?'align-end':'nc align-end'"
+                      >
+                      {{ (props.item.diane[0]||{})['rentabilite_nette_pourcent'] || 'n/c' }} %</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>Diane | Résultat d'exploitation :</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.diane[0]||{})['resultat_expl']?'align-end':'nc align-end'"
+                      >
+                      {{ (props.item.diane[0]||{})['resultat_expl'] || 'n/c' }} k€</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>Diane | Résultat Net Consolidé</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="(props.item.diane[0]||{})['resultat_net_consolide']?'align-end':'nc align-end'"
+                      >
+                      {{ (props.item.diane[0]||{})['resultat_net_consolide'] || 'n/c' }} k€</v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile>
+                      <v-list-tile-content>Diane | Valeur Ajoutée:</v-list-tile-content>
+                      <v-list-tile-content
+                      :class="((props.item.diane[0]||{})['valeur_ajoutee'])?'align-end':'nc align-end'"
+                      >
+                      {{ (props.item.diane[0]||{})['valeur_ajoutee'] || 'n/c' }} k€</v-list-tile-content>
+                    </v-list-tile>
+                  </v-list>
+                </v-card>
+              </v-flex>
+            </v-data-iterator>
+          </v-flex>
+          <v-flex xs12>
+            <v-toolbar      
+              class="mb-2"
+              color="indigo darken-5"
+              dark
+              flat
+            >
+              <v-toolbar-title>Effectifs</v-toolbar-title>
+            </v-toolbar>
+          </v-flex>
+          <v-flex xs12 style="height: 350px">
+            <IEcharts
+              :loading="chart"
+              style="height: 350px"
+              :option="effectifOptions(effectif)"
+            />
+          </v-flex>
+          <v-flex xs12>
+            <v-toolbar
             dark
-            flat
-          >
-           
-            <v-toolbar-title>Identité</v-toolbar-title>
-          </v-toolbar>
-              </v-flex>
-              <v-flex 
-              xs6 
-              class="pa-3"
-              style="font-size: 18px">
-                <b>{{ (sirene.adresse || [])[0] }} </b>
-                <br
-                v-if="(sirene.adresse || [])[0] != ''"
-                />
-                {{ (sirene.adresse || [])[1] }} 
-                <br
-                v-if="(sirene.adresse || [])[1] != ''"
-                />
-                {{ (sirene.adresse || [])[2] }} 
-                <br
-                v-if="(sirene.adresse || [])[2] != ''"
-                />
-                {{ (sirene.adresse || [])[3] }} 
-                <br
-                v-if="(sirene.adresse || [])[3] != ''"
-                />
-                {{ (sirene.adresse || [])[4] }}
-                <br
-                v-if="(sirene.adresse || [])[4] != ''"
-                />
-                {{ (sirene.adresse || [])[5] }}
-                <br
-                v-if="(sirene.adresse || [])[5] != ''"
-                />
-                {{ (sirene.adresse || [])[6] }}
-                <br/><br/>
-                                <v-divider/>
-
-                <br/>
-                
-                SIRET <b>{{ siret }}</b> <br/>
-                {{ sirene.naturejuridique }}<br/>
-                Création: {{ printDate(sirene.debut_activite) }}
-                <br/><br/>
-                                <v-divider/>
-
-                <br/>
-                <b>{{ (naf.n1 || {})[((naf.n5to1 || {})[(sirene.ape || '')] || '')] }}</b><br/>
-                {{ (naf.n5 || {})[(sirene.ape || '')] }}<br/>
-                Code APE: {{ (sirene.ape || '') }}<br/>
-              </v-flex>
-              <v-flex xs6 class="text-xs-right pa-3">
-                <iframe :v-if="sirene.longitude" width="100%" height="360" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" :src="'https://www.openstreetmap.org/export/embed.html?bbox=' + (sirene.longitude - 0.03) + '%2C' + (sirene.lattitude  - 0.03) + '%2C' + (sirene.longitude + 0.03) + '%2C' + (sirene.lattitude + 0.03) + '&amp;layer=mapnik&amp;marker=' + sirene.lattitude + '%2C' + sirene.longitude" style="border: 1px solid black"></iframe><br/><small><a href="https://www.openstreetmap.org/#map=19/47.31581/5.05088">Afficher une carte plus grande</a></small>
-              </v-flex>
-              <v-flex xs12>
-                  <v-toolbar
-                    class="mb-2"
-                    color="indigo darken-5"
-                    dark
-                    flat
-                  >
-                    <v-toolbar-title>Informations Financières</v-toolbar-title>
-                  </v-toolbar>
-                <v-data-iterator
-                :items="zipDianeBDF"
-                :rows-per-page-items="[3]"
-                :pagination.sync="pagination"
-                content-tag="v-layout"
-                row
-                wrap>
-                  <v-flex
-                    class="pa-1"
-                    slot="item"
-                    slot-scope="props"
-                    xs12
-                    sm6
-                    md4
-                    lg4
-                  >
-                    <v-card
-                    outline
-                    class="elevation-2">
-                      <v-card-title class="subheading font-weight-bold">{{ props.item.annee }}</v-card-title>
-
-                      <v-divider></v-divider>
-
-                      <v-list dense>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Arrété Bilan</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0]||{})['arrete_bilan']?'align-end':'nc align-end'"
-                          >
-
-                            {{ ((props.item.bdf[0]||{})['arrete_bilan'] || 'n/c').substring(0,10) }} 
-                          </v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Taux de marge</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0]||{})['taux_marge']?'align-end':'nc align-end'"
-                          >
-                          {{ round((props.item.bdf[0]||{})['taux_marge'], 2) || 'n/c' }} %</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Frais Financier</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0]||{})['frais_financier']?'align-end':'nc align-end'"
-                          >
-                          {{ round((props.item.bdf[0]||{})['frais_financier'], 2) || 'n/c' }} %</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Frais Financier CT</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0]||{})['financier_court_terme']?'align-end':'nc align-end'"
-                          >
-                          {{ round((props.item.bdf[0]||{})['financier_court_terme'], 2) || 'n/c' }} %</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Délai Fournisseur</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0])?'align-end':'nc align-end'"
-                          >
-                          {{ round((props.item.bdf[0]||{})['delai_fournisseur'], 2) || 'n/c' }} j</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>BDF | Poids FRNG</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.bdf[0])?'align-end':'nc align-end'"
-                          >
-                          {{ round((props.item.bdf[0]||{})['poids_frng'], 2) || 'n/c' }} %</v-list-tile-content>
-                        </v-list-tile>
-
-                        <v-list-tile>
-                          <v-list-tile-content>Diane | Chiffre d'Affaire:</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="((props.item.diane[0]||{})['CA'])?'align-end':'nc align-end'"
-                          >
-                          {{ ((props.item.diane[0]||{})['CA'])||'n/c ' }}k€</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Diane | Rentabilité Nette</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.diane[0]||{})['rentabilite_nette_pourcent']?'align-end':'nc align-end'"
-                          >
-                          {{ (props.item.diane[0]||{})['rentabilite_nette_pourcent'] || 'n/c' }} %</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Diane | Résultat d'exploitation :</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.diane[0]||{})['resultat_expl']?'align-end':'nc align-end'"
-                          >
-                          {{ (props.item.diane[0]||{})['resultat_expl'] || 'n/c' }} k€</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Diane | Résultat Net Consolidé</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="(props.item.diane[0]||{})['resultat_net_consolide']?'align-end':'nc align-end'"
-                          >
-                          {{ (props.item.diane[0]||{})['resultat_net_consolide'] || 'n/c' }} k€</v-list-tile-content>
-                        </v-list-tile>
-                        <v-list-tile>
-                          <v-list-tile-content>Diane | Valeur Ajoutée:</v-list-tile-content>
-                          <v-list-tile-content
-                          :class="((props.item.diane[0]||{})['valeur_ajoutee'])?'align-end':'nc align-end'"
-                          >
-                          {{ (props.item.diane[0]||{})['valeur_ajoutee'] || 'n/c' }} k€</v-list-tile-content>
-                        </v-list-tile>
-                      </v-list>
-                    </v-card>
-                  </v-flex>
-                </v-data-iterator>
-              </v-flex>
-              <v-flex xs12>
-                <v-toolbar      
-                  class="mb-2"
-                  color="indigo darken-5"
-                  dark
-                  flat
-                >
-                  <v-toolbar-title>Effectifs</v-toolbar-title>
-                </v-toolbar>
-              </v-flex>
-              <v-flex xs12 style="height: 350px">
-                <IEcharts
-                  :loading="chart"
-                  style="height: 350px"
-                  :option="effectifOptions(effectif)"
-                />
-              </v-flex>
-              <v-flex xs12>
-                <v-toolbar
-                dark
-                color='indigo darken-5'>
-                  <v-toolbar-title>Débits Urssaf</v-toolbar-title>
-                </v-toolbar>
-                <IEcharts
-                  :loading="chart"
-                  style="height: 350px"
-                  :option="urssafOptions"
-                />
-              </v-flex>
-              <v-flex xs6 class="pr-1">
-                <v-toolbar
-                dark
-                color='indigo darken-5'>
-                  <v-toolbar-title>Demandes d'activité partielle</v-toolbar-title>
-                </v-toolbar>
-                <v-list>
-                  <v-list-tile>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      Date 
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      Effectif Autorisé
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      Début
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      Fin
-                    </v-list-tile-content>
-                  </v-list-tile>
-                  <v-list-tile
-                    v-for="(d, i) in apdemande"
-                    :key="i">
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      {{ d.date_statut.substring(0,10) }}
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      {{ d.effectif_autorise }}
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      {{ d.periode.start.substring(0,10) }}
-                    </v-list-tile-content>
-                    <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                      {{ d.periode.end.substring(0,10) }}
-                    </v-list-tile-content>
-                  </v-list-tile>
-                </v-list>
-              </v-flex>
-              <v-flex xs6 class="pl-1">
-                <v-toolbar
-                dark
-                color='indigo darken-5'>
-                  <v-toolbar-title>Consommations d'activité partielle</v-toolbar-title>
-                </v-toolbar>
-                <v-list style="width: 100%">
-                  <v-list-tile>
-                    <v-list-tile-content class="align-right" style="width: '33%'">
-                      Date 
-                    </v-list-tile-content>
-                    <v-list-tile-content class="align-right" style="width: '33%'">
-                      Effectifs
-                    </v-list-tile-content>
-                    <v-list-tile-content class="align-right" style="width: '33%'">
-                      Heures
-                    </v-list-tile-content>
-                  </v-list-tile>
-                  <v-list-tile
-                    v-for="(d, i) in apconso"
-                    :key="i">
-                    <v-list-tile-content class="align-right" style="width: '25%'">
-                      {{ d.periode.substring(0, 10) }}
-                    </v-list-tile-content>
-                    <v-list-tile-content class="align-right" style="width: '25%'">
-                      {{ d.effectif }}
-                    </v-list-tile-content>
-                    <v-list-tile-content class="align-right" style="width: '25%'">
-                      {{ d.montant }}
-                    </v-list-tile-content>
-                  </v-list-tile>
-                </v-list>
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-card-text>
-      </v-card>
+            color='indigo darken-5'>
+              <v-toolbar-title>Débits Urssaf</v-toolbar-title>
+            </v-toolbar>
+            <IEcharts
+              :loading="chart"
+              style="height: 350px"
+              :option="urssafOptions"
+            />
+          </v-flex>
+          <v-flex xs6 class="pr-1">
+            <v-toolbar
+            dark
+            color='indigo darken-5'>
+              <v-toolbar-title>Demandes d'activité partielle</v-toolbar-title>
+            </v-toolbar>
+            <v-list>
+              <v-list-tile>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  Date 
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  Effectif Autorisé
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  Début
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  Fin
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile
+                v-for="(d, i) in apdemande"
+                :key="i">
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  {{ d.date_statut.substring(0,10) }}
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  {{ d.effectif_autorise }}
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  {{ d.periode.start.substring(0,10) }}
+                </v-list-tile-content>
+                <v-list-tile-content class="text-xs-right" style="width: '25%'">
+                  {{ d.periode.end.substring(0,10) }}
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+          </v-flex>
+          <v-flex xs6 class="pl-1">
+            <v-toolbar
+            dark
+            color='indigo darken-5'>
+              <v-toolbar-title>Consommations d'activité partielle</v-toolbar-title>
+            </v-toolbar>
+            <v-list style="width: 100%">
+              <v-list-tile>
+                <v-list-tile-content class="align-right" style="width: '33%'">
+                  Date 
+                </v-list-tile-content>
+                <v-list-tile-content class="align-right" style="width: '33%'">
+                  Effectifs
+                </v-list-tile-content>
+                <v-list-tile-content class="align-right" style="width: '33%'">
+                  Heures
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile
+                v-for="(d, i) in apconso"
+                :key="i">
+                <v-list-tile-content class="align-right" style="width: '25%'">
+                  {{ d.periode.substring(0, 10) }}
+                </v-list-tile-content>
+                <v-list-tile-content class="align-right" style="width: '25%'">
+                  {{ d.effectif }}
+                </v-list-tile-content>
+                <v-list-tile-content class="align-right" style="width: '25%'">
+                  {{ d.montant }}
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+          </v-flex>
+        </v-layout>
+      </v-container>
     </div>
   </div>
 </template>

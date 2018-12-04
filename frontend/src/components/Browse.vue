@@ -5,14 +5,7 @@
     class="toolbar elevation-12"
     color="#ffffff"
     extension-height="48px"
-    app>      
-    <div v-if="rightDrawer" slot="extension">
-      <v-spacer></v-spacer>
-      <v-text-field width="50%"
-      label="nom, siret ..."></v-text-field>
-      <v-spacer></v-spacer>
-    </div>
-
+    app>
     <v-icon
      @click="drawer=!drawer"
     class="fa-rotate-180"
@@ -21,10 +14,10 @@
     key="toolbar"
     >mdi-backburger</v-icon>
     <div style="width: 100%; text-align: center;"  class="titre">
-      Détection {{ height }} {{ scrollTop }}
+      Détection
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#e0e0ffef" @click="rightDrawer=!rightDrawer">mdi-magnify</v-icon>
+    <v-icon color="#e0e0ffef" @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
   </v-toolbar>
   <div style="width:100%">
   <v-navigation-drawer :class="(rightDrawer?'elevation-6':'') + 'rightDrawer'" v-model="rightDrawer" right app>
@@ -32,7 +25,7 @@
       <v-list class="pa-0">
         <v-list-tile avatar>
           <v-list-tile-avatar>
-            <v-icon @click="rightDrawer=!rightDrawer">mdi-magnify</v-icon>
+            <v-icon @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
         </v-list-tile-avatar>
         <v-spacer></v-spacer>
         <v-list-tile-content>
@@ -45,6 +38,17 @@
       </v-list>
     </v-toolbar>
     <v-list two-line>
+      <v-list-tile>
+        <v-list-tile-action>
+          <v-btn @click="refreshLookup()">test</v-btn>
+        </v-list-tile-action>
+        </v-list-tile>
+      <v-list-tile>
+        <v-list-tile-action>
+
+
+        </v-list-tile-action>
+      </v-list-tile>
       <v-list-tile>
         <v-list-tile-action>
           <v-icon>fa-industry</v-icon>
@@ -176,10 +180,16 @@ export default {
       this.tabs = this.tabs.filter((tab, index) => index !== tabIndex)
     }
   },
+  watch: {
+    search (val) {
+      val && val !== this.select && this.querySelections(val)
+    }
+  },
   computed: {
     scrollTop () {
-        return this.$store.state.scrollTop;
+      return this.$store.state.scrollTop
     },
+
     height: {
       get () {
         return this.$store.state.height

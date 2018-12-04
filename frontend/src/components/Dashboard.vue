@@ -13,58 +13,61 @@
       Tableau de Bord
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#ffffff" @click="rightDrawer=!rightDrawer">mdi-view-dashboard</v-icon>
+    <v-icon color="#ffffff" @click="rightDrawer=!rightDrawer">mdi-database-search</v-icon>
   </v-toolbar>
-  <v-container fluid grid-list-md text-xs-center>
-      <v-layout row wrap justify-start>
-        <v-flex xs12></v-flex>
-        <v-flex xs6>
-          <v-card>
-            <v-card-title class="headline font-weight-thin" >
-              Calcul prédictions
-            </v-card-title>
-            <v-divider/>
-            <v-card-text>
-              <v-list>
-                <v-list-tile avatar>
-                  Effectué: x%
-                </v-list-tile>
-                <v-list-tile avatar>
-                  En attente: y%
-                </v-list-tile>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-flex>
-        <v-flex xs6>
-          <v-card>
-            <v-card-title  class="headline font-weight-thin">
-              Visites d'entreprises
-            </v-card-title>
-            <v-divider/>
-            <v-card-text>
-              <v-list>
-                <v-list-tile avatar>
-                  Planifiées: x%
-                </v-list-tile>
-                <v-list-tile avatar>
-                  Effectuées: y%
-                </v-list-tile>
-                <v-list-tile avatar>
-                  Retard: y%
-                </v-list-tile>
-              </v-list>
-            </v-card-text>
-          </v-card>
+
+    <v-container>
+      <v-layout>
+        <v-flex>
+        <v-autocomplete
+          slot="extension"
+          v-model="select"
+          :items="items"
+          :search-input.sync="search"
+          :loading="loading"
+          label="Entreprises"            
+          placeholder="Siret, Raison Sociale..."
+          prepend-icon="mdi-database-search"
+          cache-items
+          class="mx-3"
+          flat
+          hide-no-data
+          hide-details
+        ></v-autocomplete>
         </v-flex>
       </v-layout>
-  </v-container>
-
+    </v-container>
+    <Etablissement :siret="select" batch="1802"></Etablissement>
   </div>
 </template>
 
 <script>
+import Etablissement from '@/components/Etablissement'
+
 export default {
+  components: { Etablissement },
+  data () {
+    return { 
+    loading: false,
+    items: [],
+    search: null,
+    select: null
+    }
+  },
+  watch: {
+    search (val) {
+      val && val !== this.select && this.querySelections(val)
+    }
+  },
+  methods: {
+    querySelections (val) {
+      console.log(this.select)
+      this.loading = true
+      this.$axios.post('/api/search', { 'guessRaisonSociale': val }).then(r => {
+        this.items = r.data.map(e => {return {text: e.raison_sociale, value: e._id.siret}})
+      }).finally(this.loading = false)
+    }
+  },
   computed: {
     message () {
       return this.$store.getters.reverseLog
@@ -76,11 +79,19 @@ export default {
       set (val) {
         this.$store.dispatch('setDrawer', val)
       }
+    },
+    rightDrawer: {
+      get () {
+        return this.$store.state.rightDrawer
+      },
+      set (val) {
+        this.$store.dispatch('setRightDrawer', val)
+      }
     }
   }
 }
 </script>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+
 <style scoped>
 h1, h2 {
   font-weight: normal;

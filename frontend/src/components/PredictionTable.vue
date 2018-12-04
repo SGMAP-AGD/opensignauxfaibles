@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- <v-navigation-drawer
-    class="elevation-6"
+    class='elevation-6'
     absolute
     permanent
-    :mini-variant = "mini"
+    :mini-variant = 'mini"
     style="z-index: 1"
     >
 
@@ -103,18 +103,18 @@
 </template>
 
 <script>
-import IEcharts from "vue-echarts-v3/src/lite.js";
-import "echarts/lib/chart/line";
-import "echarts/lib/component/title";
-import widgetPrediction from "@/components/widgetPrediction";
+import IEcharts from 'vue-echarts-v3/src/lite.js';
+import 'echarts/lib/chart/line';
+import 'echarts/lib/component/title';
+import widgetPrediction from '@/components/widgetPrediction';
 export default {
-  props: ["batchKey"],
+  props: ['batchKey'],
   components: {
     IEcharts,
     widgetPrediction
   },
   beforeDestroy: function() {
-    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener('resize', this.handleResize);
   },
   data: () => ({
     effectifClass: [10, 20, 50, 100],
@@ -123,44 +123,23 @@ export default {
     loading: false,
     chart: false,
     pagination: {
-      sortBy: "name"
+      sortBy: 'name'
     },
-    naf1: [
-      "Tous",
-      "Activités spécialisées, scientifiques et techniques",
-      "Activités de services administratifs et de soutien",
-      "Industrie manufacturière",
-      "Hébergement et restauration",
-      "Construction",
-      "Transports et entreposage",
-      "Commerce ; réparation d'automobiles et de motocycles",
-      "Santé humaine et action sociale",
-      "Autres activités de services",
-      "Arts, spectacles et activités récréatives",
-      "Industries extractives",
-      "Production et distribution d'eau ; assainissement, gestion des déchets et dépollution",
-      "Information et communication",
-      "Activités financières et d'assurance",
-      "Activités immobilières",
-      "Agriculture, sylviculture et pêche",
-      "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné",
-      "Activités extra-territoriales"
-    ],
     headers: [
       {
-        text: "raison sociale",
-        align: "left",
-        value: "raison_sociale"
+        text: 'raison sociale',
+        align: 'left',
+        value: 'raison_sociale'
       },
-      { text: "détection", value: "prob" },
-      { text: "emploi", value: "effectif" },
-      { text: "Défault urssaf", value: "default_urssaf" },
-      { text: "Taux de marge", value: "taux_marge" },
-      { text: "Fond de roulement", value: "fond_roulement" },
-      { text: "Financier court terme", value: "financier_court_terme" }
+      { text: 'détection', value: 'prob' },
+      { text: 'emploi', value: 'effectif' },
+      { text: 'Défault urssaf', value: 'default_urssaf' },
+      { text: 'Taux de marge', value: 'taux_marge' },
+      { text: 'Fond de roulement', value: 'fond_roulement' },
+      { text: 'Financier court terme', value: 'financier_court_terme' }
     ],
     prediction: [],
-    naf: "Industrie manufacturière",
+    naf: 'Industrie manufacturière',
     minEffectif: 20,
     entrepriseConnue: true,
     horsCCSF: true,
@@ -183,7 +162,7 @@ export default {
         return this.$store.getters.getTabs;
       },
       set(tabs) {
-        this.$store.dispatch("updateTabs", tabs);
+        this.$store.dispatch('updateTabs', tabs);
       }
     },
     activeTab: {
@@ -191,7 +170,7 @@ export default {
         return this.$store.getters.activeTab;
       },
       set(activeTab) {
-        this.$store.dispatch("updateActiveTab", activeTab);
+        this.$store.dispatch('updateActiveTab', activeTab);
       }
     },
     height() {
@@ -211,10 +190,10 @@ export default {
     open(etab, focus) {
       if (this.tabs.findIndex(t => t.siret === etab._id.siret) === -1) {
         let i = this.tabs.push({
-          type: "Etablissement",
+          type: 'Etablissement',
           param: etab.raison_sociale,
           siret: etab._id.siret,
-          batch: "1802"
+          batch: '1802'
         });
         if (focus) {
           this.activeTab = i - 1;
@@ -223,16 +202,16 @@ export default {
     },
     applyFilter(p) {
       return (
-        (this.naf === "Tous" || p.naf1 === this.naf) &&
+        (this.naf === 'Tous' || p.naf1 === this.naf) &&
         p.effectif >= this.minEffectif &&
         (p.connu === false || this.entrepriseConnue === false) &&
         (p.ccsf === false || this.horsCCSF === false) &&
-        (p.procol === "in_bonis" || this.horsProcol === false)
+        (p.procol === 'in_bonis' || this.horsProcol === false)
       );
     },
     getNAF() {
       var self = this;
-      this.$axios.get("/api/data/naf").then(response => {
+      this.$axios.get('/api/data/naf').then(response => {
         self.naf = response.data;
       });
     },
@@ -254,11 +233,11 @@ export default {
           text: null
         },
         tooltip: {
-          trigger: "axis",
+          trigger: 'axis',
           axisPointer: {
-            type: "cross",
+            type: 'cross',
             label: {
-              backgroundColor: "#283b56"
+              backgroundColor: '#283b56'
             }
           }
         },
@@ -267,22 +246,22 @@ export default {
         },
         xAxis: {
           show: true,
-          type: "category",
+          type: 'category',
           axisTick: false,
           data: marge.map(m => m.x)
         },
         yAxis: {
-          type: "value",
+          type: 'value',
           show: false,
           min: -150,
           max: 150
         },
         series: [
           {
-            color: "indigo",
+            color: 'indigo',
             smooth: true,
-            name: "taux marge",
-            type: "line",
+            name: 'taux marge',
+            type: 'line',
             data: marge.map(m => m.y)
           }
         ]
@@ -291,7 +270,7 @@ export default {
     getPrediction() {
       this.loading = true;
       var self = this;
-      this.$axios.post("/api/data/prediction").then(response => {
+      this.$axios.post('/api/data/prediction').then(response => {
         var prediction = response.data;
         prediction.forEach(p => {
           p.bdf = Object.keys(p.bdf || {})

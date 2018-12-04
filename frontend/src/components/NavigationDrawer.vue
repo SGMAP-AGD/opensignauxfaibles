@@ -28,7 +28,7 @@
 
         <v-list-tile to="/Browse">
           <v-list-tile-action>
-            <v-icon>fa-search</v-icon>
+            <v-icon>mdi-target</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>Détection</v-list-tile-title>

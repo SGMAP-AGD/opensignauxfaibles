@@ -131,6 +131,7 @@ func main() {
 		api.GET("/compact/entreprise", compactEntrepriseHandler)
 		api.GET("/reduce/:algo/:batch/:siret", reduceHandler)
 		api.GET("/reduce/:algo/:batch", reduceHandler)
+		api.POST("/search", searchRaisonSociale)
 	}
 
 	bind := viper.GetString("APP_BIND")
