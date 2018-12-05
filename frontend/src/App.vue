@@ -142,6 +142,20 @@ body {
       transparent
     );
 }
+.toolbar-widget {
+  color: "black";
+  font-family: "Quicksand", sans-serif;
+  text-shadow: 0px 0px 2px rgb(146, 146, 146), 0px 0px 1px rgb(255, 255, 255);
+  background: linear-gradient(0deg, #b6b6b6, #6e6e6e00 7%, transparent),
+    radial-gradient(
+      ellipse at top,
+      #ffffff,
+      #e4e4e4 35%,
+      #c9c9cc 80%,
+      #afafcc 100%,
+      transparent
+    );
+}
 #app {
   background: radial-gradient(
     circle at center,

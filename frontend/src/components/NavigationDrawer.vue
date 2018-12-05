@@ -26,12 +26,21 @@
           </v-list-tile-content>
         </v-list-tile>
 
-        <v-list-tile to="/Browse">
+        <v-list-tile to="/detection">
           <v-list-tile-action>
             <v-icon>mdi-target</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>Détection</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+
+        <v-list-tile to="/browse">
+          <v-list-tile-action>
+            <v-icon>mdi-database-search</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>Consultation</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
 

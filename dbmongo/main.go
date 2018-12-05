@@ -123,7 +123,6 @@ func main() {
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
 		api.POST("/data/prediction", predictionBrowse)
-		api.POST("/browserIndex", browserIndexHandler)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissementHandler)
 		api.GET("/compact/etablissement", compactEtablissementHandler)
@@ -132,6 +131,7 @@ func main() {
 		api.GET("/reduce/:algo/:batch/:siret", reduceHandler)
 		api.GET("/reduce/:algo/:batch", reduceHandler)
 		api.POST("/search", searchRaisonSociale)
+		api.GET("/data/etablissement/:batch/:siret", browseEtablissementHandler)
 	}
 
 	bind := viper.GetString("APP_BIND")

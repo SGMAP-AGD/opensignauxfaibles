@@ -3,7 +3,7 @@
     <div>
       <v-container>
         <v-layout wrap>
-          <v-flex 
+          <v-flex
           xs12
           md6
           class="pa-3"
@@ -16,15 +16,15 @@
             <br
             v-if="(sirene.adresse || [])[0] != ''"
             />
-            {{ (sirene.adresse || [])[1] }} 
+            {{ (sirene.adresse || [])[1] }}
             <br
             v-if="(sirene.adresse || [])[1] != ''"
             />
-            {{ (sirene.adresse || [])[2] }} 
+            {{ (sirene.adresse || [])[2] }}
             <br
             v-if="(sirene.adresse || [])[2] != ''"
             />
-            {{ (sirene.adresse || [])[3] }} 
+            {{ (sirene.adresse || [])[3] }}
             <br
             v-if="(sirene.adresse || [])[3] != ''"
             />
@@ -38,13 +38,9 @@
             />
             {{ (sirene.adresse || [])[6] }}
             <br/><br/>
-                            <v-divider/>
-
+            <v-divider/>
             <br/>
-            
-  
-                            <v-divider/>
-
+            <v-divider/>
             <br/>
             <b>{{ (naf.n1 || {})[((naf.n5to1 || {})[(sirene.ape || '')] || '')] }}</b><br/>
             {{ (naf.n5 || {})[(sirene.ape || '')] }}<br/>
@@ -66,7 +62,6 @@
             :items="zipDianeBDF"
             :rows-per-page-items="[3]"
             :pagination.sync="pagination"
-            content-tag="v-layout"
             row
             wrap>
               <v-flex
@@ -92,7 +87,7 @@
                       :class="(props.item.bdf[0]||{})['arrete_bilan']?'align-end':'nc align-end'"
                       >
 
-                        {{ ((props.item.bdf[0]||{})['arrete_bilan'] || 'n/c').substring(0,10) }} 
+                        {{ ((props.item.bdf[0]||{})['arrete_bilan'] || 'n/c').substring(0,10) }}
                       </v-list-tile-content>
                     </v-list-tile>
                     <v-list-tile>
@@ -164,7 +159,7 @@
                       <v-list-tile-content
                       :class="((props.item.diane[0]||{})['valeur_ajoutee'])?'align-end':'nc align-end'"
                       >
-                      {{ (props.item.diane[0]||{})['valeur_ajoutee'] || 'n/c' }} k€</v-list-tile-content>
+                      {{ (props.item.diane[0]||{})['valeur_ajoutee'] || 'n/c' }} k€</v-list-tile-content>
                     </v-list-tile>
                   </v-list>
                 </v-card>
@@ -172,7 +167,7 @@
             </v-data-iterator>
           </v-flex>
           <v-flex xs12>
-            <v-toolbar      
+            <v-toolbar
               class="mb-2"
               color="indigo darken-5"
               dark
@@ -209,7 +204,7 @@
             <v-list>
               <v-list-tile>
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                  Date 
+                  Date
                 </v-list-tile-content>
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
                   Effectif Autorisé
@@ -225,16 +220,16 @@
                 v-for="(d, i) in apdemande"
                 :key="i">
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                  {{ d.date_statut.substring(0,10) }}
+                  {{ d.date_statut.substring(0,10) }}
                 </v-list-tile-content>
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                  {{ d.effectif_autorise }}
+                  {{ d.effectif_autorise }}
                 </v-list-tile-content>
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                  {{ d.periode.start.substring(0,10) }}
+                  {{ d.periode.start.substring(0,10) }}
                 </v-list-tile-content>
                 <v-list-tile-content class="text-xs-right" style="width: '25%'">
-                  {{ d.periode.end.substring(0,10) }}
+                  {{ d.periode.end.substring(0,10) }}
                 </v-list-tile-content>
               </v-list-tile>
             </v-list>
@@ -248,7 +243,7 @@
             <v-list style="width: 100%">
               <v-list-tile>
                 <v-list-tile-content class="align-right" style="width: '33%'">
-                  Date 
+                  Date
                 </v-list-tile-content>
                 <v-list-tile-content class="align-right" style="width: '33%'">
                   Effectifs
@@ -261,13 +256,13 @@
                 v-for="(d, i) in apconso"
                 :key="i">
                 <v-list-tile-content class="align-right" style="width: '25%'">
-                  {{ d.periode.substring(0, 10) }}
+                  {{ d.periode.substring(0, 10) }}
                 </v-list-tile-content>
                 <v-list-tile-content class="align-right" style="width: '25%'">
-                  {{ d.effectif }}
+                  {{ d.effectif }}
                 </v-list-tile-content>
                 <v-list-tile-content class="align-right" style="width: '25%'">
-                  {{ d.montant }}
+                  {{ d.montant }}
                 </v-list-tile-content>
               </v-list-tile>
             </v-list>
@@ -279,164 +274,164 @@
 </template>
 
 <script>
-  import IEcharts from 'vue-echarts-v3/src/lite.js'
-  import 'echarts/lib/chart/line'
-  import 'echarts/lib/component/title'
+import IEcharts from 'vue-echarts-v3/src/lite.js'
+import 'echarts/lib/chart/line'
+import 'echarts/lib/component/title'
 
-  export default {
-    props: ['siret', 'batch'],
-    name: 'Etablissement',
-    data () {
+export default {
+  props: ['siret', 'batch'],
+  name: 'Etablissement',
+  data () {
+    return {
+      chart: false,
+      bilan: true,
+      urssaf: true,
+      apart: true,
+      etablissement: {},
+      entreprise: {},
+      pagination: null,
+      naf: {}
+    }
+  },
+  methods: {
+    close () {
+      this.tabs = this.tabs.filter((tab, index) => index !== this.activeTab)
+      this.activeTab = this.activeTab - 1
+    },
+    printDate (date) {
+      return (date || '          ').substring(0, 10)
+    },
+    round (value, size) {
+      return Math.round(value * (10 ^ size)) / (10 ^ size)
+    },
+    effectifOptions (effectif) {
       return {
-        chart: false,
-        bilan: true,
-        urssaf: true,
-        apart: true,
-        etablissement: {},
-        entreprise: {},
-        pagination: null,
-        naf: {}
-      }
-    },
-    methods: {
-      close () {
-        this.tabs = this.tabs.filter((tab, index) => index !== this.activeTab)
-        this.activeTab = this.activeTab - 1
-      },
-      printDate (date) {
-        return (date || '          ').substring(0, 10)
-      },
-      round (value, size) {
-        return Math.round(value * (10 ^ size)) / (10 ^ size)
-      },
-      effectifOptions (effectif) {
-        return {
-          title: {
-            text: null
-          },
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: {
-              type: 'cross',
-              label: {
-                backgroundColor: '#283b56'
-              }
+        title: {
+          text: null
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#283b56'
             }
-          },
-          toolbox: {
-            show: true
-          },
-          xAxis: {
-            show: true,
-            type: 'category',
-            axisTick: false,
-            data: this.effectif.map(e => e.periode)
-          },
-          yAxis: {
-            type: 'value',
-            show: true
-          },
-          series: [{
-            color: 'indigo',
-            smooth: true,
-            name: 'taux marge',
-            type: 'line',
-            data: this.effectif.map(e => e.effectif)
-          }]
-        }
-      }
-    },
-    mounted () {
-      this.$axios.get('/api/data/etablissement/1802/' + this.siret).then(response => {
-        this.etablissement = response.data.etablissement[0].value
-        this.entreprise = response.data.entreprise[0].value
-      })
-      this.$axios.get('/api/data/naf').then(response => { this.naf = response.data })
-    },
-    components: {
-      IEcharts
-    },
-    computed: {
-      apconso () {
-        return ((this.etablissement || {}).apconso || []).sort((a, b) => a.periode <= b.periode).slice(0, 10)
-      },
-      apdemande () {
-        return ((this.etablissement || {}).apdemande || []).sort((a, b) => a.periode.start <= b.periode.start).slice(0, 10)
-      },
-      activeTab: {
-        get () { return this.$store.getters.activeTab },
-        set (activeTab) { this.$store.dispatch('updateActiveTab', activeTab) }
-      },
-      tabs: {
-        get () { return this.$store.getters.getTabs },
-        set (tabs) { this.$store.dispatch('updateTabs', tabs) }
-      },
-      sirene () {
-        return ((this.etablissement.sirene || [])[0]) || {}
-      },
-      effectif () {
-        return ((this.etablissement.effectif || []) || []).sort((a, b) => a.periode < b.periode).slice(0, 15).reverse()
-      },
-      bdf () {
-        return (this.entreprise.bdf || []).sort((a, b) => a.annee > b.annee).reverse()
-      },
-      diane () {
-        return (Object.keys(this.entreprise.diane || []).map(k => this.entreprise.diane[k]) || [null]).sort((a, b) => a.annee > b.annee).reverse()
-      },
-      zipDianeBDF () {
-        let annees = new Set(this.bdf.map(b => b.annee).concat(this.diane.map(d => d.annee)))
-        return Array.from(annees).sort((a, b) => a < b).map(a => {
-          return {
-            annee: a,
-            bdf: this.bdf.filter(b => b.annee === a),
-            diane: this.diane.filter(d => d.annee === a)
           }
-        })
-      },
-      urssafOptions () {
+        },
+        toolbox: {
+          show: true
+        },
+        xAxis: {
+          show: true,
+          type: 'category',
+          axisTick: false,
+          data: this.effectif.map(e => e.periode)
+        },
+        yAxis: {
+          type: 'value',
+          show: true
+        },
+        series: [{
+          color: 'indigo',
+          smooth: true,
+          name: 'taux marge',
+          type: 'line',
+          data: this.effectif.map(e => e.effectif)
+        }]
+      }
+    }
+  },
+  mounted () {
+    this.$axios.get('/api/data/etablissement/1802/' + this.siret).then(response => {
+      this.etablissement = response.data.etablissement[0].value
+      this.entreprise = response.data.entreprise[0].value
+    })
+    this.$axios.get('/api/data/naf').then(response => { this.naf = response.data })
+  },
+  components: {
+    IEcharts
+  },
+  computed: {
+    apconso () {
+      return ((this.etablissement || {}).apconso || []).sort((a, b) => a.periode <= b.periode).slice(0, 10)
+    },
+    apdemande () {
+      return ((this.etablissement || {}).apdemande || []).sort((a, b) => a.periode.start <= b.periode.start).slice(0, 10)
+    },
+    activeTab: {
+      get () { return this.$store.getters.activeTab },
+      set (activeTab) { this.$store.dispatch('updateActiveTab', activeTab) }
+    },
+    tabs: {
+      get () { return this.$store.getters.getTabs },
+      set (tabs) { this.$store.dispatch('updateTabs', tabs) }
+    },
+    sirene () {
+      return ((this.etablissement.sirene || [])[0]) || {}
+    },
+    effectif () {
+      return ((this.etablissement.effectif || []) || []).sort((a, b) => a.periode < b.periode).slice(0, 15).reverse()
+    },
+    bdf () {
+      return (this.entreprise.bdf || []).sort((a, b) => a.annee > b.annee).reverse()
+    },
+    diane () {
+      return (Object.keys(this.entreprise.diane || []).map(k => this.entreprise.diane[k]) || [null]).sort((a, b) => a.annee > b.annee).reverse()
+    },
+    zipDianeBDF () {
+      let annees = new Set(this.bdf.map(b => b.annee).concat(this.diane.map(d => d.annee)))
+      return Array.from(annees).sort((a, b) => a < b).map(a => {
         return {
-          title: {
-            text: null
-          },
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: {
-              type: 'cross',
-              label: {
-                backgroundColor: '#283b56'
-              }
-            }
-          },
-          toolbox: {
-            show: true
-          },
-          xAxis: {
-            show: true,
-            type: 'category',
-            axisTick: false,
-            data: (this.etablissement.array_debit || []).map(d => d.periode)
-          },
-          yAxis: {
-            type: 'value',
-            show: true
-          },
-          series: [{
-            color: 'indigo',
-            smooth: true,
-            name: 'Cotisation',
-            type: 'line',
-            data: (this.etablissement.array_debit || []).map(d => d.cotisation)
-          }, {
-            color: 'red',
-            smooth: true,
-            name: 'Dette URSSAF',
-            type: 'line',
-            data: (this.etablissement.array_debit || []).map(d => d.montant_part_ouvriere + d.montant_part_patronale)
-          }]
+          annee: a,
+          bdf: this.bdf.filter(b => b.annee === a),
+          diane: this.diane.filter(d => d.annee === a)
         }
+      })
+    },
+    urssafOptions () {
+      return {
+        title: {
+          text: null
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#283b56'
+            }
+          }
+        },
+        toolbox: {
+          show: true
+        },
+        xAxis: {
+          show: true,
+          type: 'category',
+          axisTick: false,
+          data: (this.etablissement.array_debit || []).map(d => d.periode)
+        },
+        yAxis: {
+          type: 'value',
+          show: true
+        },
+        series: [{
+          color: 'indigo',
+          smooth: true,
+          name: 'Cotisation',
+          type: 'line',
+          data: (this.etablissement.array_debit || []).map(d => d.cotisation)
+        }, {
+          color: 'red',
+          smooth: true,
+          name: 'Dette URSSAF',
+          type: 'line',
+          data: (this.etablissement.array_debit || []).map(d => d.montant_part_ouvriere + d.montant_part_patronale)
+        }]
       }
     }
   }
+}
 </script>
 
 <style scoped>
@@ -446,7 +441,7 @@
 .widget {
   position: absolute;
   left: 20px;
-  top: 20px; 
+  top: 20px;
   right: 20px;
 }
 .nc {

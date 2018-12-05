@@ -58,18 +58,21 @@ func prepareMRJob(batchKey string, id string, typeJob string, target string) (*m
 }
 
 // browserIndexHandler traite les requêtes d'indexation
-func browserIndexHandler(c *gin.Context) {
-	var index struct {
-		BatchKey string `json:"batch" binding:"required"`
-		Siret    string `json:"siret"`
-	}
+func browseEtablissementHandler(c *gin.Context) {
+	// var index struct {
+	// 	BatchKey string `json:"batch" binding:"required"`
+	// 	Siret    string `json:"siret"`
+	// }
 
-	err := c.ShouldBind(&index)
-	if err != nil {
-		c.JSON(500, "Requête malformée: "+err.Error())
-	}
+	// err := c.ShouldBind(&index)
+	// if err != nil {
+	// 	c.JSON(500, "Requête malformée: "+err.Error())
+	// }
 
-	result, err := browserIndex(index.BatchKey, index.Siret)
+	siret := c.Params.ByName("siret")
+	batch := c.Params.ByName("batch")
+
+	result, err := browseEtablissement(batch, siret)
 
 	if err != nil {
 		c.JSON(500, "Erreur du traitement: "+err.Error())
@@ -78,7 +81,7 @@ func browserIndexHandler(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-func browserIndex(batchKey string, siret string) (interface{}, error) {
+func browseEtablissement(batchKey string, siret string) (interface{}, error) {
 	var siren string
 	if len(siret) == 14 {
 		siren = siret[0:9]
@@ -141,6 +144,27 @@ func predictionBrowse(c *gin.Context) {
 	err := db.DB.C("Prediction").Pipe(pipeline).All(&result)
 	if err != nil {
 		c.JSON(500, err)
+		return
+	}
+	c.JSON(200, result)
+}
+
+func searchRaisonSociale(c *gin.Context) {
+	var params struct {
+		GuessRaisonSociale string `json:"guessRaisonSociale"`
+	}
+	err := c.ShouldBind(&params)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+
+	var result = make([]interface{}, 0)
+
+	err = db.DBStatus.C("Prediction").Find(bson.M{"$text": bson.M{"$search": params.GuessRaisonSociale}}).Limit(15).All(&result)
+
+	if err != nil {
+		c.JSON(500, err.Error())
 		return
 	}
 	c.JSON(200, result)

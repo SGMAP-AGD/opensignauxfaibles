@@ -92,12 +92,64 @@
       </template>
     </v-data-table>-->
     <v-card
-      style="height: 100px"
+      style="height: 100px;"
       v-for="p in predictionFiltered"
       :key="p._id.siret"
       class="elevation-6"
     >
-      <v-card-text>{{ p._id.siret }}</v-card-text>
+      <v-container>
+        <v-layout>
+          <v-flex>
+          {{ p._id.siret }}
+          </v-flex>
+          <v-flex>
+
+          <IEcharts
+            style="height: 40px; width: 100px; "
+            :loading="chart"
+            :option="getMargeOption(
+              (p.bdf || []).map(b => {
+              return {'x': b.annee, 'y': b.taux_marge}
+              })
+            )"
+          />
+
+          </v-flex>
+          <v-flex>
+
+          <IEcharts
+            style="height: 40px; width: 100px;"
+            :loading="chart"
+            :option="getMargeOption(
+              (p.bdf || []).map(b => {
+              return {'x': b.annee, 'y': b.poids_frng}
+              })
+            )"
+          />
+
+          </v-flex>
+          <v-flex>
+
+          <IEcharts
+            style="height: 40px; width: 100px;"
+            :loading="chart"
+            :option="getMargeOption(
+              (p.bdf || []).map(b => {
+              return {'x': b.annee, 'y': b.financier_court_terme}
+              })
+            )"
+          />
+
+          </v-flex>
+          <v-flex>
+
+          <widgetPrediction :prob="p.prob" :diff="p.diff"/>
+
+          </v-flex>
+
+        </v-layout>
+      </v-container>
+
     </v-card>
   </div>
 </template>

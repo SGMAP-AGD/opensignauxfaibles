@@ -4,6 +4,7 @@ import Dashboard from '@/components/Dashboard'
 import Data from '@/components/Data'
 import Admin from '@/components/Admin'
 import Browse from '@/components/Browse'
+import Detection from '@/components/Detection'
 
 Vue.use(Router)
 
@@ -28,6 +29,11 @@ export default new Router({
       path: '/browse',
       name: 'Browse',
       component: Browse
+    },
+    {
+      path: '/detection',
+      name: 'Detection',
+      component: Detection
     }
   ]
 })

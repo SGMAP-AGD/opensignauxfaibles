@@ -13,31 +13,7 @@
       Tableau de Bord
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#ffffff" @click="rightDrawer=!rightDrawer">mdi-database-search</v-icon>
   </v-toolbar>
-
-    <v-container>
-      <v-layout>
-        <v-flex>
-        <v-autocomplete
-          slot="extension"
-          v-model="select"
-          :items="items"
-          :search-input.sync="search"
-          :loading="loading"
-          label="Entreprises"            
-          placeholder="Siret, Raison Sociale..."
-          prepend-icon="mdi-database-search"
-          cache-items
-          class="mx-3"
-          flat
-          hide-no-data
-          hide-details
-        ></v-autocomplete>
-        </v-flex>
-      </v-layout>
-    </v-container>
-    <Etablissement :siret="select" batch="1802"></Etablissement>
   </div>
 </template>
 
@@ -47,11 +23,8 @@ import Etablissement from '@/components/Etablissement'
 export default {
   components: { Etablissement },
   data () {
-    return { 
-    loading: false,
-    items: [],
-    search: null,
-    select: null
+    return {
+      tasks: []
     }
   },
   watch: {
@@ -60,13 +33,14 @@ export default {
     }
   },
   methods: {
-    querySelections (val) {
-      console.log(this.select)
-      this.loading = true
-      this.$axios.post('/api/search', { 'guessRaisonSociale': val }).then(r => {
-        this.items = r.data.map(e => {return {text: e.raison_sociale, value: e._id.siret}})
-      }).finally(this.loading = false)
+    getTasks () {
+      this.$axios.get('/api/dashboard/tasks').then(response => {
+        this.tasks = response.data
+      })
     }
+  },
+  mounted () {
+    this.getTasks()
   },
   computed: {
     message () {
@@ -87,7 +61,7 @@ export default {
       set (val) {
         this.$store.dispatch('setRightDrawer', val)
       }
-    }
+    },
   }
 }
 </script>

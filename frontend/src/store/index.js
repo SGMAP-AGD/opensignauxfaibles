@@ -67,7 +67,9 @@ const sessionStore = new Vuex.Store({
     prediction: [],
     predictionParameters: {},
     height: 0,
-    scrollTop: 0
+    scrollTop: 0,
+    loginError: false,
+    loginTry: 3
   },
   mutations: {
     updateActiveTab (state, activeTab) {
@@ -190,6 +192,16 @@ const sessionStore = new Vuex.Store({
     },
     setScrollTop (state, scrollTop) {
       state.scrollTop = scrollTop
+    },
+    setLoginError (state, loginError) {
+      state.loginError = loginError
+    },
+    decrementLoginTry (state) {
+      if (state.loginTry > 1) {
+        state.loginTry = state.loginTry - 1
+      } else {
+        state.loginTry = 4
+      }
     }
   },
   actions: {
@@ -234,6 +246,10 @@ const sessionStore = new Vuex.Store({
       axiosClient.post('/login', credentials).then(response => {
         context.commit('setToken', response.data.token)
         wsConnect(context)
+      }).catch(_ => {
+        context.commit('decrementLoginTry')
+        context.commit('setLoginError', true)
+        setTimeout(function () { context.commit('setLoginError', false) }, 5000)
       })
     },
     getLogin (context) {
@@ -253,7 +269,10 @@ const sessionStore = new Vuex.Store({
 
       axiosClient.post('/login/check', credentials).then(response => {
         localStore.commit('setBrowserToken', response.data.browserToken)
-        context.commit('login')
+        context.dispatch('login')
+      }).catch(_ => {
+        context.commit('setLoginError', true)
+        setTimeout(function () { context.commit('setLoginError', false) }, 5000)
       })
     },
     setDrawer (context, val) {

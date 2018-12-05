@@ -1,6 +1,14 @@
 <template>
   <v-container fluid fill-height>
     <v-layout align-center wrap justify-center>
+        <v-alert
+          style="position: absolute; top: 0px; z-index: 10;"
+          v-model="loginError"
+          dismissible
+          type="error"
+        >
+          Identification incorrecte
+        </v-alert>
       <v-flex class="login" xs12 sm6 md3>
         <span><v-img class="center" max-width="100px" src="/static/logo_signaux_faibles_cercle.svg"></v-img></span>
         <h1><span class="fblue">Signaux</span>·<span class="fred">Faibles</span></h1>
@@ -8,7 +16,7 @@
       <v-flex class="login" xs12 sm6 md3>
           <v-form @submit="login">
           <v-text-field  prepend-icon="person" label="Adresse électronique" v-model="email"></v-text-field >
-          <v-text-field  prepend-icon="lock" type="password" label="Mot de passe" v-model="password"></v-text-field>
+          <v-text-field  prepend-icon="lock" type="password" :label="passwordHint" v-model="password"></v-text-field>
           <v-btn round color="primary" type="submit">Connexion</v-btn><br/>
           <div v-if="browserToken">
           <v-dialog
@@ -19,7 +27,7 @@
           >
             <a slot="activator" style="font-size: 10px" href='#'>Mot de passe oublié ?</a>
               <v-card >
-                <v-toolbar color="#eef" class="toolbar elevation-1" dense>
+                <v-toolbar color="#eef" class="toolbar-widget elevation-1" dense>
                   <v-icon>mdi-lock-question</v-icon>
                   <v-spacer></v-spacer>
                   <span style="font-size: 15px; font-weight: 600">
@@ -170,6 +178,26 @@ export default {
     }
   },
   computed: {
+    passwordHint () {
+      switch (this.loginTry) {
+        case 4: 
+          this.passwordHelp = true
+          return "Mot de passe"
+          break
+        case 3:
+          return "Mot de passe"
+        case 2:
+          return "Mot de passe: 2 essais restants"
+        case 1:
+          return "Mot de passe: dernier essai"
+      }
+    },
+    loginTry () {
+      return this.$store.state.loginTry
+    },
+    loginError () {
+      return this.$store.state.loginError
+    },
     validEmail () {
       const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
       return pattern.test(this.recoveryEmail)
@@ -227,6 +255,7 @@ export default {
   },
   methods: {
     checkLogin () {
+      this.verifDialog = false
       this.$store.dispatch('checkLogin', this.loginCode)
     },
     login () {
