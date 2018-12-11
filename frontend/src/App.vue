@@ -128,6 +128,17 @@ export default {
 body {
   font-family: "Quicksand", sans-serif;
 }
+.task {
+  background: linear-gradient(0deg, #1f1a24, #1d1c24 10%, #1d1c24 90%, #353c47);
+}
+.tasktext {
+  color: white;
+}
+.tasktitle {
+  color: white;
+  font-size: 20px;
+  font-weight: 500;
+}
 .toolbar {
   color: "black";
   font-family: "Quicksand", sans-serif;

@@ -69,7 +69,8 @@ const sessionStore = new Vuex.Store({
     height: 0,
     scrollTop: 0,
     loginError: false,
-    loginTry: 3
+    loginTry: 3,
+    regions: {}
   },
   mutations: {
     updateActiveTab (state, activeTab) {
@@ -202,6 +203,9 @@ const sessionStore = new Vuex.Store({
       } else {
         state.loginTry = 4
       }
+    },
+    getRegions (state, regions) {
+      state.regions = regions
     }
   },
   actions: {
@@ -231,6 +235,9 @@ const sessionStore = new Vuex.Store({
       })
       axiosClient.get('/api/admin/files').then(response => {
         context.commit('updateFiles', response.data)
+      })
+      axiosClient.get('/api/admin/regions').then(response => {
+        context.commit('getRegions', response.data)
       })
     },
     setCurrentType (context, type) {

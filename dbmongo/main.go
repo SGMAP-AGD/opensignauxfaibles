@@ -53,7 +53,7 @@ func main() {
 	r.Use(gin.Recovery())
 	// r.Use(Kanboard())
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:8080", "http://opensignauxfaibles.fr:8080", "http://opensignauxfaibles.fr:3000", "http://opensignauxfaibles.fr"}
+	config.AllowOrigins = []string{"http://localhost:8080", "https://signaux.faibles.fr"}
 	config.AddAllowHeaders("Authorization")
 	config.AddAllowMethods("GET", "POST", "PUT", "HEAD", "DELETE")
 
@@ -128,10 +128,13 @@ func main() {
 		api.GET("/compact/etablissement", compactEtablissementHandler)
 		api.GET("/compact/entreprise/:siren", compactEntrepriseHandler)
 		api.GET("/compact/entreprise", compactEntrepriseHandler)
+		api.GET("/data/public/etablissement", publicEtablissementHandler)
 		api.GET("/reduce/:algo/:batch/:siret", reduceHandler)
 		api.GET("/reduce/:algo/:batch", reduceHandler)
 		api.POST("/search", searchRaisonSociale)
 		api.GET("/data/etablissement/:batch/:siret", browseEtablissementHandler)
+		api.GET("/dashboard/tasks", getTasks)
+		api.GET("/admin/regions", getRegionsHandler)
 	}
 
 	bind := viper.GetString("APP_BIND")

@@ -1,19 +1,45 @@
 <template>
-<div>
-  <v-toolbar class="toolbar" color="#c9aec5" height="35px" app>
-    <v-icon
-    @click="drawer=!drawer"
-    class="fa-rotate-180"
-    v-if="!drawer"
-    color="#ffffff"
-    key="toolbar"
-    >mdi-backburger
-    </v-icon>
-    <div style="width: 100%; text-align: center;" class="titre">
-      Tableau de Bord
-    </div>
-    <v-spacer></v-spacer>
-  </v-toolbar>
+  <div>
+    <v-toolbar class="toolbar elevation-12" color="#c9aec5" height="35px" app>
+      <v-icon
+        @click="drawer=!drawer"
+        class="fa-rotate-180"
+        v-if="!drawer"
+        color="#ffffff"
+        key="toolbar"
+        >mdi-backburger
+      </v-icon>
+      <div style="width: 100%; text-align: center;" class="titre">
+        Tableau de Bord
+      </div>
+      <v-spacer></v-spacer>
+      <v-icon color="#c9aec5" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-dashboard</v-icon>
+    </v-toolbar>
+    <v-navigation-drawer
+      :class="rightDrawer?'elevation-6':''"
+      right app
+      v-model="rightDrawer"
+    >
+      <v-list  two-line class="pt-0">
+        <v-toolbar>
+          <v-icon @click="rightDrawer=!rightDrawer" color="c9aec5">fa-dashbord</v-icon>
+          <v-spacer></v-spacer>
+            Suivi d'activité
+          <v-divider></v-divider>
+        </v-toolbar>
+      </v-list>
+    </v-navigation-drawer>
+    <v-card v-for="t in tasks" :key="t._id" class="ma-3 task elevation-12">
+      <v-card-text class="tasktitle">
+        <v-tooltip>
+          <span>SIRET: {{ t._id }}</span>
+          <v-card-title slot="activator">{{ t.etablissement[0].value.sirene.raisonsociale }}</v-card-title>
+        </v-tooltip>
+      </v-card-text>
+      <v-card-text class="tasktext" dark v-for="s in t.tasks" :key="s.id" style="background-color: transparent;">
+        {{ s }}
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 

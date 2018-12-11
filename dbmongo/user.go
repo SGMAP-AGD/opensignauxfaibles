@@ -34,6 +34,7 @@ type AdminUser struct {
 	FirstName      string    `json:"firstName" bson:"firstName"`
 	LastName       string    `json:"lastName" bson:"lastName"`
 	BrowserTokens  []string  `json:"browserTokens" bson:"browserTokens"`
+	Regions        []string  `json:"regions" bson:"regions"`
 }
 
 func (user AdminUser) save() error {
@@ -204,6 +205,29 @@ func sendRecoveryEmail(email string) error {
 	// 	spew.Dump(err)
 	// }
 	// return err
+}
+
+func getRegions() map[string]string {
+	regions := map[string]string{
+		"ARA": "Auvergne-Rhône-Alpes",
+		"BFC": "Bourgogne-Franche-Comté",
+		"BRE": "Bretagne",
+		"CVL": "Centre-Val de Loire",
+		"COR": "Corse",
+		"GES": "Grand Est",
+		"HDF": "Hauts-de-France",
+		"IDF": "Île-de-France",
+		"NOR": "Normandie",
+		"NAQ": "Nouvelle-Aquitaine",
+		"OCC": "Occitanie",
+		"PDL": "Pays de la Loire",
+		"PAC": "Provence-Alpes-Côte d'Azur",
+	}
+	return regions
+}
+
+func getRegionsHandler(c *gin.Context) {
+	c.JSON(200, getRegions())
 }
 
 func checkRecoverySetPassword(c *gin.Context) {
