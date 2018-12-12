@@ -4,7 +4,7 @@ import Dashboard from '@/components/Dashboard'
 import Data from '@/components/Data'
 import Admin from '@/components/Admin'
 import Browse from '@/components/Browse'
-import Detection from '@/components/Detection'
+import Prediction from '@/components/Prediction'
 
 Vue.use(Router)
 
@@ -33,7 +33,7 @@ export default new Router({
     {
       path: '/detection',
       name: 'Detection',
-      component: Detection
+      component: Prediction
     }
   ]
 })
