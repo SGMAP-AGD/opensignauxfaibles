@@ -15,6 +15,7 @@
       <v-spacer></v-spacer>
       <v-icon color="#c9aec5" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-dashboard</v-icon>
     </v-toolbar>
+    <DashboardTask v-for="task in tasks" :key="task._id" :task="task"></DashboardTask>
     <v-navigation-drawer
       :class="rightDrawer?'elevation-6':''"
       right app
@@ -29,25 +30,15 @@
         </v-toolbar>
       </v-list>
     </v-navigation-drawer>
-    <v-card v-for="t in tasks" :key="t._id" class="ma-3 task elevation-12">
-      <v-card-text class="tasktitle">
-        <v-tooltip>
-          <span>SIRET: {{ t._id }}</span>
-          <v-card-title slot="activator">{{ t.etablissement[0].value.sirene.raisonsociale }}</v-card-title>
-        </v-tooltip>
-      </v-card-text>
-      <v-card-text class="tasktext" dark v-for="s in t.tasks" :key="s.id" style="background-color: transparent;">
-        {{ s }}
-      </v-card-text>
-    </v-card>
   </div>
 </template>
 
 <script>
 import Etablissement from '@/components/Etablissement'
+import DashboardTask from '@/components/DashboardTask'
 
 export default {
-  components: { Etablissement },
+  components: { Etablissement, DashboardTask },
   data () {
     return {
       tasks: []
@@ -87,7 +78,7 @@ export default {
       set (val) {
         this.$store.dispatch('setRightDrawer', val)
       }
-    },
+    }
   }
 }
 </script>

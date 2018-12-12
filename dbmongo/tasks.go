@@ -21,13 +21,14 @@ func getTasks(c *gin.Context) {
 	}})
 
 	pipeline = append(pipeline, bson.M{"$group": bson.M{
-		"_id":   "$_id.siret",
-		"date":  bson.M{"$max": "$_id.date"},
-		"tasks": bson.M{"$push": "$$ROOT"},
+		"_id":       "$_id.siret",
+		"lastDate":  bson.M{"$max": "$_id.date"},
+		"firstDate": bson.M{"$min": "$_id.date"},
+		"tasks":     bson.M{"$push": "$$ROOT"},
 	}})
 
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{
-		"date": -1,
+		"firstDate": -1,
 	}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{

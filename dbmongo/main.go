@@ -103,8 +103,6 @@ func main() {
 	{
 		api.GET("/refreshToken", authMiddleware.RefreshHandler)
 		api.GET("/purge", purge)
-		api.GET("/kanboard/get/projects", listProjects)
-		api.GET("/kanboard/get/tasks", getKBTasks)
 		api.POST("/admin/batch", upsertBatch)
 		api.POST("/admin/batch/addFile", addFileToBatchHandler)
 		api.GET("/admin/batch", listBatch)
@@ -153,9 +151,9 @@ func loadConfig() {
 	viper.SetDefault("DB_PORT", "27017")
 	viper.SetDefault("DB", "opensignauxfaibles")
 	viper.SetDefault("JWT_SECRET", "Secret à changer")
-	viper.SetDefault("KANBOARD_ENDPOINT", "http://localhost/kanboard/jsonrpc.php")
-	viper.SetDefault("KANBOARD_USERNAME", "admin")
-	viper.SetDefault("KANBOARD_PASSWORD", "admin")
+	// viper.SetDefault("KANBOARD_ENDPOINT", "http://localhost/kanboard/jsonrpc.php")
+	// viper.SetDefault("KANBOARD_USERNAME", "admin")
+	// viper.SetDefault("KANBOARD_PASSWORD", "admin")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic("Erreur à la lecture de la configuration")
