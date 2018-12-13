@@ -120,7 +120,7 @@ func main() {
 		api.GET("/data/naf", getNAF)
 		api.GET("/data/features", getFeatures)
 		api.GET("/admin/epoch", epoch)
-		api.POST("/data/prediction", predictionBrowse)
+		api.POST("/data/prediction", predictionBrowseHandler)
 		api.GET("/import/:batch", importBatchHandler)
 		api.GET("/compact/etablissement/:siret", compactEtablissementHandler)
 		api.GET("/compact/etablissement", compactEtablissementHandler)

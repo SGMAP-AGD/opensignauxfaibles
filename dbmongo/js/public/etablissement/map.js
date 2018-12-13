@@ -22,6 +22,7 @@ function map() {
     accu.adresse = v.sirene[k].adresse
     accu.gps = [v.sirene[k].lattitude, v.sirene[k].longitude]
     accu.creation = v.sirene[k].creation
+    accu.ape = v.sirene[k].ape
     return accu
   }, {})
 

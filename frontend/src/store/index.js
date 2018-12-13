@@ -64,13 +64,12 @@ const sessionStore = new Vuex.Store({
     },
     uploads: [],
     activeTab: null,
-    prediction: [],
-    predictionParameters: {},
     height: 0,
     scrollTop: 0,
     loginError: false,
     loginTry: 3,
-    regions: {}
+    regions: {},
+    naf: {}
   },
   mutations: {
     updateActiveTab (state, activeTab) {
@@ -182,11 +181,8 @@ const sessionStore = new Vuex.Store({
     updateFiles (state, files) {
       state.files = files.sort((a, b) => a.name.localeCompare(b.name))
     },
-    storePrediction (state, prediction) {
-      state.prediction = prediction
-    },
-    setPredictionParameters (state, parameters) {
-      state.predictionParameters = parameters
+    updateNAF (state, naf) {
+      state.naf = naf
     },
     setHeight (state, height) {
       state.height = height
@@ -238,6 +234,11 @@ const sessionStore = new Vuex.Store({
       })
       axiosClient.get('/api/admin/regions').then(response => {
         context.commit('getRegions', response.data)
+      })
+    },
+    getNAF (context) {
+      axiosClient.get('/api/data/naf').then(response => {
+        context.commit('updateNAF', response.data)
       })
     },
     setCurrentType (context, type) {

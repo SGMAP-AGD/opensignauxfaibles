@@ -5,14 +5,17 @@
     class="toolbar elevation-12"
     color="#ffffff"
     extension-height="48px"
-    app>
+    app
+  >
     <v-icon
-     @click="drawer=!drawer"
-    class="fa-rotate-180"
-    v-if="!drawer"
-    color="#e0e0ffef"
-    key="toolbar"
-    >mdi-backburger</v-icon>
+      @click="drawer=!drawer"
+      class="fa-rotate-180"
+      v-if="!drawer"
+      color="#e0e0ffef"
+      key="toolbar"
+    >
+      mdi-backburger
+    </v-icon>
     <div style="width: 100%; text-align: center;"  class="titre">
       Détection
     </div>
@@ -22,19 +25,17 @@
   
   <div style="width:100%">
     <v-navigation-drawer :class="(rightDrawer?'elevation-6':'') + 'rightDrawer'" v-model="rightDrawer" right app>
-      <v-toolbar flat class="transparent">
+      <v-toolbar flat class="transparent" height="100">
         <v-list class="pa-0">
           <v-list-tile avatar>
             <v-list-tile-avatar>
               <v-icon @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
           </v-list-tile-avatar>
           <v-spacer></v-spacer>
-          <v-list-tile-content>
-            Détection
-          </v-list-tile-content>
-          <v-list-tile-avatar>
-            <img src="/static/logo_signaux_faibles_cercle.svg">
-          </v-list-tile-avatar>
+
+          
+            <v-img src="/static/regions/PDL.svg"></v-img>
+          
           </v-list-tile>
         </v-list>
       </v-toolbar>
@@ -105,9 +106,8 @@
       </v-footer>
     </v-navigation-drawer>
   </div>
-
   <PredictionWidget v-for="p in prediction" :key="p._id.siret" :prediction="p"/>
-  {{ prediction }}
+ 
 </div>
 </template>
 
@@ -118,27 +118,6 @@ export default {
     return {
       effectifClass: [10, 20, 50, 100],
       active: 0,
-      naf1: [
-        'Tous',
-        'Activités spécialisées, scientifiques et techniques',
-        'Activités de services administratifs et de soutien',
-        'Industrie manufacturière',
-        'Hébergement et restauration',
-        'Construction',
-        'Transports et entreposage',
-        'Commerce ; réparation d\'automobiles et de motocycles',
-        'Santé humaine et action sociale',
-        'Autres activités de services',
-        'Arts, spectacles et activités récréatives',
-        'Industries extractives',
-        'Production et distribution d\'eau ; assainissement, gestion des déchets et dépollution',
-        'Information et communication',
-        'Activités financières et d\'assurance',
-        'Activités immobilières',
-        'Agriculture, sylviculture et pêche',
-        'Production et distribution d\'électricité, de gaz, de vapeur et d\'air conditionné',
-        'Activités extra-territoriales'
-      ],
       prediction: [],
       naf: 'Industrie manufacturière',
       minEffectif: 20,
@@ -150,6 +129,7 @@ export default {
   },
   mounted () {
     this.getPrediction()
+    this.$store.dispatch('getNAF')
     this.$store.commit('updateBatches')
   },
   methods: {
@@ -169,6 +149,9 @@ export default {
     }
   },
   computed: {
+    naf1 () {
+      return Object.keys(this.$store.state.naf.n1 || {}).sort().map(n => n + ' - ' + this.$store.state.naf.n1[n].substring(0,60) )
+    },
     scrollTop () {
       return this.$store.state.scrollTop
     },
@@ -206,6 +189,12 @@ export default {
     },
     batches () {
       return this.$store.state.batches.filter(b => b.readonly === true).map(batch => batch.id.key)
+    },
+    visiblePrediction () {
+
+    },
+    detectionLength () {
+      return Math.round((this.height + this.scrollTop) / 1000 + 1)*10 ;
     }
   },
   components: { PredictionWidget },

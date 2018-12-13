@@ -1,8 +1,8 @@
 <template>
   <div>
     <v-card
-      style="height: 100px;"
-      class="elevation-6 ma-3"
+      style="height: 100px; background: linear-gradient(#fff, #eee 45%, #ccc);"
+      class="elevation-2 ma-2"
     >
       <v-container>
         <v-layout>

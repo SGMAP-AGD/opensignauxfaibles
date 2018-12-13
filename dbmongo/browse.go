@@ -151,31 +151,74 @@ func publicEtablissement() error {
 	return nil
 }
 
-func predictionBrowse(c *gin.Context) {
-	var pipeline []bson.M
+func predictionBrowseHandler(c *gin.Context) {
+	params := struct {
+		Batch    string `json:"batch"`
+		Naf1     string `json:"naf1"`
+		Effectif int    `json:"effectif"`
+		Suivi    bool   `json:"suivi"`
+		Ccsf     bool   `json:"ccsf"`
+		Procol   bool   `json:"procol"`
+		Limit    int    `json:"limit"`
+		Offset   int    `json:"offset"`
+	}{}
 
-	pipeline = append(pipeline, bson.M{"$limit": 50})
-	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
-		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
-	}})
+	err := c.ShouldBind(&params)
+	if err != nil {
+		c.JSON(400, "Bad Request: "+err.Error())
+	}
 
-	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from":         "Entreprise",
-		"localField":   "siren",
-		"foreignField": "_id",
-		"as":           "entreprise"}})
-
-	pipeline = append(pipeline, bson.M{"$addFields": bson.M{"bdf": bson.M{"$arrayElemAt": []interface{}{"$entreprise.value.batch.1802.bdf", 0}}}})
-
-	pipeline = append(pipeline, bson.M{"$project": bson.M{"entreprise": 0}})
-
-	var result []interface{}
-	err := db.DB.C("Prediction").Pipe(pipeline).All(&result)
+	result, err := predictionBrowse(params.Batch, params.Naf1, params.Effectif, params.Suivi, params.Ccsf, params.Procol, params.Limit, params.Offset)
 	if err != nil {
 		c.JSON(500, err)
 		return
 	}
 	c.JSON(200, result)
+}
+
+func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf bool, procol bool, limit int, offset int) (interface{}, error) {
+	var pipeline []bson.M
+
+	// pipeline = append(pipeline, bson.M{"$limit": 50})
+
+	pipeline = append(pipeline, bson.M{"$match": bson.M{
+		"_id.batch": batch,
+	}})
+
+	pipeline = append(pipeline, bson.M{"$project": bson.M{
+		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
+		"siret": "$_id.siret",
+		"prob":  "$prob",
+		"diff":  "$diff",
+	}})
+
+	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
+		"from":         "PublicEtablissement",
+		"localField":   "siret",
+		"foreignField": "_id",
+		"as":           "etablissement"}})
+
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
+		"etablissement": bson.M{"$arrayElemAt": []interface{}{"$etablissement", 0}},
+	}})
+
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
+		"etablissement": "$etablissement.value",
+	}})
+
+	if naf1 != "" {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{
+			"etablissement.sirene.ape": bson.M{"$in": naf5from1(naf1)},
+		}})
+	}
+
+	pipeline = append(pipeline, bson.M{"$skip": offset})
+
+	pipeline = append(pipeline, bson.M{"$limit": limit})
+	var result = []interface{}{}
+	err := db.DB.C("Prediction").Pipe(pipeline).All(&result)
+
+	return result, err
 }
 
 func searchRaisonSociale(c *gin.Context) {
