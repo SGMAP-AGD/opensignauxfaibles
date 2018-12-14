@@ -107,9 +107,9 @@ a {
   color: #42b983;
 }
 div.titre {
-  font-family: 'Signika', sans-serif;
+  font-family: 'Alfa Slab One', cursive;
   color: #ffffff;
   font-weight: 500;
-  font-size: 18px
+  font-size: 20px
 }
 </style>

@@ -22,7 +22,7 @@
     <v-spacer></v-spacer>
     <v-icon color="#e0e0ffef" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
   </v-toolbar>
-  
+  <span style="visibility: hidden; position:absolute;">{{ detectionLength }} {{ predictionLength }} {{ prediction.length }}</span>
   <div style="width:100%">
     <v-navigation-drawer :class="(rightDrawer?'elevation-6':'') + 'rightDrawer'" v-model="rightDrawer" right app>
       <v-toolbar flat class="transparent" height="100">
@@ -30,16 +30,20 @@
           <v-list-tile avatar>
             <v-list-tile-avatar>
               <v-icon @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
-          </v-list-tile-avatar>
-          <v-spacer></v-spacer>
-
-          
+            </v-list-tile-avatar>
+            <v-spacer></v-spacer>
             <v-img src="/static/regions/PDL.svg"></v-img>
-          
           </v-list-tile>
         </v-list>
       </v-toolbar>
       <v-list two-line>
+        <v-list-tile three-line>
+          <v-select
+            :items="batches"
+            v-model="currentBatchKey"
+            label="Lot d'intégration"
+          ></v-select>
+        </v-list-tile>
         <v-list-tile>
           <v-list-tile-action>
             <v-icon>fa-industry</v-icon>
@@ -49,6 +53,7 @@
               :items="naf1"
               v-model="naf"
               label="Secteur d'activité"
+              @change="updatePrediction()"
             ></v-select>
           </v-list-tile-content>
         </v-list-tile>
@@ -61,6 +66,7 @@
               :items="effectifClass"
               v-model="minEffectif"
               label="Effectif minimum"
+              @change="updatePrediction()"
             ></v-select>
           </v-list-tile-content>
         </v-list-tile>
@@ -95,19 +101,10 @@
           </v-list-tile-content>
         </v-list-tile>
       </v-list>
-      <v-footer class="elevation-6" style="color: blue; width:100%; position: fixed; bottom: 0px;">
-        <v-btn
-          flat
-          icon
-          color="blue"
-          href="https://github.com/entrepreneur-interet-general/opensignauxfaibles">
-          <v-icon>fab fa-github</v-icon>
-        </v-btn>
-      </v-footer>
     </v-navigation-drawer>
   </div>
   <PredictionWidget v-for="p in prediction" :key="p._id.siret" :prediction="p"/>
- 
+
 </div>
 </template>
 
@@ -117,40 +114,74 @@ export default {
   data () {
     return {
       effectifClass: [10, 20, 50, 100],
-      active: 0,
       prediction: [],
-      naf: 'Industrie manufacturière',
+      predictionLength: 0,
+      naf: 'C',
       minEffectif: 20,
       entrepriseConnue: true,
       horsCCSF: true,
       horsProcol: true,
-      loading: false,
+      loading: false
     }
   },
   mounted () {
-    this.getPrediction()
     this.$store.dispatch('getNAF')
-    this.$store.commit('updateBatches')
+    this.$store.dispatch('updateBatches')
   },
   methods: {
-    getPrediction() {
-      this.loading = true;
-      var self = this;
-      this.$axios.post('/api/data/prediction').then(response => {
-        var prediction = response.data;
+    updatePrediction () {
+      this.loading = true
+      var self = this
+      var params = {
+        batch: this.currentBatchKey,
+        naf1: this.naf,
+        limit: this.detectionLength,
+        offset: 0,
+        effectif: this.minEffectif
+      }
+      console.log(params)
+      this.$axios.post('/api/data/prediction', params).then(response => {
+        var prediction = response.data
         prediction.forEach(p => {
           p.bdf = Object.keys(p.bdf || {})
             .map(b => p.bdf[b])
-            .sort((a, b) => a.annee < b.annee);
-        });
-        this.prediction = prediction;
-        self.loading = false;
-      });
+            .sort((a, b) => a.annee < b.annee)
+        })
+        this.prediction = prediction
+        this.predictionLength = this.prediction.length
+        self.loading = false
+      }) 
+    },
+    getPrediction (limit, offset) {
+      this.loading = true
+      var self = this
+      var params = {
+        batch: this.currentBatchKey,
+        naf1: this.naf,
+        limit: limit,
+        offset: offset,
+        effectif: this.minEffectif
+      }
+      console.log(params)
+      this.predictionLength = limit + offset
+      this.$axios.post('/api/data/prediction', params).then(response => {
+        var prediction = response.data
+        prediction.forEach(p => {
+          p.bdf = Object.keys(p.bdf || {})
+            .map(b => p.bdf[b])
+            .sort((a, b) => a.annee < b.annee)
+        })
+        this.prediction = this.prediction.concat(prediction)
+        self.loading = false
+      })
     }
   },
   computed: {
     naf1 () {
-      return Object.keys(this.$store.state.naf.n1 || {}).sort().map(n => n + ' - ' + this.$store.state.naf.n1[n].substring(0,60) )
+      return Object.keys(this.$store.state.naf.n1 || {}).sort().map(n => {return {
+        text: this.$store.state.naf.n1[n].substring(0, 60),
+        value: n
+      }})
     },
     scrollTop () {
       return this.$store.state.scrollTop
@@ -188,13 +219,15 @@ export default {
       }
     },
     batches () {
-      return this.$store.state.batches.filter(b => b.readonly === true).map(batch => batch.id.key)
-    },
-    visiblePrediction () {
-
+      return (this.$store.state.batches || []).map(batch => batch.id.key)
     },
     detectionLength () {
-      return Math.round((this.height + this.scrollTop) / 1000 + 1)*10 ;
+      var length = Math.round((this.height + this.scrollTop) / 900 + 5) * 10 
+      if (length > this.predictionLength) {
+        var complement = length - this.predictionLength
+        this.getPrediction(complement, this.predictionLength)
+      }
+      return length
     }
   },
   components: { PredictionWidget },
@@ -205,9 +238,9 @@ export default {
 <style>
 div.titre {
   color: #e0e0ffef;
-  font-family: 'Signika', sans-serif;
+  font-family: 'Alfa Slab One', cursive;
   font-weight: 500;
   color: primary;
-  font-size: 18px;
+  font-size: 20px;
 }
 </style>

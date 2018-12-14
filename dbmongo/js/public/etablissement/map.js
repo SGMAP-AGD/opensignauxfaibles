@@ -1,9 +1,10 @@
 function map() { 
   v = Object.keys((this.value.batch || {}))
+  .filter(b => b <= actual_batch)
   .sort()
   .reduce((m, batch) => {
     Object.keys(this.value.batch[batch])
-    .filter(type => ['sirene'].includes(type))
+    .filter(type => ['sirene', 'effectif'].includes(type))
     .forEach((type) => {
       m[type] = (m[type] || {})
       var  array_delete = (this.value.batch[batch].compact.delete[type]||[])
@@ -16,7 +17,7 @@ function map() {
     return m
   }, {})
 
-  sirene = Object.keys(v.sirene || {}).reduce((accu, k) => {
+  var sirene = Object.keys(v.sirene || {}).reduce((accu, k) => {
     accu.raisonsociale = v.sirene[k].raisonsociale
     accu.nicsiege = v.sirene[k].nicsiege
     accu.adresse = v.sirene[k].adresse
@@ -26,8 +27,17 @@ function map() {
     return accu
   }, {})
 
+  var effectif = Object.keys(v.effectif || {}).reduce((accu, k) => {
+    if (v.effectif[k].periode.getTime() > accu.date.getTime()) {
+      accu.date = v.effectif[k].periode
+      accu.effectif = v.effectif[k].effectif
+    }
+    return accu
+  }, {date: new Date(0)})
+
   r = {
-    sirene
+    sirene,
+    effectif
   }
-  emit(this.value.siret, r) 
+  emit({siret: this.value.siret, batch: actual_batch}, r) 
 }

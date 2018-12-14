@@ -123,18 +123,18 @@ func browseEtablissement(batchKey string, siret string) (interface{}, error) {
 }
 
 func publicEtablissementHandler(c *gin.Context) {
-	err := publicEtablissement()
+	batch := c.Params.ByName("batch")
+	err := publicEtablissement(batch)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
 	c.JSON(200, "ok")
-
 }
 
-func publicEtablissement() error {
+func publicEtablissement(batch string) error {
 	// préparation des jobs
-	job, query, err := prepareMRJob("", "", "public", "etablissement", "PublicEtablissement")
+	job, query, err := prepareMRJob(batch, "", "public", "etablissement", "Public")
 
 	if err != nil {
 		return errors.New("Erreur dans la création du job MapReduce: " + err.Error())
@@ -151,8 +151,38 @@ func publicEtablissement() error {
 	return nil
 }
 
+func publicEntrepriseHandler(c *gin.Context) {
+	batch := c.Params.ByName("batch")
+	err := publicEntreprise(batch)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, "ok")
+}
+
+func publicEntreprise(batch string) error {
+	// préparation des jobs
+	job, query, err := prepareMRJob(batch, "", "public", "entreprise", "Public")
+
+	if err != nil {
+		return errors.New("Erreur dans la création du job MapReduce: " + err.Error())
+	}
+
+	// exécution
+
+	_, err = db.DB.C("Entreprise").Find(query).MapReduce(job, nil)
+
+	if err != nil {
+		return errors.New("Erreur dans l'exécution des jobs MapReduce" + err.Error())
+	}
+
+	return nil
+}
+
 func predictionBrowseHandler(c *gin.Context) {
 	params := struct {
+		Algo     string `json:"algo"`
 		Batch    string `json:"batch"`
 		Naf1     string `json:"naf1"`
 		Effectif int    `json:"effectif"`
@@ -186,15 +216,20 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 	}})
 
 	pipeline = append(pipeline, bson.M{"$project": bson.M{
-		"siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
-		"siret": "$_id.siret",
-		"prob":  "$prob",
-		"diff":  "$diff",
+		"siren":     bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
+		"_id.siret": "$_id.siret",
+		"_id.batch": "$_id.batch",
+		"prob":      "$prob",
+		"diff":      "$diff",
+	}})
+
+	pipeline = append(pipeline, bson.M{"$sort": bson.M{
+		"prob": -1,
 	}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from":         "PublicEtablissement",
-		"localField":   "siret",
+		"from":         "Public",
+		"localField":   "_id",
 		"foreignField": "_id",
 		"as":           "etablissement"}})
 
@@ -211,6 +246,10 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 			"etablissement.sirene.ape": bson.M{"$in": naf5from1(naf1)},
 		}})
 	}
+
+	pipeline = append(pipeline, bson.M{"$match": bson.M{
+		"etablissement.effectif.effectif": bson.M{"$gt": effectif},
+	}})
 
 	pipeline = append(pipeline, bson.M{"$skip": offset})
 

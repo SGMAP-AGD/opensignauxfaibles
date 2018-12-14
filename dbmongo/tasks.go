@@ -22,9 +22,15 @@ func getTasks(c *gin.Context) {
 
 	pipeline = append(pipeline, bson.M{"$group": bson.M{
 		"_id":       "$_id.siret",
+		"batch":     bson.M{"$min": "$_id.batch"},
 		"lastDate":  bson.M{"$max": "$_id.date"},
 		"firstDate": bson.M{"$min": "$_id.date"},
 		"tasks":     bson.M{"$push": "$$ROOT"},
+	}})
+
+	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
+		"_id.siret": "$_id",
+		"_id.batch": "$batch",
 	}})
 
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{
@@ -32,7 +38,7 @@ func getTasks(c *gin.Context) {
 	}})
 
 	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
-		"from":         "PublicEtablissement",
+		"from":         "Public",
 		"localField":   "_id",
 		"foreignField": "_id",
 		"as":           "etablissement",

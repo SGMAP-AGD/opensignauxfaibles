@@ -15,7 +15,7 @@
       <v-spacer></v-spacer>
       <v-icon color="#c9aec5" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-dashboard</v-icon>
     </v-toolbar>
-    <DashboardTask v-for="task in tasks" :key="task._id" :task="task"></DashboardTask>
+    <DashboardTask v-for="task in tasks" :key="task._id.siret" :task="task"></DashboardTask>
     <v-navigation-drawer
       :class="rightDrawer?'elevation-6':''"
       right app
@@ -99,7 +99,7 @@ a {
   color: #42b983;
 }
 div.titre {
-  font-family: 'Signika', sans-serif;
+  font-family: 'Alfa Slab One', cursive;
   color: #ffffff;
   font-weight: 500;
   font-size: 18px

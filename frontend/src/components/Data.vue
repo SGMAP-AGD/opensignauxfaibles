@@ -263,9 +263,9 @@ export default {
 <style scoped>
   div.titre {
     color: rgb(241, 195, 195);
-    font-family: 'Signika', sans-serif;
+    font-family: 'Alfa Slab One', cursive;
     font-weight: 500;
     color: primary;
-    font-size: 18px;
+    font-size: 20px;
   }
 </style>

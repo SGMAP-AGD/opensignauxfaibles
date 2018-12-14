@@ -124,7 +124,7 @@ export default {
 
 <style>
 @import url('https://fonts.googleapis.com/css?family=Quicksand');
-@import url('https://fonts.googleapis.com/css?family=Signika');
+@import url('https://fonts.googleapis.com/css?family=Alfa+Slab+One');
 body {
   font-family: 'Quicksand', sans-serif;
 }
@@ -147,8 +147,6 @@ body {
     );
 }
 .toolbar {
-  color: 'black';
-  font-family: 'Quicksand', sans-serif;
   text-shadow: 0px 0px 2px rgb(0, 0, 0), 0px 0px 1px rgb(255, 255, 255);
   background: linear-gradient(0deg, #272629, #ffffff00 7%, transparent),
     radial-gradient(
