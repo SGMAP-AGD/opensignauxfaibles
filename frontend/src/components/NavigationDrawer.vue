@@ -17,14 +17,14 @@
     </v-toolbar>
      <v-list class="pt-0" dense>
         <v-divider></v-divider>
-        <v-list-tile to="/">
+        <!-- <v-list-tile to="/">
           <v-list-tile-action>
             <v-icon>mdi-view-dashboard</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>Tableau de Bord</v-list-tile-title>
           </v-list-tile-content>
-        </v-list-tile>
+        </v-list-tile> -->
 
         <v-list-tile to="/detection">
           <v-list-tile-action>
@@ -53,14 +53,14 @@
           </v-list-tile-content>
         </v-list-tile>
 
-        <v-list-tile to="/admin">
+        <!-- <v-list-tile to="/admin">
           <v-list-tile-action>
             <v-icon>fa-cog</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>Administration</v-list-tile-title>
           </v-list-tile-content>
-        </v-list-tile>
+        </v-list-tile> -->
 
         <v-divider></v-divider>
 

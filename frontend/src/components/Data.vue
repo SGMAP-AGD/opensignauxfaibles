@@ -5,16 +5,16 @@
       @click="drawer=!drawer"
       class="fa-rotate-180"
       v-if="!drawer"
-      color="rgb(241, 195, 195)"
+      color="#fff"
       key="toolbar"
       >
       mdi-backburger
       </v-icon>
-      <div style="width: 100%; text-align: center;"  class="titre">
+      <div style="width: 100%; text-align: center;" class="toolbar_titre">
         Données
       </div>
       <v-spacer></v-spacer>
-      <v-icon color="rgb(241, 195, 195)" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
+      <v-icon color="#fff" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">fa-database</v-icon>
     </v-toolbar>
     <v-navigation-drawer
       :class="rightDrawer?'elevation-6':''"
@@ -23,7 +23,7 @@
     >
       <v-list  two-line class="pt-0">
         <v-toolbar>
-          <v-icon @click="rightDrawer=!rightDrawer" color="secondary">fa-database</v-icon>
+          <v-icon @click="rightDrawer=!rightDrawer">fa-database</v-icon>
           <v-spacer></v-spacer>
           Lot {{ currentBatchKey }}
         </v-toolbar>
@@ -260,12 +260,4 @@ export default {
 }
 </script>
 
-<style scoped>
-  div.titre {
-    color: rgb(241, 195, 195);
-    font-family: 'Alfa Slab One', cursive;
-    font-weight: 500;
-    color: primary;
-    font-size: 20px;
-  }
-</style>
+

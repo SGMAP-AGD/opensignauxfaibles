@@ -9,7 +9,7 @@
     key="toolbar"
     >mdi-backburger
     </v-icon>
-    <div style="width: 100%; text-align: center;" class="titre">
+    <div style="width: 100%; text-align: center;" class="toolbar_titre">
       Consultation
     </div>
     <v-spacer></v-spacer>

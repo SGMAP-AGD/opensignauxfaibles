@@ -99,8 +99,8 @@ a {
   color: #42b983;
 }
 div.titre {
-  font-family: 'Alfa Slab One', cursive;
-  color: #ffffff;
+  font-family: 'Abel', cursive;
+  color: #fff;
   font-weight: 500;
   font-size: 18px
 }

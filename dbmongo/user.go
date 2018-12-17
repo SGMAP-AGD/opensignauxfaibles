@@ -1,15 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	"math/big"
+	"net/smtp"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -176,35 +180,51 @@ func sendRecoveryEmail(email string) error {
 
 			if err == nil {
 				fmt.Println(recoveryCode)
+
+				smtpAddress := viper.GetString("smtpAddress")
+				//smtpUser := viper.GetString("smtpUser")
+				//smtpPassword := viper.GetString("smtpPass")
+
+				c, err := smtp.Dial(smtpAddress)
+				if err != nil {
+					spew.Dump(err)
+				}
+				fmt.Println("kikoooooo")
+				defer c.Close()
+				// Set the sender and recipient.
+				c.Mail("do.not.reply@signaux.faibles.fr")
+				c.Rcpt(email)
+
+				// Send the email body.
+				wc, err := c.Data()
+				if err != nil {
+					spew.Dump(err)
+				}
+				defer wc.Close()
+				buf := bytes.NewBufferString(`Bonjour,
+				
+				suite à votre demande de récupération de mot de passe sur l'applicatif Signaux Faibles, voici votre code de vérification:` + recoveryCode + `
+				
+				Cordialement,
+			
+				l'équipe Signaux-Faibles.
+			
+				ps: si vous n'êtes pas à l'origine de cette tentative, nous vous prions d'en faire part à l'adresse contact@signaux-faibles.beta.gouv.fr
+				
+				`)
+
+				if _, err = buf.WriteTo(wc); err != nil {
+					spew.Dump(err)
+				}
+				return err
+
 			}
 		}
 	} else {
 		fmt.Println("error: " + err.Error())
 	}
-	return nil
 
-	// smtpAddress := viper.GetString("smtpAddress")
-	// smtpUser := viper.GetString("smtpUser")
-	// smtpPassword := viper.GetString("smtpPass")
-	// c, err := smtp.Dial("localhost:25")
-	// if err != nil {
-	// 	spew.Dump(err)
-	// }
-	// defer c.Close()
-	// // Set the sender and recipient.
-	// c.Mail("christophe@zbouboutchi.net")
-	// c.Rcpt("christophe@zbouboutchi.net")
-	// // Send the email body.
-	// wc, err := c.Data()
-	// if err != nil {
-	// 	spew.Dump(err)
-	// }
-	// defer wc.Close()
-	// buf := bytes.NewBufferString("This is the email body.")
-	// if _, err = buf.WriteTo(wc); err != nil {
-	// 	spew.Dump(err)
-	// }
-	// return err
+	return nil
 }
 
 func getRegions() map[string]string {
@@ -310,6 +330,43 @@ func loginGet(login login) error {
 			err = user.save()
 			if err == nil {
 				fmt.Println(checkCode)
+
+				smtpAddress := viper.GetString("smtpAddress")
+				//smtpUser := viper.GetString("smtpUser")
+				//smtpPassword := viper.GetString("smtpPass")
+
+				c, err := smtp.Dial(smtpAddress)
+				if err != nil {
+					spew.Dump(err)
+				}
+				fmt.Println("kikoooooo")
+				defer c.Close()
+				// Set the sender and recipient.
+				c.Mail("do.not.reply@signaux.faibles.fr")
+				c.Rcpt(email)
+
+				// Send the email body.
+				wc, err := c.Data()
+				if err != nil {
+					spew.Dump(err)
+				}
+				defer wc.Close()
+				buf := bytes.NewBufferString(`Bonjour,
+suite à votre première identification sur l'applicatif Signaux Faibles, voici votre code de vérification:
+
+` + checkCode + `
+
+Cordialement,
+l'équipe Signaux-Faibles.
+			
+ps: si vous n'êtes pas à l'origine de cette tentative, nous vous prions d'en faire part à l'adresse contact@signaux-faibles.beta.gouv.fr
+				
+				`)
+
+				if _, err = buf.WriteTo(wc); err != nil {
+					spew.Dump(err)
+				}
+				return err
 			}
 		}
 	} else {

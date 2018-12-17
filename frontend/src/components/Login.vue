@@ -136,7 +136,7 @@
         width="500"
         >
           <v-card>
-            <v-toolbar color="#eef" class="toolbar elevation-1" dense>
+            <v-toolbar color="#eef" class="toolbar-widget elevation-1" dense>
               <v-icon>mdi-lock</v-icon>
               <v-spacer></v-spacer>
               Validation de votre connexion

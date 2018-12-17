@@ -18,7 +18,7 @@ Vue.prototype.$axios = axios.create(
 
 Vue.prototype.$axios.interceptors.request.use(
   config => {
-    config.baseURL = 'http://localhost:3000'
+    config.baseURL = 'https://signaux.faibles.fr'
     if (store.sessionStore.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.sessionStore.state.token
     return config
   }

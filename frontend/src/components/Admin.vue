@@ -59,7 +59,7 @@ import axios from 'axios'
 export default {
   methods: {
     cloneDatabase () {
-      axios.get('http://localhost:3000/api/admin/clone/' + this.to)
+      axios.get('https://signaux.faibles.fr' + this.to)
         .then(response => alert(JSON.stringify(response.data, null, 2)))
     },
     go () {

@@ -76,32 +76,6 @@ export default {
         title: 'Accueil',
         color: 'light-green darken-4'
       },
-      items: [
-        {
-          title: 'Accueil',
-          action: '/',
-          icon: 'fa-home',
-          color: 'green darken-3'
-        },
-        {
-          title: 'Détection',
-          action: '/Browse',
-          icon: 'fa-search',
-          color: 'indigo darken-4'
-        },
-        {
-          title: 'Données',
-          action: '/data',
-          icon: 'fa-database',
-          color: 'red darken-4'
-        },
-        {
-          title: 'Administration',
-          action: '/admin',
-          icon: 'fa-users',
-          color: 'gray darken-4'
-        }
-      ],
       avatar: {
         debug: { icon: 'fa-cogs', color: 'blue' },
         info: { icon: 'fa-info', color: 'green' },
@@ -158,6 +132,12 @@ body {
       #21213b 100%,
       transparent
     );
+}
+.toolbar_titre {
+  color: #ffffff;
+  font-family: 'Abel', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
 }
 .toolbar-widget {
   color: 'black';

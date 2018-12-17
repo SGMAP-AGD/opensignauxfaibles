@@ -16,7 +16,7 @@
     >
       mdi-backburger
     </v-icon>
-    <div style="width: 100%; text-align: center;"  class="titre">
+    <div style="width: 100%; text-align: center;" class="toolbar_titre">
       Détection
     </div>
     <v-spacer></v-spacer>
@@ -27,11 +27,11 @@
   <span style="visibility: hidden; position:absolute;">{{ detectionLength }} {{ predictionLength }} {{ prediction.length }}</span>
   <div style="width:100%">
     <v-navigation-drawer :class="(rightDrawer?'elevation-6':'') + 'rightDrawer'" v-model="rightDrawer" right app>
-      <v-toolbar flat class="transparent" height="100">
+      <v-toolbar flat class="transparent" height="40">
         <v-list class="pa-0">
           <v-list-tile avatar>
             <v-list-tile-avatar>
-              <v-icon @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
+              <v-icon :class="loading?'rotate':''" @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
             </v-list-tile-avatar>
             <v-spacer></v-spacer>
             <v-img src="/static/regions/PDL.svg"></v-img>
@@ -237,13 +237,6 @@ export default {
 </script>
 
 <style scoper>
-div.titre {
-  color: #ffffff;
-  font-family: 'Abel', sans-serif;
-  font-weight: 800;
-  color: primary;
-  font-size: 22px;
-}
 .rotate {
     -webkit-animation:spin 4s linear infinite;
     -moz-animation:spin 4s linear infinite;
