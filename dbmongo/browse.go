@@ -134,7 +134,7 @@ func publicEtablissementHandler(c *gin.Context) {
 
 func publicEtablissement(batch string) error {
 	// préparation des jobs
-	job, query, err := prepareMRJob(batch, "", "public", "etablissement", "Public")
+	job, _, err := prepareMRJob(batch, "", "public", "etablissement", "Public")
 
 	if err != nil {
 		return errors.New("Erreur dans la création du job MapReduce: " + err.Error())
@@ -142,7 +142,7 @@ func publicEtablissement(batch string) error {
 
 	// exécution
 
-	_, err = db.DB.C("Etablissement").Find(query).MapReduce(job, nil)
+	_, err = db.DB.C("Etablissement").Find(nil).MapReduce(job, nil)
 
 	if err != nil {
 		return errors.New("Erreur dans l'exécution des jobs MapReduce" + err.Error())
@@ -216,11 +216,12 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 	}})
 
 	pipeline = append(pipeline, bson.M{"$project": bson.M{
-		"siren":     bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
-		"_id.siret": "$_id.siret",
-		"_id.batch": "$_id.batch",
-		"prob":      "$prob",
-		"diff":      "$diff",
+		"_idEntreprise.siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
+		"_idEntreprise.batch": "$_id.batch",
+		"_id.siret":           "$_id.siret",
+		"_id.batch":           "$_id.batch",
+		"prob":                "$prob",
+		"diff":                "$diff",
 	}})
 
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{
@@ -233,12 +234,20 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 		"foreignField": "_id",
 		"as":           "etablissement"}})
 
+	pipeline = append(pipeline, bson.M{"$lookup": bson.M{
+		"from":         "Public",
+		"localField":   "_idEntreprise",
+		"foreignField": "_id",
+		"as":           "entreprise"}})
+
 	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
 		"etablissement": bson.M{"$arrayElemAt": []interface{}{"$etablissement", 0}},
+		"entreprise":    bson.M{"$arrayElemAt": []interface{}{"$entreprise", 0}},
 	}})
 
 	pipeline = append(pipeline, bson.M{"$addFields": bson.M{
 		"etablissement": "$etablissement.value",
+		"entreprise":    "$entreprise.value",
 	}})
 
 	if naf1 != "" {

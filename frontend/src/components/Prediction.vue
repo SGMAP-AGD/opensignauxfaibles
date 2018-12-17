@@ -11,7 +11,7 @@
       @click="drawer=!drawer"
       class="fa-rotate-180"
       v-if="!drawer"
-      color="#e0e0ffef"
+      color="#ffffff"
       key="toolbar"
     >
       mdi-backburger
@@ -20,7 +20,9 @@
       Détection
     </div>
     <v-spacer></v-spacer>
-    <v-icon color="#e0e0ffef" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
+    <v-icon 
+    :class="loading?'rotate':''"
+    color="#ffffff" v-if="!rightDrawer" @click="rightDrawer=!rightDrawer">mdi-target</v-icon>
   </v-toolbar>
   <span style="visibility: hidden; position:absolute;">{{ detectionLength }} {{ predictionLength }} {{ prediction.length }}</span>
   <div style="width:100%">
@@ -42,6 +44,7 @@
             :items="batches"
             v-model="currentBatchKey"
             label="Lot d'intégration"
+            @change="updatePrediction()"
           ></v-select>
         </v-list-tile>
         <v-list-tile>
@@ -139,7 +142,6 @@ export default {
         offset: 0,
         effectif: this.minEffectif
       }
-      console.log(params)
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data
         prediction.forEach(p => {
@@ -162,7 +164,6 @@ export default {
         offset: offset,
         effectif: this.minEffectif
       }
-      console.log(params)
       this.predictionLength = limit + offset
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data
@@ -235,12 +236,20 @@ export default {
 }
 </script>
 
-<style>
+<style scoper>
 div.titre {
-  color: #e0e0ffef;
-  font-family: 'Alfa Slab One', cursive;
-  font-weight: 500;
+  color: #ffffff;
+  font-family: 'Abel', sans-serif;
+  font-weight: 800;
   color: primary;
-  font-size: 20px;
+  font-size: 22px;
 }
+.rotate {
+    -webkit-animation:spin 4s linear infinite;
+    -moz-animation:spin 4s linear infinite;
+    animation:spin 4s linear infinite;
+}
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
 </style>

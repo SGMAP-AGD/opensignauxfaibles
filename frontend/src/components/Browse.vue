@@ -60,7 +60,6 @@ export default {
   },
   methods: {
     querySelections (val) {
-      console.log(this.select)
       this.loading = true
       this.$axios.post('/api/search', { 'guessRaisonSociale': val }).then(r => {
         this.items = r.data.map(e => { return { text: e.raison_sociale, value: e._id.siret } })
@@ -107,9 +106,9 @@ a {
   color: #42b983;
 }
 div.titre {
-  font-family: 'Alfa Slab One', cursive;
+  font-family: 'Abel', sans-serif;
   color: #ffffff;
-  font-weight: 500;
+  font-weight: 800;
   font-size: 20px
 }
 </style>

@@ -124,7 +124,8 @@ export default {
 
 <style>
 @import url('https://fonts.googleapis.com/css?family=Quicksand');
-@import url('https://fonts.googleapis.com/css?family=Alfa+Slab+One');
+@import url('https://fonts.googleapis.com/css?family=Abel');
+@import url('https://fonts.googleapis.com/css?family=Oswald');
 body {
   font-family: 'Quicksand', sans-serif;
 }
@@ -169,8 +170,9 @@ body {
       #e4e4e4 35%,
       #c9c9cc 80%,
       #afafcc 100%,
-      transparent
+      transparent,
     );
+
 }
 #app {
   background: radial-gradient(

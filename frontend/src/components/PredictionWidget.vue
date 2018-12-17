@@ -1,77 +1,84 @@
 <template>
-  <div>
+  <div >
     <v-card
+    @click="hover=true"
       style="height: 80px; background: linear-gradient(#fff, #eee 45%, #ccc);"
       class="elevation-2 ma-2"
     >
-    <div style="height: 100%; width: 100%;">
-      <div class="entete">
-        <PredictionWidgetScore id="widget" :prob="prediction.prob" :diff="prediction.diff"/>
+      <div style="height: 100%; width: 100%;">
+        <div class="entete">
+          <PredictionWidgetScore id="widget" :prob="prediction.prob" :diff="prediction.diff"/>
+        </div>
+        <div class="corps">
+          <div 
+          style="left: 250px; position: absolute;"
+          :id="'marge_' + prediction._id.siret"></div>
+          <div style="white-space: nowrap; max-width: 400px; max-height:30px">
+          <span style="font-size: 18px; color: #333; line-height: 10px; font-family: 'Oswald';">{{ prediction.etablissement.sirene.raisonsociale }}<br style="line-height: 10px;"/></span>
+          </div>
+          <span style="font-size: 12px; color: #333; line-height: 10px;">{{ prediction._id.siret }}<br style="line-height: 10px;"/></span>
+          <v-img style="position: absolute; left: 160px; bottom: 10px;" width="17" src="/static/gray_apart.svg"></v-img>
+          <v-img style="position: absolute; left: 90px; bottom: 10px;" width="57" src="/static/gray_urssaf.svg"></v-img>
+          <div style="position: absolute; left: 195px; bottom: 4px; color: #333">
+            <span style="font-size: 20px">{{ prediction.etablissement.effectif.effectif || 'n/c' }}</span><br/></div>
+            <div v-if="hover"
+            style="height: 50px; position: absolute; left: 400px; top: 5px; min-height: 100px; width: 100px;">
+            Taux de marge
+              <IEcharts
+              style="height: 50px; background: #fff4"
+                :loading="chart"
+                :option="getMargeOption()"
+              />
+            </div>
+            <div v-if="hover"
+            style="height: 50px; position: absolute; left: 520px; top: 5px; min-height: 100px; width: 100px;">
+            FRNG
+              <IEcharts
+              style="height: 50px; background: #fff4"
+                :loading="chart"
+                :option="getFRNGOption()"
+              />
+            </div>
+            <div v-if="hover"
+            style="height: 50px; position: absolute; left: 640px; top: 5px; min-height: 100px; width: 100px;">
+            Financier CT
+              <IEcharts
+              style="height: 50px; background: #fff4"
+                :loading="chart"
+                :option="getFinCTOption()"
+              />
+            </div>
+        </div>
+        
       </div>
-      <div class="corps">
-        <span style="font-size: 10px">{{ prediction._id.siret }} effectif: {{ prediction.etablissement.effectif.effectif || 'n/c' }}</span><br/>
-        <span style="font-size: 13px">{{ prediction.etablissement.sirene.raisonsociale }}</span><br/>
-        <v-img style="position: absolute; right: 70px; bottom: 10px;" width="18" src="/static/red_apart.svg"></v-img>
-        <v-img style="position: absolute; right: 10px; bottom: 10px;" width="50" src="/static/red_urssaf.svg"></v-img>
-      </div>      
-    </div>
     </v-card>
   </div>
 </template>
 
 <script>
-// import IEcharts from 'vue-echarts-v3/src/lite.js'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/component/title'
-import PredictionWidgetScore from '@/components/widgetPrediction'
+import PredictionWidgetScore from '@/components/PredictionWidgetScore'
 
 export default {
   props: ['prediction'],
   components: {
-    // IEcharts,
     PredictionWidgetScore
   },
-  methods: {
-    getMargeOption (marge) {
-      return {
-        title: {
-          text: null
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            label: {
-              backgroundColor: '#283b56'
-            }
-          }
-        },
-        toolbox: {
-          show: true
-        },
-        xAxis: {
-          show: true,
-          type: 'category',
-          axisTick: false,
-          data: marge.map(m => m.x)
-        },
-        yAxis: {
-          type: 'value',
-          show: false,
-          min: -150,
-          max: 150
-        },
-        series: [
-          {
-            color: 'indigo',
-            smooth: true,
-            name: 'taux marge',
-            type: 'line',
-            data: marge.map(m => m.y)
-          }
-        ]
-      }
+  data () {
+    return {
+      hover: false,
+      chart: false
     }
+  },
+  mounted () {
+    // var paper = new Raphael('marge_' + this.prediction._id.siret, 20, 20)
+    // var circle = paper.circle(10, 10, 10)
+    // circle.attr('fill', '#00f')
+    // circle.attr('stroke', '#fff')
+  },
+  methods: {
+
   }
 }
 </script>
