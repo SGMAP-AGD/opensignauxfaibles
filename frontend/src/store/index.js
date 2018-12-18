@@ -8,12 +8,20 @@ Vue.use(Vuex)
 
 const vm = new Vue()
 
+// dev
+const baseURL = 'http://localhost:3000'
+const baseWS = 'ws://localhost:3000'
+
+// prod
+// const baseURL = 'https://signaux.faibles.fr'
+// const baseWS = 'wss://signaux.faibles.fr'
+
 var axiosClient = axios.create(
   {
     headers: {
       'Content-Type': 'application/json'
     },
-    baseURL: 'https://signaux.faibles.fr'
+    baseURL
   }
 )
 
@@ -46,7 +54,7 @@ const sessionStore = new Vuex.Store({
       email: null,
       password: null
     },
-    appDrawer: false,
+    appDrawer: true,
     rightDrawer: false,
     token: null,
     types: null,
@@ -138,6 +146,9 @@ const sessionStore = new Vuex.Store({
     },
     updateBatches (state, batches) {
       state.batches = batches
+      if (state.currentBatchKey == null) {
+        state.currentBatchKey = batches[0].id.key
+      }
     },
     updateDbStatus (state) {
       axiosClient.get('/api/admin/status').then(response => {
@@ -400,7 +411,7 @@ function wsConnect (state) {
   if (index > -1) {
     Vue._installedPlugins.splice(index, 1)
   }
-  Vue.use(VueNativeSock, 'wss://signaux.faibles.fr/ws/' + state.token, {
+  Vue.use(VueNativeSock, baseWS + '/ws/' + state.token, {
     store: sessionStore,
     format: 'json',
     connectManually: true,
@@ -426,7 +437,8 @@ setInterval(
 
 var store = {
   sessionStore: sessionStore,
-  localStore: localStore
+  localStore: localStore,
+  axiosClient
 }
 
 export default store

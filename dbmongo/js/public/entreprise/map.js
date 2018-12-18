@@ -1,7 +1,7 @@
 function map() { 
     v = Object.keys((this.value.batch || {})).sort().filter(batch => batch <= actual_batch).reduce((m, batch) => {
         Object.keys(this.value.batch[batch])
-            .filter(type => ['bdf']
+            .filter(type => ['bdf', 'diane']
             .includes(type))
             .forEach((type) => {
                 m[type] = (m[type] || {})
@@ -28,7 +28,12 @@ function map() {
         }
         accu = accu.concat(bdf)
         return accu
-    }, []).sort((a1, a2) => a1.annee > a2.annee)
+    }, []).sort((a1, a2) => a1.annee < a2.annee)
+
+    v.diane = Object.keys(v.diane || {}).reduce((accu, key) => {
+        accu = accu.concat(v.diane[key])
+        return accu
+    }, []).sort((a1, a2) => a1.exercice_diane < a2.exercice_diane)
 
     emit({siren: this.value.siren, batch: actual_batch}, v) 
   }

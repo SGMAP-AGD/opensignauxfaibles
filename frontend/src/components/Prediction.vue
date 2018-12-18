@@ -1,5 +1,5 @@
 <template>
-<div>
+<div id='#detection'>
   <v-toolbar
     height="35px"
     class="toolbar elevation-12"
@@ -129,9 +129,15 @@ export default {
   },
   mounted () {
     this.$store.dispatch('getNAF')
-    this.$store.dispatch('updateBatches')
+    this.firstUpdatePrediction()
   },
   methods: {
+    firstUpdatePrediction () {
+      if (this.prediction.length < 1) {
+        this.updatePrediction()
+        setTimeout(this.firstUpdatePrediction, 1000)
+      }
+    },
     updatePrediction () {
       this.loading = true
       var self = this
@@ -213,6 +219,7 @@ export default {
     },
     currentBatchKey: {
       get () {
+        this.$store.dispatch('updateBatches')
         return this.$store.state.currentBatchKey
       },
       set (value) {
@@ -223,7 +230,7 @@ export default {
       return (this.$store.state.batches || []).map(batch => batch.id.key)
     },
     detectionLength () {
-      var length = Math.round((this.height + this.scrollTop) / 900 + 5) * 10 
+      var length = Math.round((this.height + this.scrollTop) / 860 + 5) * 10 
       if (length > this.predictionLength) {
         var complement = length - this.predictionLength
         this.getPrediction(complement, this.predictionLength)

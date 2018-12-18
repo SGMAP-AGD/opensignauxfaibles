@@ -4,25 +4,9 @@ import App from './App'
 import router from './router'
 import store from './store'
 
-import axios from 'axios'
-
 Vue.config.productionTip = false
 
-Vue.prototype.$axios = axios.create(
-  {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }
-)
-
-Vue.prototype.$axios.interceptors.request.use(
-  config => {
-    config.baseURL = 'https://signaux.faibles.fr'
-    if (store.sessionStore.state.token != null) config.headers['Authorization'] = 'Bearer ' + store.sessionStore.state.token
-    return config
-  }
-)
+Vue.prototype.$axios = store.axiosClient
 
 Vue.prototype.$store = store.sessionStore
 Vue.prototype.$localStore = store.localStore

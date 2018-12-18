@@ -17,6 +17,8 @@ function map() {
     return m
   }, {})
 
+  var offset_effectif = (date_fin_effectif.getUTCFullYear() - date_fin.getUTCFullYear()) * 12 + date_fin_effectif.getUTCMonth() - date_fin.getUTCMonth()
+
   var sirene = Object.keys(v.sirene || {}).reduce((accu, k) => {
     accu.raisonsociale = v.sirene[k].raisonsociale
     accu.nicsiege = v.sirene[k].nicsiege
@@ -27,14 +29,29 @@ function map() {
     return accu
   }, {})
 
-  var effectif = Object.keys(v.effectif || {}).reduce((accu, k) => {
-    if (v.effectif[k].periode.getTime() > accu.date.getTime()) {
-      accu.date = v.effectif[k].periode
-      accu.effectif = v.effectif[k].effectif
-    }
-    return accu
-  }, {date: new Date(0)})
 
+  // Effectifs
+  var map_effectif = Object.keys(v.effectif || {}).reduce(function (map_effectif, hash) {
+    var effectif = v.effectif[hash];
+    if (effectif == null) {
+        return map_effectif
+    }
+    var effectifTime = effectif.periode.getTime()
+    map_effectif[effectifTime] = (map_effectif[effectifTime] || 0) + effectif.effectif
+    return map_effectif
+  }, {})
+
+  // Object.keys(map_effectif).forEach(time =>{
+  //     time_d = new Date(parseInt(time))
+  //     time_offset = DateAddMonth(time_d, -offset_effectif -1)
+  //     if (time_offset.getTime() in output_indexed){
+  //         output_indexed[time_offset.getTime()].effectif = map_effectif[time]
+  //         output_indexed[time_offset.getTime()].date_effectif = time_d
+  //     }
+  // })
+
+  effectif = map_effectif[date_fin_effectif.getTime()]
+  effectif_precedent = map_effectif[DateAddMonth(date_fin_effectif, -12).getTime()]
   // Préparation environnement
   // liste_periodes = liste des périodes entre la date de début et la date de fin configurée dans le batch
 
@@ -62,27 +79,27 @@ function map() {
 
   // Débits 
   
-  var ecn = Object.keys(v.debit).reduce((m, h) => {
-    var d = [h, v.debit[h]]
-    var start = d[1].periode.start
-    var end = d[1].periode.end
-    var num_ecn = d[1].numero_ecart_negatif
-    var compte = d[1].numero_compte
-    var key = start + "-" + end + "-" + num_ecn + "-" + compte
-    m[key] = (m[key] || []).concat([{
-        "hash": d[0],
-        "numero_historique": d[1].numero_historique,
-        "date_traitement": d[1].date_traitement
-    }])
-    return m
-  }, {})
+  // var ecn = Object.keys(v.debit).reduce((m, h) => {
+  //   var d = [h, v.debit[h]]
+  //   var start = d[1].periode.start
+  //   var end = d[1].periode.end
+  //   var num_ecn = d[1].numero_ecart_negatif
+  //   var compte = d[1].numero_compte
+  //   var key = start + "-" + end + "-" + num_ecn + "-" + compte
+  //   m[key] = (m[key] || []).concat([{
+  //       "hash": d[0],
+  //       "numero_historique": d[1].numero_historique,
+  //       "date_traitement": d[1].date_traitement
+  //   }])
+  //   return m
+  // }, {})
 
   Object.keys(v.debit).forEach(function (h) {
     var debit = v.debit[h]
     if (debit.part_ouvriere + debit.part_patronale > 0) {
 
         var debit_suivant = (v.debit[debit.debit_suivant] || {"date_traitement" : date_fin})
-        date_limite = date_fin//new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
+        date_limite = date_fin //new Date(new Date(debit.periode.start).setFullYear(debit.periode.start.getFullYear() + 1))
         date_traitement_debut = new Date(
             Date.UTC(debit.date_traitement.getFullYear(), debit.date_traitement.getUTCMonth())
         )
@@ -135,7 +152,9 @@ function map() {
   r = {
     sirene,
     effectif,
+    effectif_precedent,
     urssaf
   }
+
   emit({siret: this.value.siret, batch: actual_batch}, r) 
 }

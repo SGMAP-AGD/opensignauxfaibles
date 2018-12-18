@@ -257,7 +257,7 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 	}
 
 	pipeline = append(pipeline, bson.M{"$match": bson.M{
-		"etablissement.effectif.effectif": bson.M{"$gt": effectif},
+		"etablissement.effectif": bson.M{"$gt": effectif},
 	}})
 
 	pipeline = append(pipeline, bson.M{"$skip": offset})

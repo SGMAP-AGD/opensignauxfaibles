@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="background: #fffe">
     <div>
       <v-container>
         <v-layout wrap>

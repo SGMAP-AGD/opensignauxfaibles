@@ -103,8 +103,7 @@ function finalize(k, v) {
             output_indexed[time_offset.getTime()].effectif = map_effectif[time]
             output_indexed[time_offset.getTime()].date_effectif = time_d
         }
-    }
-)
+    })
 
  output_array.forEach(function (val, index) {
      if (val.effectif == null) {

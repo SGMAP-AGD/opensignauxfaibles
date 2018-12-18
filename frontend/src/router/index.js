@@ -34,11 +34,12 @@ export default new Router({
       path: '/',
       name: 'Detection',
       component: Prediction
-    },
-    {
-      path: '/detection',
-      name: 'Detection',
-      component: Prediction
     }
+    // },
+    // {
+    //   path: '/detection',
+    //   name: 'Detection',
+    //   component: Prediction
+    // }
   ]
 })
