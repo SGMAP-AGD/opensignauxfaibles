@@ -16,7 +16,7 @@ function finalize(k, v) {
         return m
     }, { "siret": k })
 
-    var ecn = Object.keys(v.debit).reduce((m, h) => {
+    var ecn = Object.keys(v.debit || {}).reduce((m, h) => {
         var d = [h, v.debit[h]]
         var start = d[1].periode.start
         var end = d[1].periode.end
@@ -43,7 +43,7 @@ function finalize(k, v) {
     
     var value_cotisation = {}
     
-    Object.keys(v.cotisation).forEach(function (h) {
+    Object.keys(v.cotisation || {}).forEach(function (h) {
         var cotisation = v.cotisation[h]
         var periode_cotisation = generatePeriodSerie(cotisation.periode.start, cotisation.periode.end)
         periode_cotisation.forEach(function (date_cotisation) {
@@ -78,7 +78,7 @@ function finalize(k, v) {
         return periode
     }, {});
 
-    Object.keys(v.debit).forEach(function (h) {
+    Object.keys(v.debit || {}).forEach(function (h) {
         var debit = v.debit[h]
         if (debit.part_ouvriere + debit.part_patronale > 0) {
 

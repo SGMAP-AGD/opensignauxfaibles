@@ -275,14 +275,15 @@ func searchRaisonSociale(c *gin.Context) {
 	}
 	err := c.ShouldBind(&params)
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(500, err.Error())
 		return
 	}
 
 	var result = make([]interface{}, 0)
 
-	err = db.DBStatus.C("Prediction").Find(bson.M{"$text": bson.M{"$search": params.GuessRaisonSociale}}).Limit(15).All(&result)
-
+	err = db.DBStatus.C("Public").Find(bson.M{"$text": bson.M{"$search": params.GuessRaisonSociale}}).Limit(15).All(&result)
+	fmt.Println(err)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return

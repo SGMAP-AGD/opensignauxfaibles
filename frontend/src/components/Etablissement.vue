@@ -342,7 +342,7 @@ export default {
     }
   },
   mounted () {
-    this.$axios.get('/api/data/etablissement/1802/' + this.siret).then(response => {
+    this.$axios.get('/api/data/etablissement/'+ this.currentBatchKey + '/' + this.siret).then(response => {
       this.etablissement = response.data.etablissement[0].value
       this.entreprise = response.data.entreprise[0].value
     })
@@ -377,6 +377,9 @@ export default {
     },
     diane () {
       return (Object.keys(this.entreprise.diane || []).map(k => this.entreprise.diane[k]) || [null]).sort((a, b) => a.annee > b.annee).reverse()
+    },
+    currentBatchKey () {
+      return this.$store.state.currentBatchKey
     },
     zipDianeBDF () {
       let annees = new Set(this.bdf.map(b => b.annee).concat(this.diane.map(d => d.annee)))
