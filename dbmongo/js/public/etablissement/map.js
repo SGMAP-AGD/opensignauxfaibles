@@ -4,7 +4,7 @@ function map() {
   .sort()
   .reduce((m, batch) => {
     Object.keys(this.value.batch[batch])
-    .filter(type => ['sirene', 'effectif', 'debit'].includes(type))
+    .filter(type => ['sirene', 'effectif', 'debit', 'ccsf', 'procol'].includes(type))
     .forEach((type) => {
       m[type] = (m[type] || {})
       var  array_delete = (this.value.batch[batch].compact.delete[type]||[])
@@ -149,11 +149,50 @@ function map() {
     return accu
   }, false )
 
+  function deal_with_procols(data_source, altar_or_procol){
+
+    var codes  =  Object.keys(data_source).reduce(function(events,hash) {
+      var the_event = data_source[hash]
+
+      if (altar_or_procol == "altares")
+        var etat = altaresToHuman(the_event.code_evenement);
+      else if (altar_or_procol == "procol")
+        var etat = procolToHuman(the_event.action_procol, the_event.stade_procol);
+
+      if (etat != null)
+        events.push({"etat": etat, "date_proc_col": new Date(the_event.date_effet)})
+
+      return(events)
+    },[]).sort(
+      function(a,b) {return(a.date_proc_col.getTime() > b.date_proc_col.getTime())}
+    )
+
+    codes.forEach(
+      function (event) {
+        let periode_effet = new Date(Date.UTC(event.date_proc_col.getFullYear(), event.date_proc_col.getUTCMonth(), 1, 0, 0, 0, 0))
+        var time_til_last = Object.keys(output_indexed).filter(val => {return (val >= periode_effet)})
+
+        time_til_last.forEach(time => {
+          if (time in output_indexed) {
+            output_indexed[time].etat_proc_collective = event.etat
+            output_indexed[time].date_proc_collective = event.date_proc_col
+            if (event.etat != "in_bonis")
+              output_indexed[time].tag_outcome = "failure"
+          }
+        })
+      }
+    )
+  }
+
+  deal_with_procols((v.procol || {}), "procol")
+
+  
   r = {
     sirene,
     effectif,
     effectif_precedent,
-    urssaf
+    urssaf,
+    procol: (output_array[output_array.length-1]||{'etat_proc_collective' : 'in_bonis'}).etat_proc_collective
   }
 
   emit({siret: this.value.siret, batch: actual_batch}, r) 

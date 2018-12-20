@@ -147,7 +147,7 @@ const sessionStore = new Vuex.Store({
     updateBatches (state, batches) {
       state.batches = batches
       if (state.currentBatchKey == null) {
-        state.currentBatchKey = batches[batches.length - 1].id.key
+        state.currentBatchKey = '1812'
       }
     },
     updateDbStatus (state) {

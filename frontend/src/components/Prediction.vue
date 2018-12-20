@@ -76,6 +76,7 @@
         <v-list-tile>
           <v-list-tile-action>
           <v-checkbox
+          @change="updatePrediction()"
             v-model="entrepriseConnue">
           </v-checkbox>
           </v-list-tile-action>
@@ -83,26 +84,28 @@
             Entreprise non suivie
           </v-list-tile-content>
         </v-list-tile>
-        <v-list-tile>
+        <!-- <v-list-tile>
           <v-list-tile-action>
           <v-checkbox
+          @change="updatePrediction()"
             v-model="horsCCSF">
           </v-checkbox>
           </v-list-tile-action>
           <v-list-tile-content>
             hors CCSF
           </v-list-tile-content>
-        </v-list-tile>
-        <v-list-tile>
+        </v-list-tile> -->
+        <!-- <v-list-tile>
           <v-list-tile-action>
           <v-checkbox
+          @change="updatePrediction()"
             v-model="horsProcol">
           </v-checkbox>
           </v-list-tile-action>
           <v-list-tile-content>
             hors Procédure Collective
           </v-list-tile-content>
-        </v-list-tile>
+        </v-list-tile> -->
       </v-list>
     </v-navigation-drawer>
   </div>
@@ -135,7 +138,7 @@ export default {
     firstUpdatePrediction () {
       if (this.prediction.length < 1) {
         this.updatePrediction()
-        setTimeout(this.firstUpdatePrediction, 1000)
+        setTimeout(this.firstUpdatePrediction, 5000)
       }
     },
     updatePrediction () {
@@ -146,8 +149,12 @@ export default {
         naf1: this.naf,
         limit: this.detectionLength,
         offset: 0,
-        effectif: this.minEffectif
+        effectif: this.minEffectif,
+        ccsf: this.horsCCSF,
+        procol: false,
+        suivi: this.entrepriseConnue
       }
+      console.log(params)
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data
         prediction.forEach(p => {
@@ -168,8 +175,12 @@ export default {
         naf1: this.naf,
         limit: limit,
         offset: offset,
-        effectif: this.minEffectif
+        effectif: this.minEffectif,
+        ccsf: this.horsCCSF,
+        procol: false,
+        suivi: this.entrepriseConnue
       }
+      console.log(params)
       this.predictionLength = limit + offset
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data

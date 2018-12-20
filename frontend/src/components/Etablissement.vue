@@ -68,20 +68,20 @@
                 class="pa-1"
                 slot="item"
                 slot-scope="props"
-                xs12
-                sm6
-                md4
-                lg4
+                xs6
+                sm3
+                md3
+                lg3
               >
                 <v-card
                 outline
                 class="elevation-2">
-                  <v-card-title class="subheading font-weight-bold">{{ props.item.annee }}</v-card-title>
+                  <v-card-title class="subheading font-weight-bold">{{ (props.item.diane[0] || {}).exercice_diane }}</v-card-title>
 
                   <v-divider></v-divider>
 
                   <v-list dense>
-                    <v-list-tile>
+                    <!-- <v-list-tile>
                       <v-list-tile-content>BDF | Arrété Bilan</v-list-tile-content>
                       <v-list-tile-content
                       :class="(props.item.bdf[0]||{})['arrete_bilan']?'align-end':'nc align-end'"
@@ -124,7 +124,7 @@
                       :class="(props.item.bdf[0])?'align-end':'nc align-end'"
                       >
                       {{ round((props.item.bdf[0]||{})['poids_frng'], 2) || 'n/c' }} %</v-list-tile-content>
-                    </v-list-tile>
+                    </v-list-tile> -->
 
                     <v-list-tile>
                       <v-list-tile-content>Diane | Chiffre d'Affaire:</v-list-tile-content>

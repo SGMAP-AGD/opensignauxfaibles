@@ -194,6 +194,7 @@ func predictionBrowseHandler(c *gin.Context) {
 	}{}
 
 	err := c.ShouldBind(&params)
+	fmt.Println(params)
 	if err != nil {
 		c.JSON(400, "Bad Request: "+err.Error())
 	}
@@ -214,6 +215,12 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 	pipeline = append(pipeline, bson.M{"$match": bson.M{
 		"_id.batch": batch,
 	}})
+
+	if suivi {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{
+			"connu": false,
+		}})
+	}
 
 	pipeline = append(pipeline, bson.M{"$project": bson.M{
 		"_idEntreprise.siren": bson.M{"$substrBytes": []interface{}{"$_id.siret", 0, 9}},
@@ -253,6 +260,12 @@ func predictionBrowse(batch string, naf1 string, effectif int, suivi bool, ccsf 
 	if naf1 != "" {
 		pipeline = append(pipeline, bson.M{"$match": bson.M{
 			"etablissement.sirene.ape": bson.M{"$in": naf5from1(naf1)},
+		}})
+	}
+
+	if procol {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{
+			"etablissement.procol": "in_bonis",
 		}})
 	}
 
