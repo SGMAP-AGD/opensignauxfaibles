@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -50,16 +49,12 @@ func readAndRandomComptes(fileName string, outputFileName string) (map[string]st
 			newSiret = randStringBytesRmndr(len(siret))
 			if _, ok := mapping[newSiret]; !ok && newSiret != siret {
 				break
-			} else {
-				fmt.Println("bounce !")
 			}
 		}
 		for {
 			newCompte = randStringBytesRmndr(len(compte))
 			if _, ok := mapping[newCompte]; !ok && newCompte != compte {
 				break
-			} else {
-				fmt.Println("bounce !")
 			}
 		}
 		mapping[compte] = newCompte

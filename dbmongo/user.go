@@ -189,7 +189,6 @@ func sendRecoveryEmail(email string) error {
 				if err != nil {
 					spew.Dump(err)
 				}
-				fmt.Println("kikoooooo")
 				defer c.Close()
 				// Set the sender and recipient.
 				c.Mail("do.not.reply@signaux.faibles.fr")
@@ -339,7 +338,6 @@ func loginGet(login login) error {
 				if err != nil {
 					spew.Dump(err)
 				}
-				fmt.Println("kikoooooo")
 				defer c.Close()
 				// Set the sender and recipient.
 				c.Mail("do.not.reply@signaux.faibles.fr")

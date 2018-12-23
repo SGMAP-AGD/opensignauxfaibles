@@ -154,7 +154,6 @@ export default {
         procol: false,
         suivi: this.entrepriseConnue
       }
-      console.log(params)
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data
         prediction.forEach(p => {
@@ -180,7 +179,6 @@ export default {
         procol: false,
         suivi: this.entrepriseConnue
       }
-      console.log(params)
       this.predictionLength = limit + offset
       this.$axios.post('/api/data/prediction', params).then(response => {
         var prediction = response.data

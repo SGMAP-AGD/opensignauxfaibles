@@ -194,7 +194,6 @@ func predictionBrowseHandler(c *gin.Context) {
 	}{}
 
 	err := c.ShouldBind(&params)
-	fmt.Println(params)
 	if err != nil {
 		c.JSON(400, "Bad Request: "+err.Error())
 	}
@@ -204,6 +203,7 @@ func predictionBrowseHandler(c *gin.Context) {
 		c.JSON(500, err)
 		return
 	}
+	fmt.Println(result)
 	c.JSON(200, result)
 }
 

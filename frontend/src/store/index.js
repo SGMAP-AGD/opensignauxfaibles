@@ -8,13 +8,18 @@ Vue.use(Vuex)
 
 const vm = new Vue()
 
-// dev
-const baseURL = 'http://localhost:3000'
-const baseWS = 'ws://localhost:3000'
+var dev = true
 
-// prod
-// const baseURL = 'https://signaux.faibles.fr'
-// const baseWS = 'wss://signaux.faibles.fr'
+var baseURL = ''
+var baseWS = ''
+
+if (dev) {
+  baseURL = 'http://localhost:3000'
+  baseWS = 'ws://localhost:3000'
+} else {
+  baseURL = 'https://signaux.faibles.fr'
+  baseWS = 'wss://signaux.faibles.fr'
+}
 
 var axiosClient = axios.create(
   {
@@ -147,7 +152,7 @@ const sessionStore = new Vuex.Store({
     updateBatches (state, batches) {
       state.batches = batches
       if (state.currentBatchKey == null) {
-        state.currentBatchKey = '1812'
+        state.currentBatchKey = '1802'
       }
     },
     updateDbStatus (state) {
@@ -433,7 +438,7 @@ setInterval(
       sessionStore.commit('refreshToken')
     }
   },
-  180000)
+  1800000)
 
 var store = {
   sessionStore: sessionStore,

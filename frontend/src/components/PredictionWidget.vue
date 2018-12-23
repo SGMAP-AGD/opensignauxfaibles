@@ -167,7 +167,6 @@ export default {
     },
     showEtablissement () {
       this.dialog = true
-      console.log('yeah')
     }
   }
 }
